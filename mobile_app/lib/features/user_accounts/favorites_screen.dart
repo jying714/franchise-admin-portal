@@ -121,19 +121,17 @@ class _FavoritesScreenState extends State<FavoritesScreen>
         appBar: FranchiseAppBar(
           title: localizations.favorites,
           showLogo: false,
-          backgroundColor: shared.UiConfig.primaryColor,
-          foregroundColor: shared.UiConfig.foregroundColor,
           centerTitle: true,
           elevation: 0,
         ),
-        backgroundColor: shared.UiConfig.backgroundColor,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         body: SafeArea(
           child: Center(
             child: Text(
               localizations.mustSignInForFavorites,
               style: TextStyle(
                 fontSize: shared.DesignTokens.bodyFontSize,
-                color: shared.UiConfig.textColor,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontFamily: shared.DesignTokens.fontFamily,
                 fontWeight: shared.UiConfig.normal,
               ),
@@ -152,9 +150,10 @@ class _FavoritesScreenState extends State<FavoritesScreen>
         centerTitle: true,
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: shared.UiConfig.foregroundColor,
-          labelColor: shared.UiConfig.foregroundColor,
-          unselectedLabelColor: shared.UiConfig.secondaryTextColor,
+          indicatorColor: Theme.of(context).colorScheme.onPrimary,
+          labelColor: Theme.of(context).colorScheme.onPrimary,
+          unselectedLabelColor:
+              Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7),
           tabs: [
             Tab(
                 text: localizations.menuItems,
@@ -165,7 +164,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
           ],
         ),
       ),
-      backgroundColor: shared.UiConfig.backgroundColor,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
         bottom: true,
         child: TabBarView(
@@ -208,7 +207,7 @@ class FavoriteMenuItemsTab extends StatelessWidget {
                   localizations.loyaltyErrorLoading, // reuse generic error
                   style: TextStyle(
                     fontSize: shared.DesignTokens.bodyFontSize,
-                    color: shared.UiConfig.errorTextColor,
+                    color: Theme.of(context).colorScheme.error,
                     fontFamily: shared.DesignTokens.fontFamily,
                     fontWeight: shared.UiConfig.normal,
                   ),
@@ -229,16 +228,18 @@ class FavoriteMenuItemsTab extends StatelessWidget {
                 itemCount: items.length,
                 itemBuilder: (context, index) {
                   final item = items[index];
+                  final scheme = Theme.of(context).colorScheme;
                   return Card(
                     elevation: shared.DesignTokens.cardElevation,
                     margin: const EdgeInsets.symmetric(
                       vertical: shared.DesignTokens.gridSpacing / 2,
                     ),
+                    color: scheme.surface,
                     shape: RoundedRectangleBorder(
                       borderRadius:
                           BorderRadius.circular(shared.DesignTokens.cardRadius),
+                      side: BorderSide(color: scheme.outline),
                     ),
-                    color: shared.UiConfig.surfaceColor,
                     child: ListTile(
                       leading: NetworkImageWidget(
                         imageUrl: item.image ?? '',
@@ -250,10 +251,10 @@ class FavoriteMenuItemsTab extends StatelessWidget {
                             shared.DesignTokens.imageRadius),
                       ),
                       title: Text(
-                        item.name, // Bound from shared MenuItem.name - fixed for display consistency
+                        item.name,
                         style: TextStyle(
                           fontSize: shared.DesignTokens.bodyFontSize,
-                          color: shared.UiConfig.textColor,
+                          color: scheme.onSurface,
                           fontWeight: shared.UiConfig.bold,
                           fontFamily: shared.DesignTokens.fontFamily,
                         ),
@@ -262,7 +263,7 @@ class FavoriteMenuItemsTab extends StatelessWidget {
                         item.description,
                         style: TextStyle(
                           fontSize: shared.DesignTokens.captionFontSize,
-                          color: shared.UiConfig.secondaryTextColor,
+                          color: scheme.onSurfaceVariant,
                           fontFamily: shared.DesignTokens.fontFamily,
                           fontWeight: shared.UiConfig.normal,
                         ),
@@ -270,7 +271,7 @@ class FavoriteMenuItemsTab extends StatelessWidget {
                       trailing: IconButton(
                         icon: Icon(
                           Icons.favorite,
-                          color: shared.UiConfig.errorColor,
+                          color: scheme.error,
                         ),
                         tooltip: localizations.removeFromFavoritesTooltip,
                         onPressed: () async {
@@ -342,7 +343,7 @@ class FavoriteOrdersTab extends StatelessWidget {
                   localizations.loyaltyErrorLoading,
                   style: TextStyle(
                     fontSize: shared.DesignTokens.bodyFontSize,
-                    color: shared.UiConfig.errorTextColor,
+                    color: Theme.of(context).colorScheme.error,
                     fontFamily: shared.DesignTokens.fontFamily,
                     fontWeight: shared.UiConfig.normal,
                   ),
@@ -364,24 +365,25 @@ class FavoriteOrdersTab extends StatelessWidget {
                 itemCount: orders.length,
                 itemBuilder: (context, index) {
                   final order = orders[index];
+                  final scheme = Theme.of(context).colorScheme;
                   return Card(
                     elevation: shared.DesignTokens.cardElevation,
                     margin: const EdgeInsets.symmetric(
                       vertical: shared.DesignTokens.gridSpacing / 2,
                     ),
+                    color: scheme.surface,
                     shape: RoundedRectangleBorder(
                       borderRadius:
                           BorderRadius.circular(shared.DesignTokens.cardRadius),
+                      side: BorderSide(color: scheme.outline),
                     ),
-                    color: shared.UiConfig.surfaceColor,
                     child: ListTile(
-                      leading: Icon(Icons.receipt_long,
-                          color: shared.UiConfig.secondaryColor),
+                      leading: Icon(Icons.receipt_long, color: scheme.primary),
                       title: Text(
                         order.userName ?? 'Order',
                         style: TextStyle(
                           fontSize: shared.DesignTokens.bodyFontSize,
-                          color: shared.UiConfig.textColor,
+                          color: scheme.onSurface,
                           fontWeight: shared.UiConfig.bold,
                           fontFamily: shared.DesignTokens.fontFamily,
                         ),
@@ -392,7 +394,7 @@ class FavoriteOrdersTab extends StatelessWidget {
                         ),
                         style: TextStyle(
                           fontSize: shared.DesignTokens.captionFontSize,
-                          color: shared.UiConfig.secondaryTextColor,
+                          color: scheme.onSurfaceVariant,
                           fontFamily: shared.DesignTokens.fontFamily,
                           fontWeight: shared.UiConfig.normal,
                         ),
@@ -403,7 +405,7 @@ class FavoriteOrdersTab extends StatelessWidget {
                           IconButton(
                             icon: Icon(
                               Icons.replay,
-                              color: shared.UiConfig.primaryColor,
+                              color: scheme.primary,
                             ),
                             tooltip: localizations.reorder,
                             onPressed: () {
@@ -418,7 +420,7 @@ class FavoriteOrdersTab extends StatelessWidget {
                           IconButton(
                             icon: Icon(
                               Icons.delete,
-                              color: shared.UiConfig.errorColor,
+                              color: scheme.error,
                             ),
                             tooltip: localizations.remove,
                             onPressed: () async {

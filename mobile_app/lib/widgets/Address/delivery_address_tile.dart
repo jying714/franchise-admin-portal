@@ -20,22 +20,24 @@ class DeliveryAddressTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
 
     return Card(
       elevation: shared.DesignTokens.cardElevation,
       margin: EdgeInsets.symmetric(
         vertical: shared.DesignTokens.gridSpacing / 2,
       ),
+      color: scheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
+        side: BorderSide(color: scheme.outline),
       ),
-      color: shared.UiConfig.surfaceColor,
       child: ListTile(
         title: Text(
           address.label,
           style: TextStyle(
             fontSize: shared.DesignTokens.bodyFontSize,
-            color: shared.UiConfig.textColor,
+            color: scheme.onSurface,
             fontWeight: shared.UiConfig.fontWeightBold,
             fontFamily: shared.DesignTokens.fontFamily,
           ),
@@ -44,7 +46,7 @@ class DeliveryAddressTile extends StatelessWidget {
           '${address.street}, ${address.city}, ${address.state} ${address.zip}',
           style: TextStyle(
             fontSize: shared.DesignTokens.captionFontSize,
-            color: shared.UiConfig.secondaryTextColor,
+            color: scheme.onSurfaceVariant,
             fontFamily: shared.DesignTokens.fontFamily,
             fontWeight: shared.UiConfig.fontWeightNormal,
           ),
@@ -53,9 +55,8 @@ class DeliveryAddressTile extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: Icon(Icons.edit, color: shared.UiConfig.primaryColor),
+              icon: Icon(Icons.edit, color: scheme.primary),
               onPressed: () async {
-                // Batch 2: FranchiseProvider scoping for address ops
                 Provider.of<shared.FranchiseProvider>(context, listen: false);
                 final firestoreService = Provider.of<shared.FirestoreService>(
                     context,
@@ -75,12 +76,12 @@ class DeliveryAddressTile extends StatelessWidget {
                         content: Text(
                           loc.addressUpdated ?? 'Address updated',
                           style: TextStyle(
-                            color: shared.UiConfig.textColor,
+                            color: scheme.onSurface,
                             fontFamily: shared.DesignTokens.fontFamily,
                             fontWeight: shared.UiConfig.fontWeightNormal,
                           ),
                         ),
-                        backgroundColor: shared.UiConfig.surfaceColor,
+                        backgroundColor: scheme.surface,
                         duration: Duration(
                             seconds: shared.DesignTokens.toastDuration),
                       ),
@@ -90,7 +91,7 @@ class DeliveryAddressTile extends StatelessWidget {
               },
             ),
             IconButton(
-              icon: Icon(Icons.delete, color: shared.UiConfig.errorColor),
+              icon: Icon(Icons.delete, color: scheme.error),
               onPressed: onDelete,
             ),
           ],

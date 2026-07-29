@@ -42,11 +42,9 @@ class _DeliveryAddressesScreenState extends State<DeliveryAddressesScreen> {
         logoUrl: shared.UiConfig.currentLogoUrl,
         logoAsset: shared.BrandingConfig.appBarLogoAsset,
         centerTitle: true,
-        backgroundColor: shared.UiConfig.primaryColor,
-        foregroundColor: shared.UiConfig.foregroundColor,
         elevation: 0,
       ),
-      backgroundColor: shared.UiConfig.backgroundColor,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: user == null
           ? EmptyStateWidget(
               title: localizations.mustSignInForAddresses,

@@ -31,10 +31,10 @@ class DeliveryAddressesBody extends StatefulWidget {
 class _DeliveryAddressesBodyState extends State<DeliveryAddressesBody> {
   @override
   Widget build(BuildContext context) {
-    // FranchiseProvider injected for franchise/{franchiseId}/ scoping (Batch 2)
     Provider.of<shared.FranchiseProvider>(context, listen: false);
 
     final localizations = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
     final addresses = widget.addresses;
     final firestoreService = widget.firestoreService;
     final user = widget.user;
@@ -68,7 +68,7 @@ class _DeliveryAddressesBodyState extends State<DeliveryAddressesBody> {
                     confirmLabel: localizations.confirm,
                     cancelLabel: localizations.cancel,
                     icon: Icons.delete,
-                    confirmColor: shared.UiConfig.errorColor,
+                    confirmColor: scheme.error,
                   );
                   if (shouldDelete == true) {
                     await firestoreService.removeAddressForUser(
@@ -79,12 +79,12 @@ class _DeliveryAddressesBodyState extends State<DeliveryAddressesBody> {
                         content: Text(
                           localizations.addressRemoved,
                           style: TextStyle(
-                            color: shared.UiConfig.textColor,
+                            color: scheme.onSurface,
                             fontFamily: shared.DesignTokens.fontFamily,
                             fontWeight: shared.UiConfig.fontWeightNormal,
                           ),
                         ),
-                        backgroundColor: shared.UiConfig.surfaceColor,
+                        backgroundColor: scheme.surface,
                         duration: Duration(
                             seconds: shared.DesignTokens.toastDuration),
                       ),
@@ -96,7 +96,6 @@ class _DeliveryAddressesBodyState extends State<DeliveryAddressesBody> {
               AddressForm(
                 formKey: formKey,
                 submitLabel: localizations.addAddress,
-                // You can inject validation logic here if needed for franchise/international
                 onSubmit: (newAddress) async {
                   final shouldAdd = await ConfirmationDialog.show(
                     context,
@@ -106,7 +105,7 @@ class _DeliveryAddressesBodyState extends State<DeliveryAddressesBody> {
                     confirmLabel: localizations.confirm,
                     cancelLabel: localizations.cancel,
                     icon: Icons.add_location_alt,
-                    confirmColor: shared.UiConfig.primaryColor,
+                    confirmColor: scheme.primary,
                   );
                   if (shouldAdd == true) {
                     await firestoreService.addAddressForUser(
@@ -117,12 +116,12 @@ class _DeliveryAddressesBodyState extends State<DeliveryAddressesBody> {
                         content: Text(
                           localizations.addressAdded,
                           style: TextStyle(
-                            color: shared.UiConfig.textColor,
+                            color: scheme.onSurface,
                             fontFamily: shared.DesignTokens.fontFamily,
                             fontWeight: shared.UiConfig.fontWeightNormal,
                           ),
                         ),
-                        backgroundColor: shared.UiConfig.surfaceColor,
+                        backgroundColor: scheme.surface,
                         duration: Duration(
                             seconds: shared.DesignTokens.toastDuration),
                       ),

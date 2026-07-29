@@ -58,7 +58,9 @@ class FranchiseAppBar extends StatelessWidget implements PreferredSizeWidget {
         showLogo && logoAsset != null && logoAsset!.isNotEmpty;
     final bool displayLogo = hasRemoteLogo || hasLocalLogo;
 
-    final color = backgroundColor ?? shared.UiConfig.primaryColor;
+    final scheme = Theme.of(context).colorScheme;
+    final color = backgroundColor ?? scheme.primary;
+    final fg = foregroundColor ?? scheme.onPrimary;
 
     Widget logoWidget;
     if (hasRemoteLogo) {
@@ -94,8 +96,7 @@ class FranchiseAppBar extends StatelessWidget implements PreferredSizeWidget {
                         fontSize: shared.DesignTokens.titleFontSize,
                         fontWeight: shared.UiConfig.fontWeightBold,
                         fontFamily: shared.DesignTokens.fontFamily,
-                        color:
-                            foregroundColor ?? shared.UiConfig.foregroundColor,
+                        color: fg,
                       ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -110,7 +111,7 @@ class FranchiseAppBar extends StatelessWidget implements PreferredSizeWidget {
                   fontSize: shared.DesignTokens.titleFontSize,
                   fontWeight: shared.UiConfig.fontWeightBold,
                   fontFamily: shared.DesignTokens.fontFamily,
-                  color: foregroundColor ?? shared.UiConfig.foregroundColor,
+                  color: fg,
                 ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -118,11 +119,11 @@ class FranchiseAppBar extends StatelessWidget implements PreferredSizeWidget {
 
     return AppBar(
       backgroundColor: color,
+      surfaceTintColor: Colors.transparent,
+      scrolledUnderElevation: 0,
       elevation: elevation,
       centerTitle: displayLogo ? false : centerTitle,
-      iconTheme: IconThemeData(
-        color: foregroundColor ?? shared.UiConfig.foregroundColor,
-      ),
+      iconTheme: IconThemeData(color: fg),
       leading: leading,
       title: titleWidget,
       actions: actions,
@@ -130,7 +131,7 @@ class FranchiseAppBar extends StatelessWidget implements PreferredSizeWidget {
           ? PreferredSize(
               preferredSize: const Size.fromHeight(1.0),
               child: Container(
-                color: Colors.grey.shade300,
+                color: scheme.outline,
                 height: 1.0,
               ),
             )

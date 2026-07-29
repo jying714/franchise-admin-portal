@@ -60,14 +60,14 @@ class OptionalAddOnsGroup extends StatelessWidget {
             child: Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: shared.UiConfig.primaryColor,
+                color: theme.colorScheme.primary,
                 borderRadius: BorderRadius.circular(6),
               ),
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
               child: Text(
                 loc.optionalAddOnsLabel,
                 style: theme.textTheme.titleMedium?.copyWith(
-                  color: shared.UiConfig.onPrimaryColor,
+                  color: theme.colorScheme.onPrimary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -121,7 +121,7 @@ class OptionalAddOnsGroup extends StatelessWidget {
                       child: Text(
                         meta?.name ?? addOn['name'] ?? ingId,
                         style: theme.textTheme.bodyLarge?.copyWith(
-                          color: shared.UiConfig.textColor,
+                          color: theme.colorScheme.onSurface,
                           fontFamily: shared.DesignTokens.fontFamily,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -136,8 +136,8 @@ class OptionalAddOnsGroup extends StatelessWidget {
                         style: theme.textTheme.bodyLarge?.copyWith(
                           fontWeight: shared.UiConfig.bold,
                           color: count > 0
-                              ? shared.UiConfig.primaryColor
-                              : shared.UiConfig.secondaryTextColor,
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.onSurfaceVariant,
                           fontFamily: shared.DesignTokens.fontFamily,
                         ),
                       ),
@@ -171,7 +171,7 @@ class OptionalAddOnsGroup extends StatelessWidget {
                         child: Text(
                           meta?.name ?? addOn['name'] ?? ingId,
                           style: theme.textTheme.bodyLarge?.copyWith(
-                            color: shared.UiConfig.textColor,
+                            color: theme.colorScheme.onSurface,
                             fontFamily: shared.DesignTokens.fontFamily,
                           ),
                           overflow: TextOverflow.ellipsis,
@@ -183,7 +183,7 @@ class OptionalAddOnsGroup extends StatelessWidget {
                           child: Text(
                             priceDisplay,
                             style: theme.textTheme.bodyMedium?.copyWith(
-                              color: shared.UiConfig.secondaryColor,
+                              color: theme.colorScheme.onSurfaceVariant,
                               fontWeight: shared.UiConfig.bold,
                               fontFamily: shared.DesignTokens.fontFamily,
                             ),
@@ -217,7 +217,7 @@ class OptionalAddOnsGroup extends StatelessWidget {
               child: Text(
                 "$maxFreeSauces free sauces, +${shared.UiConfig.currencyFormat(extraSauceUpcharge)} each extra.",
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: shared.UiConfig.secondaryTextColor,
+                  color: theme.colorScheme.onSurfaceVariant,
                   fontStyle: FontStyle.italic,
                   fontFamily: shared.DesignTokens.fontFamily,
                 ),

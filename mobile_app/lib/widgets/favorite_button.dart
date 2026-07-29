@@ -75,7 +75,7 @@ class _FavoriteButtonState extends State<FavoriteButton> {
     if (widget.userId == null) {
       return IconButton(
         icon: Icon(Icons.favorite_border,
-            color: shared.UiConfig.hintTextColor,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
             size: widget.iconSize ?? shared.DesignTokens.iconSize),
         onPressed: () {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -120,8 +120,8 @@ class _FavoriteButtonState extends State<FavoriteButton> {
           icon: Icon(
             isFavorited ? Icons.favorite : Icons.favorite_border,
             color: isFavorited
-                ? shared.UiConfig.accentColor
-                : shared.UiConfig.hintTextColor,
+                ? Theme.of(context).colorScheme.error
+                : Theme.of(context).colorScheme.onSurfaceVariant,
             size: widget.iconSize ?? shared.DesignTokens.iconSize,
           ),
           tooltip: widget.userId == null

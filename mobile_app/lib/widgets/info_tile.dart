@@ -19,21 +19,22 @@ class InfoTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return ListTile(
-      leading: leadingIcon != null
-          ? Icon(leadingIcon, color: shared.UiConfig.primaryColor)
-          : null,
+      leading:
+          leadingIcon != null ? Icon(leadingIcon, color: scheme.primary) : null,
       title: Text(
         label,
         style: shared.UiConfig.bodyStyle.copyWith(
           fontWeight: shared.UiConfig.fontWeightBold,
-          color: shared.UiConfig.textColor,
+          color: scheme.onSurfaceVariant,
         ),
       ),
       subtitle: Text(
         (value == null || value!.trim().isEmpty) ? '—' : value!,
         style: shared.UiConfig.captionStyle.copyWith(
           fontWeight: shared.UiConfig.fontWeightNormal,
+          color: scheme.onSurface,
         ),
       ),
       trailing: trailing,

@@ -23,6 +23,7 @@ class CategoryCard extends StatelessWidget {
     Provider.of<shared.FranchiseProvider>(context, listen: false);
 
     final loc = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
     final String imagePath =
         (category.image != null && category.image!.isNotEmpty)
             ? category.image!
@@ -41,7 +42,7 @@ class CategoryCard extends StatelessWidget {
           child: Ink(
             decoration: BoxDecoration(
               border: Border.all(
-                color: shared.UiConfig.primaryColor,
+                color: scheme.primary,
                 width: shared.DesignTokens.categoryCardBorderWidth,
               ),
               borderRadius:
@@ -115,7 +116,7 @@ class CategoryCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: shared.DesignTokens.titleFontSize,
                             fontWeight: shared.UiConfig.fontWeightBold,
-                            color: shared.UiConfig.onPrimaryColor,
+                            color: scheme.onPrimary,
                             fontFamily: shared.DesignTokens.fontFamily,
                             shadows: [
                               Shadow(
@@ -135,8 +136,7 @@ class CategoryCard extends StatelessWidget {
                               category.description!,
                               style: TextStyle(
                                 fontSize: shared.DesignTokens.captionFontSize,
-                                color: shared.UiConfig.onPrimaryColor
-                                    .withValues(alpha: 0.7),
+                                color: scheme.onPrimary.withValues(alpha: 0.7),
                                 fontFamily: shared.DesignTokens.fontFamily,
                                 fontWeight: shared.UiConfig.fontWeightNormal,
                                 shadows: [

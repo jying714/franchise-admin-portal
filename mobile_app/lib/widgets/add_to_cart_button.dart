@@ -17,10 +17,11 @@ class AddToCartButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        backgroundColor: shared.UiConfig.primaryColor,
-        foregroundColor: shared.UiConfig.foregroundColor,
+        backgroundColor: scheme.primary,
+        foregroundColor: scheme.onPrimary,
         padding: shared.UiConfig.defaultPadding,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(shared.DesignTokens.buttonRadius),

@@ -38,7 +38,7 @@ class OrderHistoryScreen extends StatelessWidget {
             logoAsset: shared.BrandingConfig.appBarLogoAsset,
             centerTitle: true,
           ),
-          backgroundColor: shared.UiConfig.backgroundColorDark,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           body: SafeArea(
             bottom: true,
             child: authUser == null
@@ -47,7 +47,7 @@ class OrderHistoryScreen extends StatelessWidget {
                       localizations.notSignedIn,
                       style: TextStyle(
                         fontSize: DesignTokens.bodyFontSize,
-                        color: shared.UiConfig.textColorDark,
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontFamily: DesignTokens.fontFamily,
                         fontWeight: shared.UiConfig.fontWeightNormal,
                       ),
@@ -81,7 +81,7 @@ class OrderHistoryScreen extends StatelessWidget {
                             localizations.noPastOrders,
                             style: TextStyle(
                               fontSize: DesignTokens.bodyFontSize,
-                              color: shared.UiConfig.textColorDark,
+                              color: Theme.of(context).colorScheme.onSurface,
                               fontFamily: DesignTokens.fontFamily,
                               fontWeight: shared.UiConfig.fontWeightNormal,
                             ),
@@ -94,6 +94,7 @@ class OrderHistoryScreen extends StatelessWidget {
                         itemCount: orders.length,
                         itemBuilder: (context, index) {
                           final order = orders[index];
+                          final scheme = Theme.of(context).colorScheme;
                           return Card(
                             elevation: DesignTokens.cardElevation,
                             margin: const EdgeInsets.symmetric(
@@ -102,14 +103,15 @@ class OrderHistoryScreen extends StatelessWidget {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(
                                   DesignTokens.cardRadius),
+                              side: BorderSide(color: scheme.outline),
                             ),
-                            color: shared.UiConfig.surfaceColor,
+                            color: scheme.surface,
                             child: ExpansionTile(
                               title: Text(
                                 localizations.orderNumberWithId(order.id),
                                 style: TextStyle(
                                   fontSize: DesignTokens.bodyFontSize,
-                                  color: shared.UiConfig.textColorDark,
+                                  color: scheme.onSurface,
                                   fontWeight: shared.UiConfig.fontWeightBold,
                                   fontFamily: DesignTokens.fontFamily,
                                 ),
@@ -121,7 +123,7 @@ class OrderHistoryScreen extends StatelessWidget {
                                 ),
                                 style: TextStyle(
                                   fontSize: DesignTokens.captionFontSize,
-                                  color: shared.UiConfig.secondaryTextColor,
+                                  color: scheme.onSurfaceVariant,
                                   fontFamily: DesignTokens.fontFamily,
                                   fontWeight: shared.UiConfig.fontWeightNormal,
                                 ),
@@ -141,7 +143,7 @@ class OrderHistoryScreen extends StatelessWidget {
                                       Text(
                                         localizations.items,
                                         style: TextStyle(
-                                          color: shared.UiConfig.textColorDark,
+                                          color: scheme.onSurface,
                                           fontSize: DesignTokens.bodyFontSize,
                                           fontFamily: DesignTokens.fontFamily,
                                           fontWeight:
@@ -173,8 +175,8 @@ class OrderHistoryScreen extends StatelessWidget {
                                                     style: TextStyle(
                                                       fontSize: DesignTokens
                                                           .captionFontSize,
-                                                      color: shared.UiConfig
-                                                          .secondaryTextColor,
+                                                      color: scheme
+                                                          .onSurfaceVariant,
                                                       fontFamily: DesignTokens
                                                           .fontFamily,
                                                       fontWeight: shared
@@ -191,7 +193,7 @@ class OrderHistoryScreen extends StatelessWidget {
                                       Text(
                                         '${localizations.deliveryType}: ${order.deliveryType}',
                                         style: TextStyle(
-                                          color: shared.UiConfig.textColorDark,
+                                          color: scheme.onSurface,
                                           fontSize: DesignTokens.bodyFontSize,
                                           fontFamily: DesignTokens.fontFamily,
                                           fontWeight:
@@ -207,8 +209,7 @@ class OrderHistoryScreen extends StatelessWidget {
                                           style: TextStyle(
                                             fontSize:
                                                 DesignTokens.captionFontSize,
-                                            color: shared
-                                                .UiConfig.secondaryTextColor,
+                                            color: scheme.onSurfaceVariant,
                                             fontFamily: DesignTokens.fontFamily,
                                             fontWeight: shared
                                                 .UiConfig.fontWeightNormal,
@@ -236,11 +237,10 @@ class OrderHistoryScreen extends StatelessWidget {
                                             children: [
                                               ElevatedButton(
                                                 style: ElevatedButton.styleFrom(
-                                                  backgroundColor: shared
-                                                      .UiConfig.primaryColor,
-                                                  foregroundColor: shared
-                                                      .UiConfig
-                                                      .foregroundColorDark,
+                                                  backgroundColor:
+                                                      scheme.primary,
+                                                  foregroundColor:
+                                                      scheme.onPrimary,
                                                   padding: const EdgeInsets
                                                       .symmetric(
                                                       horizontal: 20,
@@ -282,12 +282,12 @@ class OrderHistoryScreen extends StatelessWidget {
                                                       Icons.feedback_outlined),
                                                   style:
                                                       ElevatedButton.styleFrom(
-                                                    backgroundColor: shared
-                                                        .UiConfig
-                                                        .secondaryColor,
-                                                    foregroundColor: shared
-                                                        .UiConfig
-                                                        .foregroundColorDark,
+                                                    backgroundColor:
+                                                        scheme.surface,
+                                                    foregroundColor:
+                                                        scheme.primary,
+                                                    side: BorderSide(
+                                                        color: scheme.outline),
                                                     padding: const EdgeInsets
                                                         .symmetric(
                                                         horizontal: 20,
@@ -353,8 +353,7 @@ class OrderHistoryScreen extends StatelessWidget {
                                                       CrossAxisAlignment.center,
                                                   children: [
                                                     Icon(Icons.feedback,
-                                                        color: shared.UiConfig
-                                                            .secondaryColor,
+                                                        color: scheme.primary,
                                                         size: 18),
                                                     const SizedBox(height: 4),
                                                     Text(
@@ -363,8 +362,8 @@ class OrderHistoryScreen extends StatelessWidget {
                                                       style: TextStyle(
                                                         fontSize: DesignTokens
                                                             .captionFontSize,
-                                                        color: shared.UiConfig
-                                                            .secondaryTextColor,
+                                                        color: scheme
+                                                            .onSurfaceVariant,
                                                         fontFamily: DesignTokens
                                                             .fontFamily,
                                                         fontWeight: shared
@@ -380,8 +379,8 @@ class OrderHistoryScreen extends StatelessWidget {
                                                       style: TextStyle(
                                                         fontSize: DesignTokens
                                                             .captionFontSize,
-                                                        color: shared.UiConfig
-                                                            .secondaryTextColor,
+                                                        color: scheme
+                                                            .onSurfaceVariant,
                                                         fontFamily: DesignTokens
                                                             .fontFamily,
                                                         fontWeight: shared

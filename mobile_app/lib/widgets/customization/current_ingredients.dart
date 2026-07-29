@@ -73,7 +73,7 @@ class CurrentIngredients extends StatelessWidget {
             child: Text(
               'Add extra toppings or double any ingredient for just +${currencyFormat(context, getSaladToppingUpcharge())}.',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: shared.UiConfig.secondaryTextColor,
+                color: theme.colorScheme.onSurfaceVariant,
                 fontStyle: FontStyle.italic,
                 fontFamily: shared.DesignTokens.fontFamily,
               ),
@@ -117,7 +117,7 @@ class CurrentIngredients extends StatelessWidget {
           Text(
             loc.currentIngredientsLabel,
             style: theme.textTheme.titleMedium?.copyWith(
-              color: shared.UiConfig.primaryColor,
+              color: theme.colorScheme.primary,
               fontWeight: shared.UiConfig.bold,
               fontFamily: shared.DesignTokens.fontFamily,
             ),
@@ -193,8 +193,8 @@ class CurrentIngredients extends StatelessWidget {
                                     ? FontWeight.normal
                                     : FontWeight.bold,
                                 color: outOfStock
-                                    ? shared.UiConfig.secondaryTextColor
-                                    : shared.UiConfig.textColor,
+                                    ? theme.colorScheme.onSurfaceVariant
+                                    : theme.colorScheme.onSurface,
                               ),
                             ),
                           ),
@@ -232,7 +232,7 @@ class CurrentIngredients extends StatelessWidget {
                         child: Text(
                           loc.ingredientRemovedLabel,
                           style: TextStyle(
-                            color: shared.UiConfig.primaryColor,
+                            color: theme.colorScheme.primary,
                             fontStyle: FontStyle.italic,
                             fontWeight: FontWeight.w600,
                           ),
@@ -245,7 +245,7 @@ class CurrentIngredients extends StatelessWidget {
                           "Amount",
                           style: TextStyle(
                             fontSize: 13,
-                            color: shared.UiConfig.secondaryColor,
+                            color: theme.colorScheme.onSurfaceVariant,
                             fontFamily: shared.DesignTokens.fontFamily,
                             fontWeight: shared.UiConfig.bold,
                           ),
@@ -309,7 +309,7 @@ class CurrentIngredients extends StatelessWidget {
                     child: Text(
                       loc.cannotBeRemoved,
                       style: TextStyle(
-                        color: shared.UiConfig.hintTextColor,
+                        color: theme.colorScheme.onSurfaceVariant,
                         fontStyle: FontStyle.italic,
                       ),
                     ),
@@ -319,7 +319,7 @@ class CurrentIngredients extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 6.0),
                     child: Divider(
                       thickness: 1.0,
-                      color: shared.UiConfig.dividerColor,
+                      color: theme.colorScheme.outline,
                       height: 1,
                     ),
                   ),

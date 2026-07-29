@@ -58,8 +58,8 @@ class _MenuItemCardState extends State<MenuItemCard> {
       icon: Icon(
         isFavorited ? Icons.favorite : Icons.favorite_border,
         color: isFavorited
-            ? shared.UiConfig.accentColor
-            : shared.UiConfig.hintTextColor,
+            ? Theme.of(context).colorScheme.error
+            : Theme.of(context).colorScheme.onSurfaceVariant,
       ),
       tooltip: enabled
           ? (isFavorited
@@ -145,6 +145,7 @@ class _MenuItemCardState extends State<MenuItemCard> {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
     final firestoreService =
         Provider.of<shared.FirestoreService>(context, listen: false);
     final isWide = MediaQuery.of(context).size.width > 600;
@@ -156,9 +157,10 @@ class _MenuItemCardState extends State<MenuItemCard> {
       margin: widget.margin ??
           const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
       elevation: 2,
+      color: scheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
-        side: BorderSide(color: shared.UiConfig.cardBorderColor, width: 1),
+        side: BorderSide(color: scheme.outline, width: 1),
       ),
       child: Padding(
         padding: isWide
@@ -199,7 +201,7 @@ class _MenuItemCardState extends State<MenuItemCard> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.remove),
+                      icon: Icon(Icons.remove, color: scheme.onSurface),
                       visualDensity: VisualDensity.compact,
                       onPressed: _quantity > 1
                           ? () => setState(() => _quantity--)
@@ -207,13 +209,14 @@ class _MenuItemCardState extends State<MenuItemCard> {
                     ),
                     Text(
                       '$_quantity',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: shared.DesignTokens.bodyFontSize,
+                        color: scheme.onSurface,
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.add),
+                      icon: Icon(Icons.add, color: scheme.primary),
                       visualDensity: VisualDensity.compact,
                       onPressed: () => setState(() => _quantity++),
                     ),
@@ -231,7 +234,7 @@ class _MenuItemCardState extends State<MenuItemCard> {
                   Text(
                     widget.menuItem.name,
                     style: shared.UiConfig.titleStyle.copyWith(
-                      color: Colors.black, // Explicit high-contrast black
+                      color: scheme.onSurface,
                       fontWeight: FontWeight.w600,
                     ),
                     maxLines: 2,
@@ -241,6 +244,7 @@ class _MenuItemCardState extends State<MenuItemCard> {
                   Text(
                     '\$${widget.menuItem.price.toStringAsFixed(2)}',
                     style: shared.UiConfig.bodyStyle.copyWith(
+                      color: scheme.onSurface,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -251,7 +255,9 @@ class _MenuItemCardState extends State<MenuItemCard> {
                       padding: const EdgeInsets.only(top: 4.0),
                       child: Text(
                         widget.menuItem.description,
-                        style: shared.UiConfig.captionStyle,
+                        style: shared.UiConfig.captionStyle.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
                         maxLines: widget.expanded ? 4 : 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -268,9 +274,9 @@ class _MenuItemCardState extends State<MenuItemCard> {
                             height: 36,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: shared.UiConfig.secondaryColor,
-                                foregroundColor:
-                                    shared.UiConfig.foregroundColor,
+                                backgroundColor: scheme.surface,
+                                foregroundColor: scheme.primary,
+                                side: BorderSide(color: scheme.outline),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(18),
                                 ),
@@ -305,9 +311,8 @@ class _MenuItemCardState extends State<MenuItemCard> {
                             height: 36,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: shared.UiConfig.primaryColor,
-                                foregroundColor:
-                                    shared.UiConfig.foregroundColor,
+                                backgroundColor: scheme.primary,
+                                foregroundColor: scheme.onPrimary,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(18),
                                 ),
@@ -343,9 +348,8 @@ class _MenuItemCardState extends State<MenuItemCard> {
                             height: 36,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: shared.UiConfig.primaryColor,
-                                foregroundColor:
-                                    shared.UiConfig.foregroundColor,
+                                backgroundColor: scheme.primary,
+                                foregroundColor: scheme.onPrimary,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(18),
                                 ),

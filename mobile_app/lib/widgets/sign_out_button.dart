@@ -24,10 +24,11 @@ class SignOutButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        backgroundColor: shared.UiConfig.errorColor,
-        foregroundColor: shared.UiConfig.foregroundColor,
+        backgroundColor: scheme.error,
+        foregroundColor: scheme.onError,
         padding: shared.UiConfig.defaultPadding,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(shared.DesignTokens.buttonRadius),
@@ -42,7 +43,7 @@ class SignOutButton extends StatelessWidget {
           icon: Icons.logout,
           confirmLabel: confirmLabel,
           cancelLabel: cancelLabel,
-          confirmColor: shared.UiConfig.errorColor,
+          confirmColor: scheme.error,
           onConfirm: () {}, // ConfirmationDialog requires onConfirm
         );
         if (shouldSignOut == true) {

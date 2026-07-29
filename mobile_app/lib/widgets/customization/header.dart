@@ -40,7 +40,7 @@ class CustomizationHeader extends StatelessWidget {
               Text(
                 menuItem.name,
                 style: theme.textTheme.titleLarge?.copyWith(
-                  color: shared.UiConfig.textColor,
+                  color: theme.colorScheme.onSurface,
                   fontWeight: shared.UiConfig.bold,
                   fontFamily: shared.DesignTokens.fontFamily,
                 ),
@@ -49,7 +49,7 @@ class CustomizationHeader extends StatelessWidget {
               Text(
                 menuItem.description ?? '',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: shared.UiConfig.secondaryTextColor,
+                  color: theme.colorScheme.onSurfaceVariant,
                   fontFamily: shared.DesignTokens.fontFamily,
                 ),
                 maxLines: 2,

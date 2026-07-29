@@ -19,23 +19,25 @@ class LanguageScreen extends StatelessWidget {
       // Add more languages here as needed
     ];
 
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
         title: Text(
           loc.language,
           style: TextStyle(
             fontSize: shared.DesignTokens.titleFontSize,
-            color: shared.UiConfig.foregroundColorDark,
+            color: scheme.onPrimary,
             fontWeight: shared.UiConfig.fontWeightBold,
             fontFamily: shared.DesignTokens.fontFamily,
           ),
         ),
-        backgroundColor: shared.UiConfig.primaryColor,
+        backgroundColor: scheme.primary,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
-        iconTheme: IconThemeData(color: shared.UiConfig.foregroundColorDark),
+        iconTheme: IconThemeData(color: scheme.onPrimary),
         centerTitle: true,
       ),
-      backgroundColor: shared.UiConfig.backgroundColorDark,
+      backgroundColor: scheme.surface,
       body: Padding(
         padding: shared.UiConfig.defaultPadding,
         child: Column(
@@ -46,7 +48,7 @@ class LanguageScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: shared.DesignTokens.bodyFontSize,
                 fontWeight: shared.UiConfig.fontWeightBold,
-                color: shared.UiConfig.textColorDark,
+                color: scheme.onSurface,
                 fontFamily: shared.DesignTokens.fontFamily,
               ),
             ),
@@ -56,14 +58,14 @@ class LanguageScreen extends StatelessWidget {
                     lang['label']!,
                     style: TextStyle(
                       fontSize: shared.DesignTokens.bodyFontSize,
-                      color: shared.UiConfig.textColorDark,
+                      color: scheme.onSurface,
                       fontFamily: shared.DesignTokens.fontFamily,
                     ),
                   ),
                   trailing: languageProvider.locale.languageCode == lang['code']
                       ? Icon(
                           Icons.check,
-                          color: shared.UiConfig.primaryColor,
+                          color: scheme.primary,
                         )
                       : null,
                   onTap: () {

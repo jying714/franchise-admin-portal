@@ -2,7 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show FlutterError, FlutterErrorDetails;
 import 'package:provider/provider.dart';
-import 'dart:async' show Zone, runZonedGuarded;
+import 'dart:async' show StreamSubscription, Zone, runZonedGuarded;
 import 'package:franchise_mobile_app/core/widgets/global_error_boundary.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:franchise_mobile_app/generated/app_localizations.dart';
@@ -182,6 +182,51 @@ void _handleDeepLink(Uri uri) {
   }
 }
 
+/// T1: Derive semantic ColorScheme from franchise primary/secondary seeds.
+/// Surfaces/content/feedback come from DesignTokens defaults via UiConfig;
+/// only primary/secondary (and on*) are brand-driven. HQ seeds only.
+ColorScheme buildFranchiseColorScheme({
+  required Color primary,
+  required Color secondary,
+}) {
+  Color onFor(Color c) =>
+      c.computeLuminance() > 0.55 ? const Color(0xFF212121) : Colors.white;
+
+  final background = shared.UiConfig.backgroundColor;
+  final surface = shared.UiConfig.surfaceColor;
+  final onSurface = shared.UiConfig.textColor;
+  final onSurfaceVariant = shared.UiConfig.secondaryTextColor;
+  final outline = shared.UiConfig.cardBorderColor;
+  final error = shared.UiConfig.errorColor;
+  final surfaceContainer = Color.alphaBlend(
+    onSurface.withValues(alpha: 0.06),
+    surface,
+  );
+
+  return ColorScheme(
+    brightness: Brightness.light,
+    primary: primary,
+    onPrimary: onFor(primary),
+    secondary: secondary,
+    onSecondary: onFor(secondary),
+    error: error,
+    onError: onFor(error),
+    surface: surface,
+    onSurface: onSurface,
+    onSurfaceVariant: onSurfaceVariant,
+    outline: outline,
+    surfaceContainerHighest: surfaceContainer,
+    surfaceContainerHigh: surfaceContainer,
+    surfaceContainer: surfaceContainer,
+    surfaceContainerLow: surface,
+    surfaceContainerLowest: surface,
+    // ignore: deprecated_member_use — still used by some Material widgets
+    background: background,
+    // ignore: deprecated_member_use
+    onBackground: onSurface,
+  );
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -252,33 +297,69 @@ class MyApp extends StatelessWidget {
               builder: (context, languageProvider, child) {
                 // P2: Theme + title are now fully dynamic from FranchiseProvider branding.
                 // Selector on configVersion ensures only theme shell rebuilds on franchise switch.
-                return Selector<shared.FranchiseProvider, int>(
-                  selector: (ctx, p) => p.currentConfigVersion,
-                  builder: (context, version, _) {
+                return Selector<shared.FranchiseProvider, String>(
+                  selector: (ctx, p) =>
+                      '${p.currentConfigVersion}|${p.currentPrimaryColorHex}|${p.currentSecondaryColorHex}',
+                  builder: (context, brandingKey, _) {
                     return MaterialApp(
                       navigatorKey:
                           navigatorKey, // P2 deep link / QR navigation support
                       title: shared.UiConfig.dynamicAppName,
-                      theme: ThemeData(
-                        primaryColor: shared.UiConfig.primaryColor,
-                        scaffoldBackgroundColor:
-                            shared.UiConfig.backgroundColorDark,
-                        colorScheme: ColorScheme.fromSwatch().copyWith(
+                      theme: () {
+                        final scheme = buildFranchiseColorScheme(
+                          primary: shared.UiConfig.primaryColor,
                           secondary: shared.UiConfig.secondaryColor,
-                        ),
-                        textTheme: TextTheme(
-                          titleLarge: TextStyle(
-                            fontFamily: DesignTokens.fontFamily,
-                            fontSize: DesignTokens.titleFontSize,
-                            fontWeight: shared.UiConfig.fontWeightBold,
+                        );
+                        return ThemeData(
+                          useMaterial3: true,
+                          colorScheme: scheme,
+                          primaryColor: scheme.primary,
+                          scaffoldBackgroundColor: scheme.surface,
+                          appBarTheme: AppBarTheme(
+                            backgroundColor: scheme.primary,
+                            foregroundColor: scheme.onPrimary,
+                            surfaceTintColor: Colors.transparent,
+                            scrolledUnderElevation: 0,
+                            elevation: DesignTokens.appBarElevation,
+                            iconTheme: IconThemeData(color: scheme.onPrimary),
+                            titleTextStyle: TextStyle(
+                              fontFamily: DesignTokens.fontFamily,
+                              fontSize: DesignTokens.appBarTitleFontSize,
+                              fontWeight: shared.UiConfig.fontWeightBold,
+                              color: scheme.onPrimary,
+                            ),
                           ),
-                          bodyLarge: TextStyle(
-                            fontFamily: DesignTokens.fontFamily,
-                            fontSize: DesignTokens.bodyFontSize,
-                            fontWeight: shared.UiConfig.fontWeightNormal,
+                          cardTheme: CardThemeData(
+                            color: scheme.surface,
+                            surfaceTintColor: Colors.transparent,
                           ),
-                        ),
-                      ),
+                          dividerColor: scheme.outline,
+                          textTheme: TextTheme(
+                            titleLarge: TextStyle(
+                              fontFamily: DesignTokens.fontFamily,
+                              fontSize: DesignTokens.titleFontSize,
+                              fontWeight: shared.UiConfig.fontWeightBold,
+                              color: scheme.onSurface,
+                            ),
+                            bodyLarge: TextStyle(
+                              fontFamily: DesignTokens.fontFamily,
+                              fontSize: DesignTokens.bodyFontSize,
+                              fontWeight: shared.UiConfig.fontWeightNormal,
+                              color: scheme.onSurface,
+                            ),
+                            bodyMedium: TextStyle(
+                              fontFamily: DesignTokens.fontFamily,
+                              fontSize: DesignTokens.bodyFontSize,
+                              color: scheme.onSurface,
+                            ),
+                            bodySmall: TextStyle(
+                              fontFamily: DesignTokens.fontFamily,
+                              fontSize: DesignTokens.captionFontSize,
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
+                        );
+                      }(),
                       locale: languageProvider.locale,
                       supportedLocales: AppLocalizations.supportedLocales,
                       localizationsDelegates: const [
@@ -317,7 +398,86 @@ class HomeWrapper extends StatefulWidget {
 
 class _HomeWrapperState extends State<HomeWrapper> {
   bool _dialogShown = false;
-  bool _isInitializing = true; // ← NEW
+  bool _isInitializing = true;
+  bool _brandingLoadStarted = false;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _brandingSub;
+  String? _brandingFranchiseId;
+
+  @override
+  void dispose() {
+    _brandingSub?.cancel();
+    super.dispose();
+  }
+
+  void _listenBranding(shared.FranchiseProvider franchiseProvider) {
+    final id = franchiseProvider.currentFranchiseId;
+    if (id.isEmpty || id == 'unknown') return;
+    if (_brandingFranchiseId == id && _brandingSub != null) return;
+
+    _brandingSub?.cancel();
+    _brandingFranchiseId = id;
+    _brandingLoadStarted = true;
+
+    _brandingSub = FirebaseFirestore.instance
+        .collection('franchises')
+        .doc(id)
+        .snapshots()
+        .listen(
+      (doc) {
+        if (!mounted) return;
+        if (doc.exists && doc.data() != null) {
+          final data = doc.data()!;
+          debugPrint(
+            '[branding stream] id=$id primary=${data['primaryColorHex']} '
+            'secondary=${data['secondaryColorHex']}',
+          );
+          franchiseProvider.setBrandingFromFranchiseDoc(data);
+        }
+      },
+      onError: (Object e, StackTrace st) {
+        debugPrint('[branding stream] error: $e');
+      },
+    );
+  }
+
+  Future<void> _loadBranding(shared.FranchiseProvider franchiseProvider) async {
+    final id = franchiseProvider.currentFranchiseId;
+    if (id.isEmpty || id == 'unknown') return;
+    try {
+      // Drop in-memory branding so a previous primary cannot stick.
+      franchiseProvider.setBrandingFromFranchiseDoc(const {});
+
+      DocumentSnapshot<Map<String, dynamic>> doc;
+      try {
+        doc = await FirebaseFirestore.instance
+            .collection('franchises')
+            .doc(id)
+            .get(const GetOptions(source: Source.server));
+      } catch (_) {
+        doc = await FirebaseFirestore.instance
+            .collection('franchises')
+            .doc(id)
+            .get(const GetOptions(source: Source.serverAndCache));
+      }
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data()!;
+        debugPrint(
+          '[branding] id=$id primary=${data['primaryColorHex']} '
+          'secondary=${data['secondaryColorHex']} '
+          'brandColor=${data['brandColor']}',
+        );
+        franchiseProvider.setBrandingFromFranchiseDoc(data);
+      } else {
+        franchiseProvider.setBrandingFromFranchiseDoc({
+          'name': 'Doughboys Pizzeria',
+          'primaryColorHex': '#E31837',
+          'secondaryColorHex': '#FFD700',
+        });
+      }
+    } catch (_) {
+      // Fallback: DesignTokens / UiConfig statics
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -329,40 +489,20 @@ class _HomeWrapperState extends State<HomeWrapper> {
       return const SignInScreen();
     }
 
-    // Initialize franchise (only once)
-    if (_isInitializing && !franchiseProvider.hasValidFranchise) {
-      _isInitializing = false; // prevent multiple calls
+    if (_isInitializing) {
+      _isInitializing = false;
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         await franchiseProvider.initializeWithUser(sharedUser);
-
-        // P2 foundations: fetch full franchise doc and push branding into provider.
-        // This makes shared.UiConfig colors + appName + ThemeData live for this franchise.
-        try {
-          final doc = await FirebaseFirestore.instance
-              .collection('franchises')
-              .doc(franchiseProvider.currentFranchiseId)
-              .get();
-          if (doc.exists && doc.data() != null) {
-            franchiseProvider.setBrandingFromFranchiseDoc(doc.data()!);
-          } else {
-            franchiseProvider.setBrandingFromFranchiseDoc({
-              'name': 'Doughboys Pizzeria',
-              'primaryColorHex': '#E31837',
-              'secondaryColorHex': '#FFD700',
-            });
-          }
-        } catch (_) {
-          // Silent fallback to DesignTokens/shared.UiConfig statics
+        if (mounted) {
+          _listenBranding(franchiseProvider);
+          setState(() {});
         }
-
-        if (mounted)
-          setState(
-              () {}); // force rebuild (version bump also triggers Selector)
       });
+    } else if (franchiseProvider.hasValidFranchise) {
+      _listenBranding(franchiseProvider);
     }
 
-    // Show loading while initializing
-    if (_isInitializing || !franchiseProvider.hasValidFranchise) {
+    if (!franchiseProvider.hasValidFranchise) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );

@@ -102,7 +102,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             logoAsset: shared.BrandingConfig.appBarLogoAsset,
             centerTitle: true,
           ),
-          backgroundColor: shared.UiConfig.backgroundColor,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           body: SafeArea(
             bottom: true,
             child: Padding(
@@ -184,7 +184,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             value: fullUser.name,
                             trailing: IconButton(
                               icon: Icon(Icons.edit,
-                                  color: shared.UiConfig.primaryColor),
+                                  color: Theme.of(context).colorScheme.primary),
                               tooltip: l10n.edit,
                               onPressed: () {
                                 _showEditFieldDialog(
@@ -310,9 +310,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     shared.FirestoreService fs,
   ) {
     // l10n available for future localization of test labels
+    final scheme = Theme.of(context).colorScheme;
     return Card(
-      color: shared.UiConfig.surfaceColor,
+      color: scheme.surface,
       margin: const EdgeInsets.symmetric(vertical: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
+        side: BorderSide(color: scheme.outline),
+      ),
       child: Padding(
         padding: shared.UiConfig.cardPadding,
         child: Column(
@@ -320,8 +325,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             Text(
               '🧪 Theme Test (P2 Dev)',
-              style: shared.UiConfig.bodyBoldStyle
-                  .copyWith(color: shared.UiConfig.primaryColor),
+              style:
+                  shared.UiConfig.bodyBoldStyle.copyWith(color: scheme.primary),
             ),
             const SizedBox(height: 4),
             Text(
@@ -407,17 +412,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final qrData = shared.generateFranchiseQR(fid, name: fp.currentAppName);
     final displayName = fp.currentAppName;
 
+    final scheme = Theme.of(context).colorScheme;
     return Card(
-      color: shared.UiConfig.surfaceColor,
+      color: scheme.surface,
       margin: const EdgeInsets.symmetric(vertical: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
+        side: BorderSide(color: scheme.outline),
+      ),
       child: Padding(
         padding: shared.UiConfig.cardPadding,
         child: Column(
           children: [
             Text(
               'Share this Franchise',
-              style: shared.UiConfig.bodyBoldStyle
-                  .copyWith(color: shared.UiConfig.primaryColor),
+              style:
+                  shared.UiConfig.bodyBoldStyle.copyWith(color: scheme.primary),
             ),
             const SizedBox(height: 8),
             Text(displayName, style: shared.UiConfig.captionStyle),
@@ -426,7 +436,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               data: qrData,
               version: QrVersions.auto,
               size: 160,
-              backgroundColor: shared.UiConfig.cardColor,
+              backgroundColor: scheme.surface,
             ),
             const SizedBox(height: 8),
             Text(

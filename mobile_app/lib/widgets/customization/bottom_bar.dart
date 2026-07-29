@@ -65,10 +65,11 @@ class CustomizationBottomBar extends StatelessWidget {
     // FranchiseProvider injected for scoping (P1 batch 1)
     Provider.of<shared.FranchiseProvider>(context, listen: false);
 
+    final scheme = theme.colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: shared.UiConfig.surfaceColor,
+        color: scheme.surface,
         boxShadow: [
           BoxShadow(
             color: shared.UiConfig.shadowColor.withValues(alpha: 0.2),
@@ -87,6 +88,7 @@ class CustomizationBottomBar extends StatelessWidget {
                 Text(
                   loc.total,
                   style: theme.textTheme.titleLarge?.copyWith(
+                    color: scheme.onSurfaceVariant,
                     fontWeight: shared.UiConfig.bold,
                     fontFamily: shared.DesignTokens.fontFamily,
                   ),
@@ -94,7 +96,7 @@ class CustomizationBottomBar extends StatelessWidget {
                 Text(
                   shared.UiConfig.currencyFormat(displayTotal),
                   style: theme.textTheme.titleLarge?.copyWith(
-                    color: shared.UiConfig.primaryColor,
+                    color: scheme.onSurface,
                     fontWeight: shared.UiConfig.bold,
                     fontFamily: shared.DesignTokens.fontFamily,
                   ),
@@ -107,7 +109,7 @@ class CustomizationBottomBar extends StatelessWidget {
                 child: Text(
                   error!,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: shared.UiConfig.errorTextColor,
+                    color: scheme.error,
                     fontFamily: shared.DesignTokens.fontFamily,
                   ),
                 ),
@@ -118,7 +120,7 @@ class CustomizationBottomBar extends StatelessWidget {
               children: [
                 TextButton(
                   style: TextButton.styleFrom(
-                    foregroundColor: shared.UiConfig.secondaryColor,
+                    foregroundColor: scheme.onSurfaceVariant,
                   ),
                   onPressed: onCancel,
                   child: Text(
@@ -130,8 +132,8 @@ class CustomizationBottomBar extends StatelessWidget {
                 const SizedBox(width: 12),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: shared.UiConfig.primaryColor,
-                    foregroundColor: shared.UiConfig.foregroundColor,
+                    backgroundColor: scheme.primary,
+                    foregroundColor: scheme.onPrimary,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 32, vertical: 14),
                     shape: RoundedRectangleBorder(

@@ -136,6 +136,7 @@ class _CartScreenState extends State<CartScreen> {
     dynamic customizations,
     Map<String, shared.Customization> customObjMap,
     AppLocalizations loc,
+    ColorScheme scheme,
   ) {
     if (customizations == null ||
         (customizations is List && customizations.isEmpty)) {
@@ -178,7 +179,7 @@ class _CartScreenState extends State<CartScreen> {
               text: '${option.name}$details$upcharge',
               style: TextStyle(
                 fontWeight: shared.UiConfig.fontWeightNormal,
-                color: shared.UiConfig.secondaryTextColor,
+                color: scheme.onSurfaceVariant,
                 fontFamily: shared.DesignTokens.fontFamily,
               ),
             ));
@@ -192,7 +193,7 @@ class _CartScreenState extends State<CartScreen> {
                   text: '$displayName: ',
                   style: TextStyle(
                     fontWeight: shared.UiConfig.fontWeightBold,
-                    color: shared.UiConfig.secondaryTextColor,
+                    color: scheme.onSurfaceVariant,
                     fontFamily: shared.DesignTokens.fontFamily,
                   ),
                 ),
@@ -208,7 +209,7 @@ class _CartScreenState extends State<CartScreen> {
             '$displayName$upcharge',
             style: TextStyle(
               fontSize: shared.DesignTokens.captionFontSize,
-              color: shared.UiConfig.secondaryTextColor,
+              color: scheme.onSurfaceVariant,
               fontWeight: shared.UiConfig.fontWeightMedium,
               fontFamily: shared.DesignTokens.fontFamily,
             ),
@@ -223,7 +224,7 @@ class _CartScreenState extends State<CartScreen> {
         joined.substring(0, min(50, joined.length)),
         style: TextStyle(
           fontSize: shared.DesignTokens.captionFontSize,
-          color: shared.UiConfig.secondaryTextColor,
+          color: scheme.onSurfaceVariant,
           fontWeight: shared.UiConfig.fontWeightMedium,
           fontFamily: shared.DesignTokens.fontFamily,
         ),
@@ -246,7 +247,7 @@ class _CartScreenState extends State<CartScreen> {
         logoAsset: shared.BrandingConfig.appBarLogoAsset,
         centerTitle: true,
       ),
-      backgroundColor: shared.UiConfig.backgroundColor,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: Consumer<shared.FranchiseProvider>(
         builder: (context, provider, child) {
           final user = FirebaseAuth.instance.currentUser;
@@ -261,7 +262,7 @@ class _CartScreenState extends State<CartScreen> {
                 loc.mustSignInForCart,
                 style: TextStyle(
                   fontSize: shared.DesignTokens.bodyFontSize,
-                  color: shared.UiConfig.textColor,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontFamily: shared.DesignTokens.fontFamily,
                   fontWeight: shared.UiConfig.fontWeightMedium,
                 ),
@@ -289,7 +290,7 @@ class _CartScreenState extends State<CartScreen> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: shared.DesignTokens.bodyFontSize,
-                          color: shared.UiConfig.errorColor,
+                          color: Theme.of(context).colorScheme.error,
                           fontFamily: shared.DesignTokens.fontFamily,
                           fontWeight: shared.UiConfig.fontWeightMedium,
                         ),
@@ -298,8 +299,10 @@ class _CartScreenState extends State<CartScreen> {
                           height: shared.DesignTokens.gridSpacing * 2),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: shared.UiConfig.primaryColor,
-                          foregroundColor: shared.UiConfig.foregroundColorDark,
+                          backgroundColor:
+                              Theme.of(context).colorScheme.primary,
+                          foregroundColor:
+                              Theme.of(context).colorScheme.onPrimary,
                           padding: shared.UiConfig.defaultPadding,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(
@@ -350,8 +353,10 @@ class _CartScreenState extends State<CartScreen> {
                                 margin: shared.UiConfig.defaultPadding,
                                 padding: shared.UiConfig.defaultPadding,
                                 decoration: BoxDecoration(
-                                  color: shared.UiConfig.errorColor
-                                      .withOpacity(0.11),
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .error
+                                      .withValues(alpha: 0.11),
                                   borderRadius: BorderRadius.circular(
                                       shared.DesignTokens.cardRadius),
                                 ),
@@ -359,14 +364,17 @@ class _CartScreenState extends State<CartScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Icon(Icons.warning_amber_rounded,
-                                        color: shared.UiConfig.errorColor,
+                                        color:
+                                            Theme.of(context).colorScheme.error,
                                         size: 28),
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Text(
                                         '${loc.warning}: ${loc.itemsInCartCouldContain}\n${allAllergens.join(", ")}',
                                         style: TextStyle(
-                                          color: shared.UiConfig.errorColor,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .error,
                                           fontWeight:
                                               shared.UiConfig.fontWeightBold,
                                           fontFamily:
@@ -411,7 +419,7 @@ class _CartScreenState extends State<CartScreen> {
             loc.yourCartIsEmpty,
             style: TextStyle(
               fontSize: shared.DesignTokens.bodyFontSize,
-              color: shared.UiConfig.textColor,
+              color: Theme.of(context).colorScheme.onSurface,
               fontFamily: shared.DesignTokens.fontFamily,
               fontWeight: shared.UiConfig.fontWeightMedium,
             ),
@@ -419,8 +427,9 @@ class _CartScreenState extends State<CartScreen> {
           const SizedBox(height: shared.DesignTokens.gridSpacing * 2),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: shared.UiConfig.secondaryColor,
-              foregroundColor: shared.UiConfig.foregroundColorDark,
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              foregroundColor: Theme.of(context).colorScheme.primary,
+              side: BorderSide(color: Theme.of(context).colorScheme.outline),
               padding: shared.UiConfig.defaultPadding,
               shape: RoundedRectangleBorder(
                   borderRadius:
@@ -442,6 +451,8 @@ class _CartScreenState extends State<CartScreen> {
     AppLocalizations loc,
     Map<String, Map<String, shared.Customization>> objMap,
   ) {
+    final scheme = Theme.of(context).colorScheme;
+
     Future<void> updateCart(shared.Order updatedCart) async {
       await firestoreService.updateCart(updatedCart);
     }
@@ -477,14 +488,14 @@ class _CartScreenState extends State<CartScreen> {
             loc.clearCart,
             style: TextStyle(
               fontWeight: shared.UiConfig.fontWeightBold,
-              color: shared.UiConfig.primaryColor,
+              color: scheme.onSurface,
               fontFamily: shared.DesignTokens.fontFamily,
             ),
           ),
           content: Text(
             loc.clearCartConfirmation,
             style: TextStyle(
-              color: shared.UiConfig.textColor,
+              color: scheme.onSurface,
               fontFamily: shared.DesignTokens.fontFamily,
               fontWeight: shared.UiConfig.fontWeightMedium,
             ),
@@ -493,7 +504,7 @@ class _CartScreenState extends State<CartScreen> {
             TextButton(
               onPressed: () => Navigator.pop(context),
               style: TextButton.styleFrom(
-                foregroundColor: shared.UiConfig.disabledTextColor,
+                foregroundColor: scheme.onSurfaceVariant,
               ),
               child: Text(loc.no),
             ),
@@ -519,7 +530,7 @@ class _CartScreenState extends State<CartScreen> {
                 );
               },
               style: TextButton.styleFrom(
-                foregroundColor: shared.UiConfig.primaryColor,
+                foregroundColor: scheme.error,
               ),
               child: Text(loc.yes),
             ),
@@ -542,11 +553,12 @@ class _CartScreenState extends State<CartScreen> {
                 elevation: shared.DesignTokens.cardElevation,
                 margin: const EdgeInsets.symmetric(
                     vertical: shared.DesignTokens.gridSpacing / 2),
+                color: scheme.surface,
                 shape: RoundedRectangleBorder(
                   borderRadius:
                       BorderRadius.circular(shared.DesignTokens.cardRadius),
+                  side: BorderSide(color: scheme.outline),
                 ),
-                color: shared.UiConfig.surfaceColor,
                 child: ListTile(
                   leading: NetworkImageWidget(
                     imageUrl: item.image ?? '',
@@ -562,13 +574,13 @@ class _CartScreenState extends State<CartScreen> {
                     item.name,
                     style: TextStyle(
                       fontSize: shared.DesignTokens.bodyFontSize,
-                      color: shared.UiConfig.textColor,
+                      color: scheme.onSurface,
                       fontFamily: shared.DesignTokens.fontFamily,
                       fontWeight: shared.UiConfig.fontWeightMedium,
                     ),
                   ),
-                  subtitle:
-                      renderCustomizations(item.customizations, customMap, loc),
+                  subtitle: renderCustomizations(
+                      item.customizations, customMap, loc, scheme),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -576,7 +588,7 @@ class _CartScreenState extends State<CartScreen> {
                         '\$${(item.price * item.quantity).toStringAsFixed(2)}',
                         style: TextStyle(
                           fontSize: shared.DesignTokens.bodyFontSize,
-                          color: shared.UiConfig.textColor,
+                          color: scheme.onSurface,
                           fontWeight: shared.UiConfig.fontWeightMedium,
                           fontFamily: shared.DesignTokens.fontFamily,
                         ),
@@ -584,7 +596,7 @@ class _CartScreenState extends State<CartScreen> {
                       IconButton(
                         icon: Icon(
                           Icons.delete,
-                          color: shared.UiConfig.errorColor,
+                          color: scheme.error,
                           size: shared.DesignTokens.iconSize,
                         ),
                         onPressed: () => removeItem(index),
@@ -609,7 +621,7 @@ class _CartScreenState extends State<CartScreen> {
                 style: TextStyle(
                   fontSize: shared.DesignTokens.titleFontSize,
                   fontWeight: shared.UiConfig.fontWeightBold,
-                  color: shared.UiConfig.textColor,
+                  color: scheme.onSurface,
                   fontFamily: shared.DesignTokens.fontFamily,
                 ),
               ),
@@ -619,8 +631,9 @@ class _CartScreenState extends State<CartScreen> {
                   Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: shared.UiConfig.secondaryColor,
-                        foregroundColor: shared.UiConfig.foregroundColorDark,
+                        backgroundColor: scheme.surface,
+                        foregroundColor: scheme.primary,
+                        side: BorderSide(color: scheme.outline),
                         padding: shared.UiConfig.defaultPadding,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(
@@ -636,8 +649,9 @@ class _CartScreenState extends State<CartScreen> {
                   Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: shared.UiConfig.disabledTextColor,
-                        foregroundColor: shared.UiConfig.foregroundColorDark,
+                        backgroundColor: scheme.surface,
+                        foregroundColor: scheme.error,
+                        side: BorderSide(color: scheme.error),
                         padding: shared.UiConfig.defaultPadding,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(
@@ -654,8 +668,8 @@ class _CartScreenState extends State<CartScreen> {
               const SizedBox(height: shared.DesignTokens.gridSpacing),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: shared.UiConfig.primaryColor,
-                  foregroundColor: shared.UiConfig.foregroundColorDark,
+                  backgroundColor: scheme.primary,
+                  foregroundColor: scheme.onPrimary,
                   padding: shared.UiConfig.defaultPadding,
                   shape: RoundedRectangleBorder(
                     borderRadius:

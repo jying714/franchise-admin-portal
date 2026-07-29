@@ -18,25 +18,25 @@ class StatusChip extends StatelessWidget {
     if (statusColorMap != null && statusColorMap!.containsKey(normalized)) {
       return statusColorMap![normalized]!;
     }
-    // Fallback defaults
+    // Fixed feedback roles (D4) — do not bind to franchise primary/secondary.
     switch (normalized) {
       case 'pending':
-        return Colors.orange;
+        return const Color(0xFFF57C00); // warning
       case 'in progress':
       case 'processing':
-        return Colors.blue;
+        return const Color(0xFF1976D2); // info
       case 'delivered':
       case 'complete':
-        return Colors.green;
+      case 'completed':
+        return const Color(0xFF2E7D32); // success
       case 'cancelled':
       case 'canceled':
-        return Colors.red;
       case 'failed':
-        return Colors.redAccent;
+        return const Color(0xFFC62828); // error
       case 'out of stock':
-        return Colors.grey;
+        return const Color(0xFF757575); // neutral
       default:
-        return Colors.grey.shade400;
+        return const Color(0xFF9E9E9E);
     }
   }
 
@@ -77,10 +77,15 @@ class StatusChip extends StatelessWidget {
         ),
       ),
       backgroundColor: color,
-      avatar: icon != null ? Icon(icon, size: 18, color: Colors.white) : null,
+      avatar: icon != null
+          ? Icon(
+              icon,
+              size: 18,
+              color:
+                  color.computeLuminance() > 0.5 ? Colors.black : Colors.white,
+            )
+          : null,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
     );
   }
 }
-
-

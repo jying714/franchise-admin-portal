@@ -18,12 +18,12 @@ class PortionSelector extends StatelessWidget {
     this.disables, // <-- Optional: not required for existing usage!
   }) : super(key: key);
 
-  Color get _activeColor => Colors.teal.shade700;
-  Color get _inactiveColor => Colors.grey.shade400;
-  Color get _disabledColor => Colors.grey.shade300;
-
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final activeColor = scheme.primary;
+    final inactiveColor = scheme.outline;
+    final disabledColor = scheme.onSurfaceVariant.withValues(alpha: 0.35);
     final disables = this.disables ?? {};
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -34,9 +34,9 @@ class PortionSelector extends StatelessWidget {
           onTap: disables[Portion.left] == true
               ? null
               : () => onChanged(Portion.left),
-          activeColor: _activeColor,
-          inactiveColor: _inactiveColor,
-          disabledColor: _disabledColor,
+          activeColor: activeColor,
+          inactiveColor: inactiveColor,
+          disabledColor: disabledColor,
           disabled: disables[Portion.left] == true,
           size: size,
         ),
@@ -47,9 +47,9 @@ class PortionSelector extends StatelessWidget {
           onTap: disables[Portion.whole] == true
               ? null
               : () => onChanged(Portion.whole),
-          activeColor: _activeColor,
-          inactiveColor: _inactiveColor,
-          disabledColor: _disabledColor,
+          activeColor: activeColor,
+          inactiveColor: inactiveColor,
+          disabledColor: disabledColor,
           disabled: disables[Portion.whole] == true,
           size: size,
         ),
@@ -60,9 +60,9 @@ class PortionSelector extends StatelessWidget {
           onTap: disables[Portion.right] == true
               ? null
               : () => onChanged(Portion.right),
-          activeColor: _activeColor,
-          inactiveColor: _inactiveColor,
-          disabledColor: _disabledColor,
+          activeColor: activeColor,
+          inactiveColor: inactiveColor,
+          disabledColor: disabledColor,
           disabled: disables[Portion.right] == true,
           size: size,
         ),
@@ -171,5 +171,3 @@ class _PortionPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
-
-

@@ -14,31 +14,25 @@ class PortionPillToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // FranchiseProvider injected (P1 Batch 1) for franchise/{franchiseId}/ scoping centrality
     Provider.of<shared.FranchiseProvider>(context, listen: false);
+    final scheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isDouble
-              ? shared.UiConfig.primaryColor
-              : shared.UiConfig.surfaceColor,
+          color: isDouble ? scheme.primary : scheme.surface,
           borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
           border: Border.all(
-            color: isDouble
-                ? shared.UiConfig.primaryColor
-                : shared.UiConfig.secondaryTextColor.withOpacity(0.25),
+            color: isDouble ? scheme.primary : scheme.outline,
             width: 1.5,
           ),
         ),
         child: Text(
           isDouble ? "Double" : "Regular",
           style: TextStyle(
-            color: isDouble
-                ? shared.UiConfig.onPrimaryColor
-                : shared.UiConfig.textColor,
+            color: isDouble ? scheme.onPrimary : scheme.onSurface,
             fontWeight: shared.UiConfig.bold,
             fontSize: 14,
             fontFamily: shared.DesignTokens.fontFamily,
