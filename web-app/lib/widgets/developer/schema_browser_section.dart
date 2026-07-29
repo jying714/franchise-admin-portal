@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SchemaBrowserSection extends StatefulWidget {
   final String? franchiseId;
@@ -11,6 +12,13 @@ class SchemaBrowserSection extends StatefulWidget {
   @override
   State<SchemaBrowserSection> createState() => _SchemaBrowserSectionState();
 }
+
+bool _isConcreteFranchiseId(String? id) =>
+    id != null &&
+    id.isNotEmpty &&
+    id != 'unknown' &&
+    id != 'default' &&
+    id != 'all';
 
 class _SchemaBrowserSectionState extends State<SchemaBrowserSection> {
   bool _loading = true;
@@ -28,55 +36,126 @@ class _SchemaBrowserSectionState extends State<SchemaBrowserSection> {
   void didUpdateWidget(covariant SchemaBrowserSection oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.franchiseId != widget.franchiseId) {
+      _selectedSchemaId = null;
       _fetchSchemas();
     }
   }
 
   Future<void> _fetchSchemas() async {
+    if (!_isConcreteFranchiseId(widget.franchiseId)) {
+      setState(() {
+        _schemas = [];
+        _selectedSchemaId = null;
+        _loading = false;
+        _errorMsg = null;
+      });
+      return;
+    }
+
     setState(() {
       _loading = true;
       _errorMsg = null;
     });
+
+    final franchiseId = widget.franchiseId!;
+    final now = DateTime.now();
+    final db = FirebaseFirestore.instance;
+
+    Future<SchemaSummary> inventory(
+      String collectionId, {
+      bool isConfigDoc = false,
+      String? configDocId,
+    }) async {
+      try {
+        if (isConfigDoc) {
+          final doc = await db
+              .collection('franchises')
+              .doc(franchiseId)
+              .collection('config')
+              .doc(configDocId ?? 'features')
+              .get();
+          final data = doc.data() ?? <String, dynamic>{};
+          final keys = data.keys.toList()..sort();
+          return SchemaSummary(
+            id: 'config/${configDocId ?? 'features'}',
+            name: 'config/${configDocId ?? 'features'}',
+            version: 'keys=${keys.length}',
+            updatedAt: now,
+            status: keys.isEmpty ? 'empty' : 'active',
+            docCount: keys.length,
+            sampleFieldKeys:
+                keys.isEmpty ? '(no sample doc)' : keys.take(24).join(', '),
+          );
+        }
+
+        final col = db
+            .collection('franchises')
+            .doc(franchiseId)
+            .collection(collectionId);
+        final snap = await col.limit(50).get();
+        final count = snap.docs.length;
+        final sample = snap.docs.isEmpty
+            ? <String, dynamic>{}
+            : Map<String, dynamic>.from(snap.docs.first.data());
+        final keys = sample.keys.toList()..sort();
+        return SchemaSummary(
+          id: collectionId,
+          name: collectionId,
+          version: count >= 50 ? 'count≥50 (sample)' : 'count=$count',
+          updatedAt: now,
+          status: count == 0 ? 'empty' : 'active',
+          docCount: count,
+          sampleFieldKeys:
+              keys.isEmpty ? '(no sample doc)' : keys.take(24).join(', '),
+        );
+      } catch (e, stack) {
+        shared.ErrorLogger.log(
+          message: 'SchemaBrowser inventory $collectionId failed: $e',
+          stack: stack.toString(),
+          source: 'SchemaBrowserSection',
+          severity: 'warning',
+          contextData: {'franchiseId': franchiseId},
+        );
+        return SchemaSummary(
+          id: collectionId,
+          name: collectionId,
+          version: 'error',
+          updatedAt: now,
+          status: 'error',
+          docCount: 0,
+          sampleFieldKeys: e.toString(),
+        );
+      }
+    }
+
     try {
-      // TODO: Replace with real shared.FirestoreService call for schema metadata
-      await Future.delayed(const Duration(milliseconds: 500));
-      _schemas = [
-        SchemaSummary(
-          id: 'menu',
-          name: 'Menu',
-          version: 'v3',
-          updatedAt: DateTime.now().subtract(const Duration(days: 2)),
-          status: 'active',
-        ),
-        SchemaSummary(
-          id: 'category',
-          name: 'Category',
-          version: 'v2',
-          updatedAt: DateTime.now().subtract(const Duration(days: 10)),
-          status: 'deprecated',
-        ),
-        SchemaSummary(
-          id: 'modifier',
-          name: 'Modifier',
-          version: 'v1',
-          updatedAt: DateTime.now().subtract(const Duration(days: 20)),
-          status: 'active',
-        ),
+      final list = <SchemaSummary>[
+        await inventory('menu_items'),
+        await inventory('categories'),
+        await inventory('ingredient_metadata'),
+        await inventory('promotions'),
+        await inventory('config', isConfigDoc: true, configDocId: 'features'),
       ];
-      setState(() => _loading = false);
+
+      if (!mounted) return;
+      setState(() {
+        _schemas = list;
+        _loading = false;
+        _errorMsg = null;
+      });
     } catch (e, stack) {
+      if (!mounted) return;
       setState(() {
         _errorMsg = e.toString();
         _loading = false;
+        _schemas = [];
       });
       shared.ErrorLogger.log(
         message: 'Failed to load schemas: $e',
         stack: stack.toString(),
         source: 'SchemaBrowserSection',
         severity: 'warning',
-        contextData: {
-          'franchiseId': widget.franchiseId,
-        },
+        contextData: {'franchiseId': widget.franchiseId},
       );
     }
   }
@@ -109,89 +188,96 @@ class _SchemaBrowserSectionState extends State<SchemaBrowserSection> {
       );
     }
 
-    final isAllFranchises = widget.franchiseId == 'all';
+    final needsFranchise = !_isConcreteFranchiseId(widget.franchiseId);
+    final titleSuffix =
+        needsFranchise ? 'Select a franchise' : widget.franchiseId!;
 
     return Padding(
       padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            isAllFranchises
-                ? '${loc.schemaBrowserSectionTitle} â€” ${loc.allFranchisesLabel ?? "All Franchises"}'
-                : '${loc.schemaBrowserSectionTitle} â€” ${widget.franchiseId}',
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: colorScheme.primary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            loc.schemaBrowserSectionDesc,
-            style: theme.textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 18),
-          if (_loading)
-            Center(child: CircularProgressIndicator(color: colorScheme.primary))
-          else if (_errorMsg != null)
-            Card(
-              color: colorScheme.errorContainer,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    Icon(Icons.error, color: colorScheme.error),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        '${loc.schemaBrowserSectionError}\n$_errorMsg',
-                        style: theme.textTheme.bodyMedium
-                            ?.copyWith(color: colorScheme.error),
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.refresh, color: colorScheme.primary),
-                      tooltip: loc.reload,
-                      onPressed: _fetchSchemas,
-                    ),
-                  ],
-                ),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${loc.schemaBrowserSectionTitle} — $titleSuffix',
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: colorScheme.primary,
+                fontWeight: FontWeight.bold,
               ),
-            )
-          else if (_schemas.isEmpty)
-            Center(child: Text(loc.schemaBrowserSectionEmpty))
-          else
-            _SchemaList(
-              schemas: _schemas,
-              onSelect: (id) => setState(() => _selectedSchemaId = id),
-              colorScheme: colorScheme,
-              loc: loc,
-              selectedId: _selectedSchemaId,
             ),
-          const SizedBox(height: 32),
-          if (_selectedSchemaId != null)
-            _SchemaDetailCard(
-              schema: _schemas.firstWhere((s) => s.id == _selectedSchemaId),
-              loc: loc,
-              theme: theme,
-              colorScheme: colorScheme,
+            const SizedBox(height: 14),
+            Text(
+              loc.schemaBrowserSectionDesc,
+              style: theme.textTheme.bodyMedium,
             ),
-          const SizedBox(height: 32),
-          _ComingSoonCard(
-            icon: Icons.compare_arrows,
-            title: loc.schemaBrowserSectionDiffsComingSoon,
-            subtitle: loc.schemaBrowserSectionDiffsDesc,
-            colorScheme: colorScheme,
-            theme: theme,
-          ),
-          _ComingSoonCard(
-            icon: Icons.check_circle_outline,
-            title: loc.schemaBrowserSectionValidationComingSoon,
-            subtitle: loc.schemaBrowserSectionValidationDesc,
-            colorScheme: colorScheme,
-            theme: theme,
-          ),
-        ],
+            const SizedBox(height: 18),
+            if (needsFranchise)
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, color: colorScheme.primary),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Select a franchise to inspect per-tenant collections.',
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else if (_loading)
+              Center(
+                  child: CircularProgressIndicator(color: colorScheme.primary))
+            else if (_errorMsg != null)
+              Card(
+                color: colorScheme.errorContainer,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error, color: colorScheme.error),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          '${loc.schemaBrowserSectionError}\n$_errorMsg',
+                          style: theme.textTheme.bodyMedium
+                              ?.copyWith(color: colorScheme.error),
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.refresh, color: colorScheme.primary),
+                        tooltip: loc.reload,
+                        onPressed: _fetchSchemas,
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else if (_schemas.isEmpty)
+              Center(child: Text(loc.schemaBrowserSectionEmpty))
+            else ...[
+              _SchemaList(
+                schemas: _schemas,
+                onSelect: (id) => setState(() => _selectedSchemaId = id),
+                colorScheme: colorScheme,
+                loc: loc,
+                selectedId: _selectedSchemaId,
+              ),
+              const SizedBox(height: 24),
+              if (_selectedSchemaId != null)
+                _SchemaDetailCard(
+                  schema: _schemas.firstWhere((s) => s.id == _selectedSchemaId),
+                  loc: loc,
+                  theme: theme,
+                  colorScheme: colorScheme,
+                ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -227,34 +313,8 @@ class _SchemaList extends StatelessWidget {
           return ListTile(
             leading: Icon(Icons.schema, color: colorScheme.outline),
             title: Text('${schema.name} (${schema.version})'),
-            subtitle: Row(
-              children: [
-                Text(
-                    '${loc.schemaBrowserSectionUpdated}: ${_formatDateTime(schema.updatedAt)}'),
-                const SizedBox(width: 10),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: schema.status == 'active'
-                        ? Colors.green.withOpacity(0.12)
-                        : Colors.orange.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    schema.status == 'active'
-                        ? loc.schemaBrowserSectionStatusActive
-                        : loc.schemaBrowserSectionStatusDeprecated,
-                    style: TextStyle(
-                      color: schema.status == 'active'
-                          ? Colors.green[800]
-                          : Colors.orange[800],
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
+            subtitle: Text(
+              '${schema.docCount} docs · ${schema.status}',
             ),
             trailing: isActive
                 ? Icon(Icons.arrow_right, color: colorScheme.primary)
@@ -316,10 +376,19 @@ class _SchemaDetailCard extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              loc.schemaBrowserSectionDetailsPlaceholder,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontStyle: FontStyle.italic,
-                color: colorScheme.outline,
+              'Document count: ${schema.docCount}',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Sample field keys:',
+              style: theme.textTheme.titleSmall,
+            ),
+            const SizedBox(height: 4),
+            SelectableText(
+              schema.sampleFieldKeys,
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontFamily: 'monospace',
               ),
             ),
           ],
@@ -334,67 +403,14 @@ class _SchemaDetailCard extends StatelessWidget {
   }
 }
 
-class _ComingSoonCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final ColorScheme colorScheme;
-  final ThemeData theme;
-
-  const _ComingSoonCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.colorScheme,
-    required this.theme,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: colorScheme.surfaceVariant.withOpacity(0.87),
-      elevation: DesignTokens.adminCardElevation,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
-        child: Row(
-          children: [
-            Icon(icon, color: colorScheme.outline, size: 30),
-            const SizedBox(width: 18),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: colorScheme.outline,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class SchemaSummary {
   final String id;
   final String name;
   final String version;
   final DateTime updatedAt;
-  final String status; // active, deprecated
+  final String status; // active, empty
+  final int docCount;
+  final String sampleFieldKeys;
 
   SchemaSummary({
     required this.id,
@@ -402,5 +418,7 @@ class SchemaSummary {
     required this.version,
     required this.updatedAt,
     required this.status,
+    required this.docCount,
+    required this.sampleFieldKeys,
   });
 }

@@ -15,40 +15,71 @@ class ImpersonationToolsSection extends StatefulWidget {
       _ImpersonationToolsSectionState();
 }
 
+bool _isConcreteFranchiseId(String? id) =>
+    id != null &&
+    id.isNotEmpty &&
+    id != 'unknown' &&
+    id != 'default' &&
+    id != 'all';
+
 class _ImpersonationToolsSectionState extends State<ImpersonationToolsSection> {
   bool _loading = false;
   String? _errorMsg;
   List<UserSummary> _users = [];
   String _search = '';
-  UserSummary? _selectedUser;
-  List<ImpersonationRecord> _recentImpersonations = [];
+  UserSummary? _previewUser;
+  final List<ImpersonationRecord> _recentPreviews = [];
 
   @override
   void initState() {
     super.initState();
     _fetchUserList();
-    _fetchRecentImpersonations();
+  }
+
+  @override
+  void didUpdateWidget(covariant ImpersonationToolsSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.franchiseId != widget.franchiseId) {
+      _previewUser = null;
+      _fetchUserList();
+    }
   }
 
   Future<void> _fetchUserList() async {
+    if (!_isConcreteFranchiseId(widget.franchiseId)) {
+      setState(() {
+        _users = [];
+        _loading = false;
+        _errorMsg = null;
+      });
+      return;
+    }
+
     setState(() {
       _loading = true;
       _errorMsg = null;
     });
     try {
-      // TODO: Replace with real shared.FirestoreService user query, filtered by franchiseId
-      await Future.delayed(const Duration(milliseconds: 500));
-      // Placeholder users; replace with real query results
-      _users = [
-        UserSummary(id: 'user1', email: 'jane@doughboys.com', role: 'owner'),
-        UserSummary(id: 'user2', email: 'staff1@doughboys.com', role: 'staff'),
-        UserSummary(id: 'user3', email: 'driver@doughboys.com', role: 'driver'),
-      ];
-      setState(() => _loading = false);
+      final fs = Provider.of<shared.FirestoreService>(context, listen: false);
+      final users = await fs.allUsers(franchiseId: widget.franchiseId).first;
+      final summaries = users.map((u) {
+        final role = u.roles.isNotEmpty ? u.roles.first : 'user';
+        return UserSummary(
+          id: u.id,
+          email: u.email,
+          role: role,
+        );
+      }).toList()
+        ..sort((a, b) => a.email.compareTo(b.email));
+      setState(() {
+        _users = summaries;
+        _loading = false;
+      });
     } catch (e, stack) {
       setState(() {
         _errorMsg = e.toString();
         _loading = false;
+        _users = [];
       });
       shared.ErrorLogger.log(
         message: 'Failed to fetch user list: $e',
@@ -63,85 +94,47 @@ class _ImpersonationToolsSectionState extends State<ImpersonationToolsSection> {
     }
   }
 
-  Future<void> _fetchRecentImpersonations() async {
-    try {
-      // TODO: Replace with real shared.FirestoreService query for recent impersonations
-      await Future.delayed(const Duration(milliseconds: 300));
-      // Placeholder impersonations
-      _recentImpersonations = [
+  void _startPreview(UserSummary user) {
+    // Phase A: UI-only. Does NOT call updateUserClaims or issue tokens.
+    setState(() {
+      _previewUser = user;
+      _recentPreviews.insert(
+        0,
         ImpersonationRecord(
-            userEmail: 'jane@doughboys.com',
-            timestamp: DateTime.now().subtract(const Duration(hours: 2))),
-        ImpersonationRecord(
-            userEmail: 'driver@doughboys.com',
-            timestamp: DateTime.now().subtract(const Duration(days: 1))),
-      ];
-      setState(() {});
-    } catch (e, stack) {
-      // Non-blocking; just log error
-      shared.ErrorLogger.log(
-        message: 'Failed to fetch impersonation records: $e',
-        stack: stack.toString(),
-        source: 'ImpersonationToolsSection',
-        severity: 'info',
-        contextData: {
-          'franchiseId': widget.franchiseId,
-          'errorType': e.runtimeType.toString(),
-        },
+          userEmail: user.email,
+          timestamp: DateTime.now(),
+        ),
       );
-    }
+      if (_recentPreviews.length > 10) {
+        _recentPreviews.removeRange(10, _recentPreviews.length);
+      }
+    });
+    shared.ErrorLogger.log(
+      message: 'Preview session started (UI-only): ${user.email}',
+      source: 'ImpersonationToolsSection',
+      severity: 'info',
+      contextData: {
+        'franchiseId': widget.franchiseId,
+        'previewUserId': user.id,
+        'previewUserRole': user.role,
+        'mode': 'preview_only',
+      },
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Preview only — viewing as ${user.email} (${user.role}). Auth claims unchanged. Use the dashboard switcher to open HQ/Admin chrome.',
+        ),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+      ),
+    );
   }
 
-  Future<void> _impersonateUser(UserSummary user) async {
-    try {
-      // TODO: Implement real impersonation logic with backend/service
-      await Future.delayed(const Duration(milliseconds: 400));
-      shared.ErrorLogger.log(
-        message: 'Impersonation started: ${user.email}',
-        source: 'ImpersonationToolsSection',
-        severity: 'info',
-        contextData: {
-          'franchiseId': widget.franchiseId,
-          'impersonatedUserId': user.id,
-          'impersonatedUserRole': user.role,
-          'errorType': 'impersonation',
-        },
-      );
-      setState(() {
-        _selectedUser = user;
-        _recentImpersonations.insert(
-            0,
-            ImpersonationRecord(
-              userEmail: user.email,
-              timestamp: DateTime.now(),
-            ));
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${user.email} impersonated.'),
-          backgroundColor: Theme.of(context).colorScheme.primary,
-        ),
-      );
-    } catch (e, stack) {
-      setState(() => _selectedUser = null);
-      shared.ErrorLogger.log(
-        message: 'Impersonation failed: $e',
-        stack: stack.toString(),
-        source: 'ImpersonationToolsSection',
-        severity: 'error',
-        contextData: {
-          'franchiseId': widget.franchiseId,
-          'impersonatedUserId': user.id,
-          'errorType': e.runtimeType.toString(),
-        },
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Impersonation failed: $e'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
-    }
+  void _exitPreview() {
+    setState(() => _previewUser = null);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Preview cleared.')),
+    );
   }
 
   Future<void> _openImpersonationDialog(
@@ -198,41 +191,70 @@ class _ImpersonationToolsSectionState extends State<ImpersonationToolsSection> {
             ),
           ),
           const SizedBox(height: 16),
-
           Text(
             loc.impersonationToolsDesc,
             style: theme.textTheme.bodyMedium,
           ),
           const SizedBox(height: 22),
-
-          if (_errorMsg != null)
+          if (!_isConcreteFranchiseId(widget.franchiseId))
             Card(
-              color: colorScheme.errorContainer,
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
                   children: [
-                    Icon(Icons.error, color: colorScheme.error),
+                    Icon(Icons.info_outline, color: colorScheme.primary),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        '${loc.impersonationToolsLoadError}\n$_errorMsg',
-                        style: theme.textTheme.bodyMedium
-                            ?.copyWith(color: colorScheme.error),
+                        'Select a franchise to preview users for that tenant.',
+                        style: theme.textTheme.bodyMedium,
                       ),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.refresh, color: colorScheme.primary),
-                      tooltip: loc.reload,
-                      onPressed: _fetchUserList,
                     ),
                   ],
                 ),
               ),
-            ),
-
-          // User search/filter
-          if (_users.isNotEmpty) ...[
+            )
+          else ...[
+            if (_previewUser != null) ...[
+              MaterialBanner(
+                content: Text(
+                  'Viewing as ${_previewUser!.email} (${_previewUser!.role}) · ${widget.franchiseId} (preview)',
+                ),
+                leading: Icon(Icons.visibility, color: colorScheme.primary),
+                actions: [
+                  TextButton(
+                    onPressed: _exitPreview,
+                    child: const Text('Exit preview'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+            ],
+            if (_errorMsg != null)
+              Card(
+                color: colorScheme.errorContainer,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error, color: colorScheme.error),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          '${loc.impersonationToolsLoadError}\n$_errorMsg',
+                          style: theme.textTheme.bodyMedium
+                              ?.copyWith(color: colorScheme.error),
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.refresh, color: colorScheme.primary),
+                        tooltip: loc.reload,
+                        onPressed: _fetchUserList,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             Row(
               children: [
                 Expanded(
@@ -260,52 +282,35 @@ class _ImpersonationToolsSectionState extends State<ImpersonationToolsSection> {
               ],
             ),
             const SizedBox(height: 20),
-          ],
-
-          if (_loading)
-            Center(
-                child: CircularProgressIndicator(color: colorScheme.primary)),
-
-          // User list to impersonate
-          if (!_loading && _users.isNotEmpty)
-            _UserList(
-              users: _users,
-              search: _search,
-              onImpersonate: _impersonateUser,
-              impersonatedUser: _selectedUser,
+            if (_loading)
+              Center(
+                child: CircularProgressIndicator(color: colorScheme.primary),
+              ),
+            if (!_loading && _users.isNotEmpty)
+              _UserList(
+                users: _users,
+                search: _search,
+                onImpersonate: _startPreview,
+                impersonatedUser: _previewUser,
+                loc: loc,
+                colorScheme: colorScheme,
+              ),
+            if (!_loading && _users.isEmpty && _errorMsg == null)
+              Center(child: Text(loc.impersonationToolsNoUsersFound)),
+            const SizedBox(height: 30),
+            _RecentImpersonationsCard(
+              records: _recentPreviews,
               loc: loc,
               colorScheme: colorScheme,
             ),
-
-          if (!_loading && _users.isEmpty && _errorMsg == null)
-            Center(child: Text(loc.impersonationToolsNoUsersFound)),
-
-          const SizedBox(height: 30),
-
-          // Recent impersonations
-          _RecentImpersonationsCard(
-            records: _recentImpersonations,
-            loc: loc,
-            colorScheme: colorScheme,
-          ),
-
-          const SizedBox(height: 30),
-
-          // Future features/expansion areas
-          _ComingSoonCard(
-            icon: Icons.admin_panel_settings,
-            title: loc.impersonationToolsAuditTrailComingSoon,
-            subtitle: loc.impersonationToolsAuditTrailDesc,
-            colorScheme: colorScheme,
-            theme: theme,
-          ),
-          _ComingSoonCard(
-            icon: Icons.security,
-            title: loc.impersonationToolsRolePreviewComingSoon,
-            subtitle: loc.impersonationToolsRolePreviewDesc,
-            colorScheme: colorScheme,
-            theme: theme,
-          ),
+            const SizedBox(height: 16),
+            Text(
+              'Phase A is UI-only. Use the header dashboard switcher to open HQ/Admin. Auth claims are not modified.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.outline,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -355,9 +360,7 @@ class _UserList extends StatelessWidget {
             subtitle: Text('${loc.impersonationToolsRoleLabel}: ${user.role}'),
             trailing: ElevatedButton.icon(
               icon: const Icon(Icons.switch_account_outlined),
-              label: Text(isActive
-                  ? loc.impersonationToolsImpersonating
-                  : loc.impersonationToolsImpersonate),
+              label: Text(isActive ? 'Previewing' : 'Preview'),
               style: ElevatedButton.styleFrom(
                 backgroundColor:
                     isActive ? colorScheme.secondary : colorScheme.primary,
@@ -424,61 +427,6 @@ class _RecentImpersonationsCard extends StatelessWidget {
   String _formatDateTime(DateTime dt) {
     return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} '
         '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-  }
-}
-
-class _ComingSoonCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final ColorScheme colorScheme;
-  final ThemeData theme;
-
-  const _ComingSoonCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.colorScheme,
-    required this.theme,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: colorScheme.surfaceVariant.withOpacity(0.87),
-      elevation: DesignTokens.adminCardElevation,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
-        child: Row(
-          children: [
-            Icon(icon, color: colorScheme.outline, size: 30),
-            const SizedBox(width: 18),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: colorScheme.outline,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 

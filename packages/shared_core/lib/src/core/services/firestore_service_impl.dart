@@ -23,6 +23,7 @@ import '../models/feedback_entry.dart' as feedback_model;
 import '../utils/error_logger.dart';
 import '../providers/franchise_provider.dart';
 import '../models/banner.dart';
+import 'dart:async';
 
 class FirestoreServiceImpl implements FirestoreService {
   late final firestore.FirebaseFirestore _db;
@@ -618,6 +619,7 @@ class FirestoreServiceImpl implements FirestoreService {
       return [];
     }
   }
+
   @override
   Future<void> saveCategory(
           String franchiseId, model.Category category) async =>
@@ -2078,6 +2080,43 @@ class FirestoreServiceImpl implements FirestoreService {
   }
 
   // ===================== ERROR LOGS =====================
+  Map<String, dynamic> _normalizeErrorLogData(Map<String, dynamic> raw) {
+    final data = Map<String, dynamic>.from(raw);
+    for (final key in ['timestamp', 'createdAt', 'updatedAt']) {
+      final v = data[key];
+      if (v is firestore.Timestamp) {
+        data[key] = v.toDate();
+      }
+    }
+    // Prefer timestamp; fall back so fromMap does not throw.
+    data['timestamp'] ??= data['createdAt'] ?? DateTime.now();
+    data['message'] ??= data['error'] ?? data['msg'] ?? '';
+    data['severity'] ??= 'error';
+    data['source'] ??= 'unknown';
+    data['screen'] ??= data['screen'] ?? '';
+    return data;
+  }
+
+  List<ErrorLog> _mapErrorLogDocs(
+      List<firestore.QueryDocumentSnapshot<Object?>> docs) {
+    final out = <ErrorLog>[];
+    for (final d in docs) {
+      try {
+        final raw = Map<String, dynamic>.from(d.data() as Map);
+        out.add(ErrorLog.fromMap(_normalizeErrorLogData(raw), d.id));
+      } catch (e, stack) {
+        // Skip bad docs; do not fail the whole stream.
+        ErrorLogger.log(
+          message: 'Skip unreadable error log ${d.id}: $e',
+          source: 'FirestoreServiceImpl',
+          severity: 'warning',
+          stack: stack.toString(),
+        );
+      }
+    }
+    return out;
+  }
+
   @override
   Future<void> addErrorLogGlobal(ErrorLog log) async {
     final data = log.toFirestore();
@@ -2119,9 +2158,11 @@ class FirestoreServiceImpl implements FirestoreService {
   Future<ErrorLog?> getErrorLogGlobal(String logId) async {
     try {
       final doc = await _db.collection('error_logs').doc(logId).get();
-      return doc.exists
-          ? ErrorLog.fromMap(doc.data() as Map<String, dynamic>, doc.id)
-          : null;
+      if (!doc.exists || doc.data() == null) return null;
+      return ErrorLog.fromMap(
+        _normalizeErrorLogData(Map<String, dynamic>.from(doc.data()!)),
+        doc.id,
+      );
     } catch (e, stack) {
       await ErrorLogger.log(
         message: 'Failed to getErrorLogGlobal',
@@ -2135,24 +2176,95 @@ class FirestoreServiceImpl implements FirestoreService {
   }
 
   @override
-  Stream<List<ErrorLog>> streamErrorLogsGlobal(
-      {String? franchiseId,
-      String? userId,
-      String? severity,
-      String? platform,
-      String? screen,
-      DateTime? start,
-      DateTime? end,
-      int limit = 100}) {
-    firestore.Query q = _db.collection('error_logs');
+  Stream<List<ErrorLog>> streamErrorLogsGlobal({
+    String? franchiseId,
+    String? userId,
+    String? severity,
+    String? platform,
+    String? screen,
+    DateTime? start,
+    DateTime? end,
+    int limit = 100,
+  }) {
+    firestore.Query privateQ = _db.collection('error_logs');
+    firestore.Query publicQ = _db.collection('public_error_logs');
 
-    if (franchiseId != null) q = q.where('franchiseId', isEqualTo: franchiseId);
-    if (userId != null) q = q.where('userId', isEqualTo: userId);
-    if (severity != null) q = q.where('severity', isEqualTo: severity);
+    if (franchiseId != null &&
+        franchiseId.isNotEmpty &&
+        franchiseId != 'all' &&
+        franchiseId != 'unknown' &&
+        franchiseId != 'default') {
+      privateQ = privateQ.where('franchiseId', isEqualTo: franchiseId);
+      publicQ = publicQ.where('franchiseId', isEqualTo: franchiseId);
+    }
+    if (userId != null) {
+      privateQ = privateQ.where('userId', isEqualTo: userId);
+      publicQ = publicQ.where('userId', isEqualTo: userId);
+    }
+    if (severity != null) {
+      privateQ = privateQ.where('severity', isEqualTo: severity);
+      publicQ = publicQ.where('severity', isEqualTo: severity);
+    }
 
-    return q.limit(limit).snapshots().map((s) => s.docs
-        .map((d) => ErrorLog.fromMap(d.data() as Map<String, dynamic>, d.id))
-        .toList());
+    final controller = StreamController<List<ErrorLog>>();
+    List<ErrorLog> lastPrivate = const [];
+    List<ErrorLog> lastPublic = const [];
+    StreamSubscription? subPrivate;
+    StreamSubscription? subPublic;
+
+    void emit() {
+      if (controller.isClosed) return;
+      final byId = <String, ErrorLog>{};
+      for (final log in [...lastPublic, ...lastPrivate]) {
+        byId[log.id] = log;
+      }
+      final merged = byId.values.toList()
+        ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      controller.add(
+        merged.length > limit ? merged.sublist(0, limit) : merged,
+      );
+    }
+
+    subPrivate = privateQ.limit(limit).snapshots().listen(
+      (s) {
+        lastPrivate = _mapErrorLogDocs(s.docs);
+        emit();
+      },
+      onError: (Object e, StackTrace st) {
+        lastPrivate = const [];
+        emit();
+        ErrorLogger.log(
+          message: 'streamErrorLogsGlobal private failed: $e',
+          source: 'FirestoreServiceImpl',
+          severity: 'warning',
+          stack: st.toString(),
+        );
+      },
+    );
+
+    subPublic = publicQ.limit(limit).snapshots().listen(
+      (s) {
+        lastPublic = _mapErrorLogDocs(s.docs);
+        emit();
+      },
+      onError: (Object e, StackTrace st) {
+        lastPublic = const [];
+        emit();
+        ErrorLogger.log(
+          message: 'streamErrorLogsGlobal public failed: $e',
+          source: 'FirestoreServiceImpl',
+          severity: 'warning',
+          stack: st.toString(),
+        );
+      },
+    );
+
+    controller.onCancel = () async {
+      await subPrivate?.cancel();
+      await subPublic?.cancel();
+    };
+
+    return controller.stream;
   }
 
   @override
@@ -2500,9 +2612,7 @@ class FirestoreServiceImpl implements FirestoreService {
       bool? showResolved}) {
     firestore.Query q = _franchiseCollection(franchiseId, 'error_logs');
     if (severity != null) q = q.where('severity', isEqualTo: severity);
-    return q.limit(limit).snapshots().map((s) => s.docs
-        .map((d) => ErrorLog.fromMap(d.data() as Map<String, dynamic>, d.id))
-        .toList());
+    return q.limit(limit).snapshots().map((s) => _mapErrorLogDocs(s.docs));
   }
 
   @override
@@ -3501,18 +3611,16 @@ class FirestoreServiceImpl implements FirestoreService {
       return Stream.value(<model.Category>[]);
     }
 
-    return _franchiseCollection(franchiseId, _categories)
-        .snapshots()
-        .map((s) {
+    return _franchiseCollection(franchiseId, _categories).snapshots().map((s) {
       final list = s.docs
           .map((d) {
-        try {
-          return model.Category.fromFirestore(
-              d.data() as Map<String, dynamic>, d.id);
-        } catch (_) {
-          return null;
-        }
-      })
+            try {
+              return model.Category.fromFirestore(
+                  d.data() as Map<String, dynamic>, d.id);
+            } catch (_) {
+              return null;
+            }
+          })
           .where((c) => c != null)
           .cast<model.Category>()
           .toList();
