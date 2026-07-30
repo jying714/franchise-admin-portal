@@ -1,9 +1,9 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: July 29, 2026 (~23:30 CDT — customer franchise context v1 complete on branch)  
+**Last Updated**: July 29, 2026 (~23:55 CDT — customer franchise context v1 merged to main)  
 **Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
-**Branch (active)**: `feat/customer-franchise-context-v1`  
-**Main**: menu M1–M5, wings/calzone, mobile design tokens T1–T9, developer D0–D10; Hosting deploy on push
+**Branch (active)**: `main`  
+**Main**: menu M1–M5, wings/calzone, mobile design tokens T1–T9, developer D0–D10, **customer franchise context v1**; Hosting deploy on push
 
 > This file is **always loaded in full** by every agent.
 
@@ -11,8 +11,8 @@
 
 ## Current Phase
 
-**Core platform vertical slice is on `main`.**  
-**Release / pilot MVP remaining work** under Decisions **11–13** (customer franchise context, Stripe Connect dual accounts, kitchen ops + cash).
+**Core platform + customer franchise context on `main`.**  
+**Release / pilot MVP remaining:** Decisions **12–13** (Stripe Connect dual accounts, kitchen ops + cash).
 
 | Area | State |
 |------|--------|
@@ -22,7 +22,7 @@
 | Menu modifier M1–M5 + wings/calzone W0–W7+W2 | **Done** |
 | Mobile Design Tokens v1 (T1–T9) | **Done** |
 | Developer Dashboard v1 (D0–D10) | **Done** |
-| **Customer franchise context v1** | **COMPLETE on `feat/customer-franchise-context-v1`** (merge gate: human) |
+| **Customer franchise context v1** | **COMPLETE on `main`** |
 | **Stripe checkout v1 (Connect)** | **Locked — not implemented** |
 | **Kitchen ops v1** (thin app, print, cash toggle) | **Locked — not implemented** |
 
@@ -36,7 +36,7 @@
 - [x] Mobile Design Tokens v1 — `main`
 - [x] Developer Dashboard v1 — `main`
 - [x] **Decision 11** Customer hybrid multi-tenant path (A+B) — July 29
-- [x] **Customer franchise context v1 implementation** — CF1–CF10 smoke-passed July 29–30 on `feat/customer-franchise-context-v1`
+- [x] **Customer franchise context v1** — CF1–CF10; merged to `main` July 29–30
 - [x] **Decision 12** Stripe: platform SaaS + Connect per franchise — July 29
 - [x] **Decision 13** Kitchen ops: thin Flutter kitchen app, cash-on-pickup toggles, multi-printer, manager gates — July 29
 
@@ -44,10 +44,9 @@
 
 | Priority | Work | Authority |
 |----------|------|-----------|
-| **1** | **Merge `feat/customer-franchise-context-v1` → `main`** (human gate) | `docs/slices/customer-franchise-context-v1.md` · Decision 11 |
-| **2** | **Stripe checkout v1** (Connect + platform SaaS) | `docs/slices/stripe-checkout-v1.md` · Decision 12 |
-| **3** | **Kitchen ops v1** — thin Kitchen app, auto-print, category→printer routing, Admin cash toggles, manager-only void/refund, manager offline/print alerts | `docs/slices/kitchen-ops-v1.md` · Decision 13 |
-| **4** | Pilot polish: reorder, order status, closed hours, cart attach on sign-in | Explicit human tasks |
+| **1** | **Stripe checkout v1** (Connect + platform SaaS) | `docs/slices/stripe-checkout-v1.md` · Decision 12 |
+| **2** | **Kitchen ops v1** — thin Kitchen app, auto-print, category→printer routing, Admin cash toggles, manager-only void/refund, manager offline/print alerts | `docs/slices/kitchen-ops-v1.md` · Decision 13 |
+| **3** | Pilot polish: reorder, order status, closed hours, cart attach on sign-in | Explicit human tasks |
 
 **Pilot:** real franchise + mock listed franchise; customer QR/SMS primary + directory foundation; **Android kitchen tablet** at make line (Flutter multi-platform code OK; iOS kitchen post-pilot).
 
@@ -90,7 +89,7 @@
 **Onboarding product keys:**  
 `onboarding_feature_setup` → `onboarding_design_branding` → `onboarding_menu_foundation` → `onboardingMenuItems` → `onboardingReview`
 
-**Ground truth:** one FranchiseProvider; no DesignTokens widget color invention; progress under `franchises/{id}/onboarding_progress/progress`; mobile theme = ColorScheme from franchise seeds.
+**Ground truth:** one FranchiseProvider; no DesignTokens widget color invention; progress under `franchises/{id}/onboarding_progress/progress`; mobile theme = ColorScheme from franchise seeds; progress load must include **`onboarding_design_branding`** in defaultSteps.
 
 ---
 
