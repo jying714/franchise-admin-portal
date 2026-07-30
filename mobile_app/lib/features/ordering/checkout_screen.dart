@@ -9,6 +9,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_stripe/flutter_stripe.dart' hide Card;
 import 'package:franchise_mobile_app/generated/app_localizations.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum DeliveryType { delivery, pickup }
 
@@ -44,6 +45,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   double _deliveryFee = 0.0;
   double _promoValue = 0.0;
   double _orderTotal = 0.0;
+
+  bool _paymentsRefreshStarted = false;
 
   @override
   void dispose() {
@@ -150,6 +153,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           merchantDisplayName: franchiseProvider.currentAppName.isNotEmpty
               ? franchiseProvider.currentAppName
               : 'Franchise',
+          style: ThemeMode.light,
+          billingDetails: const BillingDetails(
+            address: Address(
+              city: null,
+              country: 'US',
+              line1: null,
+              line2: null,
+              postalCode: null,
+              state: null,
+            ),
+          ),
         ),
       );
       await Stripe.instance.presentPaymentSheet();
@@ -157,11 +171,37 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return true;
     } on StripeException catch (e) {
       setState(() => _isPaying = false);
+      final msg = e.error.localizedMessage ?? e.error.message ?? '$e';
       shared.ErrorLogger.log(
-        message: 'Stripe PaymentSheet: ${e.error.localizedMessage}',
+        message: 'Stripe PaymentSheet: $msg',
         source: 'CheckoutScreen',
         severity: 'error',
       );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(msg),
+            backgroundColor: shared.UiConfig.errorColor,
+          ),
+        );
+      }
+      return false;
+    } on FirebaseFunctionsException catch (e) {
+      setState(() => _isPaying = false);
+      final msg = e.message ?? e.code;
+      shared.ErrorLogger.log(
+        message: 'createOrderPaymentIntent: $msg',
+        source: 'CheckoutScreen',
+        severity: 'error',
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Payment setup failed: $msg'),
+            backgroundColor: shared.UiConfig.errorColor,
+          ),
+        );
+      }
       return false;
     } catch (e) {
       setState(() => _isPaying = false);
@@ -170,7 +210,36 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         source: 'CheckoutScreen',
         severity: 'error',
       );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$e'),
+            backgroundColor: shared.UiConfig.errorColor,
+          ),
+        );
+      }
       return false;
+    }
+  }
+
+  Future<void> _refreshPaymentsFromFranchiseDoc() async {
+    final fp = Provider.of<shared.FranchiseProvider>(context, listen: false);
+    final id = fp.currentFranchiseId;
+    if (id.isEmpty || id == 'unknown') return;
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('franchises')
+          .doc(id)
+          .get(const GetOptions(source: Source.server));
+      if (!mounted || !doc.exists || doc.data() == null) return;
+      final data = doc.data()!;
+      debugPrint(
+        '[checkout] paymentsEnabled=${data['paymentsEnabled']} '
+        'status=${data['stripeConnectStatus']}',
+      );
+      fp.setBrandingFromFranchiseDoc(data);
+    } catch (e) {
+      debugPrint('[checkout] payments refresh failed: $e');
     }
   }
 
@@ -423,6 +492,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         if (_orderSubtotal == 0.0) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) _updateOrderTotals();
+          });
+        }
+
+        // ST5: pull paymentsEnabled from server (avoid stale branding cache)
+        if (!_paymentsRefreshStarted) {
+          _paymentsRefreshStarted = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _refreshPaymentsFromFranchiseDoc();
           });
         }
 

@@ -113,6 +113,8 @@ Future<void> main() async {
       defaultValue:
           'pk_test_51TywIOJSgqu1bbPtcTJZk86OAdmLI3T30J74rpi5uzjhWvdkZO9QUEiyv1rJVYqH8KLqmLrFavuFNeRgBW46DBDB00aAvGcrwt',
     );
+    // Same Stripe account as functions STRIPE_SECRET_KEY (test).
+    await Stripe.instance.applySettings();
 
     FlutterError.onError = (FlutterErrorDetails details) {
       shared.ErrorLogger.log(
