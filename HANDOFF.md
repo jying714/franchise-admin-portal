@@ -1,8 +1,8 @@
 # HANDOFF.md — Agent Context & Project Status
 
-**Last Updated**: July 29, 2026 (~17:40 CDT — kitchen-ops + cash locks)  
+**Last Updated**: July 29, 2026 (~23:30 CDT — customer franchise context v1 complete)  
 **Hardware**: MINISFORUM AI X1 Pro-470  
-**Active branch**: `main`  
+**Active branch**: `feat/customer-franchise-context-v1`  
 **Repo**: https://github.com/jying714/franchise-admin-portal  
 **Local path**: `C:\\projects\\franchise-admin-portal`  
 **Firebase**: `doughboyspizzeria-2b3d2`  
@@ -16,11 +16,12 @@ Prefer **STATUS.md + this handoff + `docs/slices/*` + `docs/DECISIONS.md`** over
 
 **On `main` and done:** HQ onboarding, Design & Branding, Platform Owner, Admin ops, menu M1–M5 + wings/calzone, mobile design tokens T1–T9, developer dashboard D0–D10.
 
-**Locked for release / pilot MVP (not yet built):**
+**On `feat/customer-franchise-context-v1` (COMPLETE — human merge gate):** Decision 11 customer franchise context — bind pipeline, directory, QR/https, recents/switcher, cart clear, signed-out browse + auth-gated cart/checkout.
+
+**Still locked for release / pilot MVP (not yet built):**
 
 | Slice | Decision |
 |--------|----------|
-| `docs/slices/customer-franchise-context-v1.md` | 11 |
 | `docs/slices/stripe-checkout-v1.md` | 12 |
 | `docs/slices/kitchen-ops-v1.md` | 13 |
 
@@ -28,9 +29,11 @@ Pilot: **real + mock** franchise; make-line **Android tablet** + Ethernet ESC-PO
 
 ---
 
-## 2. Decision 11 — Customer multi-franchise (summary)
+## 2. Decision 11 — Customer multi-franchise (delivered)
 
-Hybrid binary; session = one franchiseId; QR/SMS primary + directory foundation; signed-out browse until checkout; cart clear on switch.
+Hybrid binary; session = one franchiseId; QR/SMS/https primary + directory foundation; **signed-out browse menu**; **add-to-cart / cart / checkout require auth** (guest cart deferred); cart clear on switch; `FranchiseBindService` single pipeline.
+
+Authority: `docs/slices/customer-franchise-context-v1.md` (closed).
 
 ---
 
@@ -57,15 +60,15 @@ Cash is **not** Connect; see Decision 13 toggles.
 
 ---
 
-## 5. Do not regress (menu)
+## 5. Do not regress (menu + franchise context)
 
-Pizza optionalAddOns; included not auto-charged; wings 2 portions + W2 pool; no dual menu write paths; no FranchiseProvider zero-arg / DesignTokens color invention.
+Pizza optionalAddOns; included not auto-charged; wings 2 portions + W2 pool; no dual menu write paths; no FranchiseProvider zero-arg / DesignTokens color invention; **no silent default tenant**; **no product bind outside FranchiseBindService**.
 
 ---
 
 ## 6. Implementation order
 
-1. Customer franchise context v1  
+1. ~~Customer franchise context v1~~ **DONE** (branch; merge when ready)  
 2. Stripe checkout v1 (card path enables kitchen paid feed)  
 3. Kitchen ops v1 (board + print + cash flags + manager gates)  
 4. Pilot polish  
@@ -78,7 +81,7 @@ Kitchen can use test paid/submitted orders in parallel once order status model i
 
 - `STATUS.md`  
 - `docs/DECISIONS.md` (11–13)  
-- `docs/slices/customer-franchise-context-v1.md`  
+- `docs/slices/customer-franchise-context-v1.md` (**COMPLETE**)  
 - `docs/slices/stripe-checkout-v1.md`  
 - `docs/slices/kitchen-ops-v1.md`  
 - `docs/slices/mobile-design-tokens-v1.md`  
@@ -86,4 +89,4 @@ Kitchen can use test paid/submitted orders in parallel once order status model i
 
 ---
 
-**Bottom line:** Release MVP = franchise context + dual Stripe + **thin kitchen ops with cash toggle and safe manager controls**. Cooks never get full Admin on the pass tablet.
+**Bottom line:** Customer franchise context is implemented on the feature branch. Next build focus = **dual Stripe + thin kitchen ops**. Cooks never get full Admin on the pass tablet.
