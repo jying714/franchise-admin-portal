@@ -1,6 +1,6 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: July 30, 2026 (~10:30 CDT — stripe-checkout-v1 active; ST1 next)  
+**Last Updated**: July 30, 2026 (~15:45 CDT — Decision 14 Thin POS locked; kitchen-only framing superseded)  
 **Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
 **Branch (active)**: `feat/stripe-checkout-v1`  
 **Main**: menu M1–M5, wings/calzone, mobile design tokens T1–T9, developer D0–D10, **customer franchise context v1**; Hosting deploy on push
@@ -13,7 +13,7 @@
 
 **Core platform + customer franchise context on `main`.**  
 **Active implementation:** Decision **12** — Stripe checkout v1 (platform SaaS + Connect).  
-**Still locked (not started):** Decision **13** kitchen ops + cash.
+**Station surface (locked, not started):** Decision **14** — Thin POS Station App (`pos_app`). Pure kitchen-only app (Decision 13 framing) is **superseded**.
 
 | Area | State |
 |------|--------|
@@ -25,7 +25,8 @@
 | Developer Dashboard v1 (D0–D10) | **Done** |
 | **Customer franchise context v1** | **COMPLETE on `main`** |
 | **Stripe checkout v1 (Connect)** | **In progress on `feat/stripe-checkout-v1`** (ST0 done; ST1 next) |
-| **Kitchen ops v1** (thin app, print, cash toggle) | **Locked — not implemented** |
+| **Thin POS Station App (`pos_app`)** | **Locked — not implemented** (Decision 14) |
+| Kitchen-only app | **Superseded** — do not implement separate kitchen binary |
 
 ### Completed (locked)
 
@@ -38,24 +39,28 @@
 - [x] Developer Dashboard v1 — `main`
 - [x] **Decision 11** Customer hybrid multi-tenant path (A+B) — July 29
 - [x] **Customer franchise context v1** — CF1–CF10; merged to `main` July 29–30
-- [x] **Decision 12** Stripe: platform SaaS + Connect per franchise — July 29 (docs locked)
-- [x] **Decision 13** Kitchen ops: thin Flutter kitchen app, cash-on-pickup toggles, multi-printer, manager gates — July 29 (docs locked)
+- [x] **Decision 12** Stripe: platform SaaS + Connect per franchise — July 29 (docs locked; impl in progress)
+- [x] **Decision 14** Thin POS Station App (`pos_app`) — counter-focused; supersedes pure kitchen framing — July 30 (docs locked)
 
 ### Active focus — release MVP
 
 | Priority | Work | Authority |
 |----------|------|-----------|
 | **1** | **Stripe checkout v1** (Connect + platform SaaS) — **ST1** franchise Connect fields + `paymentsEnabled` | `docs/slices/stripe-checkout-v1.md` · Decision 12 |
-| **2** | **Kitchen ops v1** — thin Kitchen app, auto-print, category→printer routing, Admin cash toggles, manager-only void/refund, manager offline/print alerts | `docs/slices/kitchen-ops-v1.md` · Decision 13 |
-| **3** | Pilot polish: reorder, order status, closed hours, cart attach on sign-in | Explicit human tasks |
+| **2** | Polish mobile_app + web-app management to solid MVP quality | Explicit human tasks + existing slices |
+| **3** | **Thin POS (`pos_app`)** — counter station, full order entry, dine-in tables, card+cash+drawer, staff/driver pay tracking | `docs/slices/pos-app-v1.md` · Decision 14 |
+| **4** | Customer website (part of hard release gate) | TBD slice / decision |
+| **5** | Pilot polish | Explicit human tasks |
 
-**Pilot:** real franchise + mock listed franchise; customer QR/SMS primary + directory foundation; **Android kitchen tablet** at make line (Flutter multi-platform code OK; iOS kitchen post-pilot).
+**Hard release gate:** Thin POS + customer website + polished mobile_app + web-app management must all be at MVP quality before the product is considered releasable.
 
-### Decision 11 / 12 / 13 locks (do not regress)
+**Pilot hardware:** Android tablet at **counter** (not pure make-line KDS); Ethernet ESC-POS printers in kitchen(s); cash drawer; card-present reader. Flutter multi-platform retained.
+
+### Decision 11 / 12 / 14 locks (do not regress)
 
 | Topic | Lock |
 |--------|------|
-| App binary | Hybrid multi-tenant; session = one `franchiseId` |
+| App binary (customer) | Hybrid multi-tenant; session = one `franchiseId` |
 | Acquisition | QR/SMS primary; directory required foundation |
 | Bind | `FranchiseBindService` only (no ad-hoc setFranchiseId for product flows) |
 | Signed-out | Browse menu OK; **add-to-cart / cart / checkout require auth** (guest cart deferred) |
@@ -63,14 +68,14 @@
 | Share QR | Prefer `https://franchisehq.io/f/{id}` |
 | Stripe platform | HQ SaaS subscriptions / platform invoices |
 | Stripe Connect | Customer card orders → franchise connected account + application fee |
-| **Cash on pickup** | **v1 yes**, franchise **Admin feature toggle** |
-| **Cash print** | Default **print on submit**; sub-toggle **require cook Accept before print** |
-| **Card print** | Auto-print on **`paid`** |
-| **Kitchen app** | Thin Flutter; cooks only essential status; **no** full Admin |
-| **Void/cancel/refund** | **Manager-only** |
-| **Printers** | Multi-printer ready; route by **menu category** (many categories per printer); Ethernet ESC-POS preferred |
-| **Pilot kitchen device** | **Android tablet**; codebase stays Flutter multi-platform |
-| **Manager alerts** | Push + SMS on tablet offline / printer error |
+| **Station surface** | **Thin POS (`pos_app`)** — counter / order-taking; **not** a pure kitchen-only binary |
+| **Void / cancel / refund** | **Manager-only** (elevated permission + PIN) |
+| **Printers** | Multi-printer ready; route by **menu category**; Ethernet ESC-POS preferred |
+| **Pilot station device** | **Android tablet** at counter; codebase stays Flutter multi-platform |
+| **Cash + drawer** | Required in thin POS MVP; auto-open drawer on cash tender |
+| **Card-present** | Required in thin POS MVP |
+| **Order source** | Structural field on every order for future metrics |
+| **Release gate** | Thin POS + customer website + polished mobile + web management |
 
 ### Explicit post-MVP / deferred
 
@@ -79,8 +84,12 @@
 | Guest cart / guest checkout | Post-MVP |
 | Full OS App Links / AASA production hardening | Follow-up polish |
 | Geo / map directory | Post-MVP |
-| Full POS / cash drawer / card-present terminal | Post-MVP |
-| iOS kitchen kiosk bring-up | Post-pilot |
+| Live delivery status tracking | Out of thin POS MVP |
+| Full catering packages | Out of thin POS MVP |
+| Complex inventory / recipe costing | Post-MVP |
+| Advanced tips pooling / full time-clock | Post-MVP |
+| Rich offline card processing | Post-MVP |
+| iOS station as primary pilot | Post-pilot |
 | HQ Design full semantic color editors | Deferred |
 | Cash Flow / Multi-Brand HQ cards | Post-MVP |
 | Combos / bundles | Deferred |

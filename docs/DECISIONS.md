@@ -1,6 +1,6 @@
 # Architecture Decision Log (DECISIONS.md)
 
-**Last Updated**: July 29, 2026 (Decision 11 complete on main — customer franchise context v1)
+**Last Updated**: July 30, 2026 (Decision 14 — Thin POS Station App supersedes pure kitchen framing)
 
 This file records major architectural and design decisions for the Doughboys Pizzeria Franchise Platform.
 
@@ -33,7 +33,7 @@ This file records major architectural and design decisions for the Doughboys Piz
 **Date**: July 2026  
 **Status**: Approved  
 **Reference**: `docs/DASHBOARDS.md`  
-**Note:** Kitchen thin app is an **ops station surface**, not a fifth full dashboard; staff/manager roles gate actions (Decision 13).
+**Note:** Station surface is now the thin POS app (Decision **14**), not a pure kitchen-only app. Staff/manager roles and permissions gate actions.
 
 ### 7. Onboarding Home = HQ Owner Dashboard (not Admin)
 **Date**: July 24–25, 2026  
@@ -60,34 +60,64 @@ This file records major architectural and design decisions for the Doughboys Piz
 
 ### 12. Payments — Platform Stripe + Connect per Franchise
 **Date**: July 29, 2026  
-**Status**: **Approved — implementation not started**  
+**Status**: **Approved — implementation in progress** (`feat/stripe-checkout-v1`)  
 **Summary:** Platform Stripe for HQ SaaS; Connect per franchise for **card** customer orders + application fee.  
-**Cash on pickup** is a separate fulfillment mode under Decision **13**, not a substitute for Connect.  
+**Cash** (on pickup / at counter) is handled by the thin POS (Decision **14**) and related feature toggles; it is not a substitute for Connect.  
 **Reference:** `docs/slices/stripe-checkout-v1.md`.
 
-### 13. Kitchen Ops — Thin App, Print Routing, Cash Feature Toggles
+### 13. Kitchen Ops — Thin App, Print Routing, Cash Feature Toggles (HISTORICAL / PARTIALLY SUPERSEDED)
 **Date**: July 29, 2026  
-**Status**: **Approved — implementation not started**  
-**Decision:**
+**Status**: **Superseded in framing by Decision 14 (July 30, 2026)**  
+**Original decision (retained for cash/print toggle context):**
 
-1. **Not a full POS for MVP.** Kitchen visibility and printing via a **thin dedicated Flutter Kitchen app** (make-line tablet), not full Admin on the pass device. Cooks must not access menu/promos/users/Stripe/refunds accidentally.
-2. **Primary kitchen UI:** Live franchise-scoped orders; limited forward status actions; reprint; printer/connectivity honesty. **Void / cancel / refund: manager-only.**
-3. **Placement:** DoorDash-like — tablet above make line, printer beside it. **Pilot hardware: Android tablet** (kiosk + printer ecosystem). **Codebase remains Flutter multi-platform**; iOS kitchen station is post-pilot unless explicitly pulled in.
-4. **Printing:**
-   - Prefer **Ethernet ESC-POS** (Star/Epson-class) for reliability.
-   - **Multi-printer ready:** map **menu category id(s) → printer(s)**; many categories per printer; unmapped → default printer (never silent drop).
-   - **Card orders:** auto-print when order reaches **`paid`** (Connect).
-   - **Cash orders:** see feature toggles below.
-5. **Cash on pickup (v1 yes):**
-   - Franchise **Admin dashboard feature card** (same family as Inventory and other feature toggles): master **`cashOnPickup`** (name TBD in implementation).
-   - When ON: customer checkout may select cash on pickup; tickets/board show **PAY CASH** clearly.
-   - **Sub-toggle** (only if master ON): **`cashPrintOnAcceptOnly`** — when ON, print cash tickets only after cook **Accept**; when OFF (**default**), **print on submit**.
-6. **Manager safety net:** Push + SMS to assigned manager(s) on kitchen tablet offline (heartbeat) and print failures. Admin on manager phone is **backup**, not the make-line system of record.
-7. **Full POS** (cash drawer, card-present terminal suite, complex table service): **out of MVP.**
+1. Originally framed as **not a full POS for MVP** — thin dedicated Flutter Kitchen app (make-line tablet).
+2. Live franchise-scoped orders; limited forward status; reprint; printer honesty. **Void / cancel / refund: manager-only.**
+3. Placement was DoorDash-like make-line. Pilot hardware Android tablet.
+4. Printing: Ethernet ESC-POS preferred; multi-printer by menu category; card auto-print on `paid`; cash print rules via Admin toggles.
+5. Cash on pickup master + sub-toggle for print-on-accept.
+6. Manager push + SMS on offline / print failure.
+7. Full POS (cash drawer, card-present, complex table service) was marked out of MVP.
 
-**Rationale:** Personal pizzeria pilot needs DoorDash-class kitchen loop without giving line cooks full Admin; cash remains cultural reality behind flags; multi-printer by category matches real stations.  
-**Impact:** New kitchen app target/flavor; Admin feature toggles; franchise printer config; order status/print job idempotency; notification path.  
-**Reference:** `docs/slices/kitchen-ops-v1.md`, `STATUS.md`.
+**Rationale at the time:** Safe cook-facing board without full Admin blast radius.
+
+**Supersession note (July 30, 2026):** Product direction changed. A pure kitchen-only management app will not be shipped as a long-term surface. The station surface is now the **thin POS app** (Decision 14). Cash-on-pickup toggles, multi-printer category routing, manager-only destructive actions, and print rules remain valid and are absorbed into the POS slice. Do not implement a separate kitchen-only binary.
+
+**Reference (historical):** `docs/slices/kitchen-ops-v1.md` (marked superseded).
+
+### 14. Thin POS Station App (`pos_app`) — Counter-Focused MVP Station
+**Date**: July 30, 2026  
+**Status**: **Approved — implementation not started** (docs locked)  
+**Authority**: this decision · `docs/slices/pos-app-v1.md` · STATUS · HANDOFF  
+
+**Decision summary:**
+
+1. **Strike the standalone thin Kitchen management app** as the MVP station surface. Replace it with a **thin POS app** (`pos_app` Flutter target/flavor) whose primary placement is the **counter / order-taking station**.
+2. **Pilot hardware**: Android tablet + Ethernet ESC-POS printer(s) in kitchen(s) + cash drawer (printer-kick) + card-present reader (Stripe Terminal or equivalent). Codebase remains Flutter multi-platform; iOS station post-pilot.
+3. **Release gate (hard)**: The overall product is **not** considered releasable until **thin POS + customer website + polished mobile_app + web-app management** are all at MVP quality.
+4. **Order types on home**: Dine-in, Carry-out, Delivery.
+   - Dine-in → full custom 2D table map (owner builds layout in web-app) → seat → open ticket → close & pay at end of meal.
+   - Carry-out / Delivery share order-creation flow; Delivery first collects customer + address (auto-fill name/phone/address when known).
+5. **Order creation**: Full menu + existing modifier system (reuse mobile_app / shared_core patterns).
+6. **Incoming online orders** (mobile / future website): auto-print, appear in the same open-order list, full management actions available.
+7. **Payments**: Card-present required; cash + automatic drawer open on cash tender; split tenders (manager-configurable max, default 3); discount UI (percentage/fixed) in MVP.
+8. **Large orders**: Manager sets threshold (amount and/or item count) or disables; over-threshold orders enter `needs_approval` and stay held until approved.
+9. **86’ing**: Manager-only; dialog chooses channels (mobile, customer website, in-store); all selected by default.
+10. **Allergens**: From existing menu-item data; prominent on printed tickets; high-visibility on-screen.
+11. **Staff / roles / PIN**: PIN session model (session timeout; forced re-PIN on void/refund/86/large-order/settings). Manager can create roles and assign permissions from the defined list. Thin staff records include roles + hourly pay + critical fields only. Separate lightweight driver and waitress lists (name + pay rate) for financial tracking.
+12. **Driver assignment**: Required on delivery order completion (critical for pay). No live delivery status tracking in MVP.
+13. **Order states (MVP)**: `draft` → `open` / `needs_approval` → `sent_to_kitchen` → `ready` → `completed` / `cancelled` (+ driver assigned at completion for delivery).
+14. **Offline**: Cash orders only when offline. Card and receiving mobile/website orders require online. If POS is down, customer channels should reflect inability to accept new orders.
+15. **Printing**: Multi-printer by menu category (or default); Ethernet ESC-POS preferred; idempotent print jobs. Absorbs prior cash/print toggle thinking.
+16. **Customer identity**: Prefer link to existing Auth users; fallback lightweight POS customer (name + phone + address). Every order carries source + optional customer/user reference.
+17. **Permissions model** (elevated actions protected): take_order, take_payment, open_drawer, void_item/void_order, refund, discount, 86_item, view_orders, manage_tables, change_settings, approve_large_order, manager_override.
+18. **Settings panel (first version)**: large-order threshold + enable/disable; max split tenders; prep/promised time; PIN session timeout; auto-print rules; default tip prompts.
+19. **Explicitly out of this MVP**: live delivery status tracking, full catering packages, complex inventory/recipe costing, advanced tips pooling or full time-clock, rich offline card processing, iOS as primary pilot device, complex multi-station orchestration beyond category→printer.
+
+**Rationale:** A pure kitchen-only app would not be used long-term and would not make the product market-viable. A counter-focused thin POS that can take orders, accept card + cash, open a drawer, seat tables, assign drivers, and reuse shared_core is the correct station surface. It starts thin enough to ship after Stripe and mobile/web polish, then expands.
+
+**Impact:** New `pos_app` target; web-app table-layout editor; staff/driver/waitress lightweight records; order source + customer linkage; expanded order states; permission model; absorption of prior kitchen print/cash rules; hard release gate includes customer website.
+
+**Reference:** `docs/slices/pos-app-v1.md`, `STATUS.md`, `HANDOFF.md`.
 
 ---
 
@@ -95,4 +125,4 @@ This file records major architectural and design decisions for the Doughboys Piz
 - Add new decisions with date, status, rationale, impact, and references.
 - Review before major refactors.
 
-**Last Updated**: July 29, 2026
+**Last Updated**: July 30, 2026

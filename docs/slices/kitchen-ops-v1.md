@@ -1,117 +1,34 @@
 # Slice: Kitchen Ops v1
 
-**Status**: **Locked** (product approved July 29, 2026 — implementation open)  
-**Branch**: TBD (`feat/kitchen-ops-v1` when work starts)  
-**Authority**: Decision **13** · STATUS · HANDOFF · this file  
-**Depends on**: Franchise-scoped orders; Stripe card path (Decision 12) for `paid` feed; Admin feature-toggle patterns  
-**Pilot device**: **Android** kitchen tablet; Flutter multi-platform codebase retained
+> **SUPERSEDED (July 30, 2026)**  
+> Product direction changed under **Decision 14**. A standalone thin Kitchen management app will not be shipped.  
+> Station surface is now the **thin POS app** — see `docs/slices/pos-app-v1.md` and Decision 14.  
+> Cash-on-pickup toggles, multi-printer category routing, manager-only void/refund, and print rules are absorbed into the POS slice.  
+> This file is retained for historical context only. Do not implement a separate kitchen-only binary.
 
 ---
 
-## 1. Problem
-
-MVP is **not** a full POS. Kitchen still needs:
-
-- Safe order board for **cooks** (no full Admin blast radius)
-- **Automatic** ticket printing to the right station printer(s)
-- Optional **cash on pickup** without confusing prepaid vs unpaid food
-- Manager visibility when the tablet or printer fails
+**Status**: **Superseded** (originally Locked July 29, 2026)  
+**Branch**: N/A  
+**Authority (historical)**: Decision 13 (now superseded in framing by Decision 14)  
+**Replacement**: `docs/slices/pos-app-v1.md` · Decision 14
 
 ---
 
-## 2. Product locks
+## Original problem (historical)
 
-### Thin Kitchen Flutter app
+MVP was framed as **not** a full POS. Kitchen needed a safe order board for cooks, automatic ticket printing, optional cash on pickup, and manager visibility on tablet/printer failure.
 
-| In | Out |
-|----|-----|
-| Franchise-locked live orders | Menu / promo / user admin |
-| Forward status (accept / in progress / ready / complete — exact enum at implement) | Free franchise switching on device |
-| Reprint | Design & Branding, Stripe Connect setup |
-| Connectivity / printer health signal | Cook-initiated void/refund |
+## Original product locks (historical)
 
-**Void / cancel / refund:** **manager-only** (PIN, manager role session, or Admin on manager device — implementation choice).
+Thin Kitchen Flutter app for cooks only; Admin cashOnPickup + cashPrintOnAcceptOnly toggles; multi-printer by category; card auto-print on `paid`; cash print rules; manager-only void/cancel/refund; Android make-line tablet; manager push/SMS on failure.
 
-### Admin feature cards (franchise-scoped)
+Full POS (cash drawer, card-present, complex table service) was explicitly out of MVP at the time.
 
-| Toggle | Behavior |
-|--------|----------|
-| **Cash on pickup** (master) | Customer may choose cash at checkout; board/ticket show PAY CASH |
-| **Require accept before cash print** (sub; only if master on) | OFF (default): print cash on **submit**. ON: print after cook **Accept** |
-| Other feature cards (e.g. Inventory) | Independent; same Admin feature area |
+## Why superseded
 
-### Print rules
-
-| Pay path | When to auto-print |
-|----------|---------------------|
-| Card (Connect) | On **`paid`** |
-| Cash, sub-toggle OFF | On **submit** |
-| Cash, sub-toggle ON | On cook **Accept** |
-
-- **Multi-printer:** `categoryId` → printer id(s); multiple categories per printer; default printer for unmapped.
-- Prefer **Ethernet ESC-POS**; print idempotent per order/station (`printedAt` / print job records).
-- Local LAN print path (agent and/or tablet SDK) — cloud does not open sockets to in-store printers through NAT.
-
-### Manager alerts
-
-- Heartbeat from kitchen station / print path.
-- On offline or print failure → **push + SMS** to franchise assigned manager user(s).
-
-### Hardware pilot
-
-- **Android tablet** at make line (DoorDash-like).
-- Printer beside tablet; Ethernet ESC-POS preferred.
-- iOS kitchen station **post-pilot** unless explicitly scheduled.
+A pure kitchen-only management app would not be used long-term and would not make the product market-viable. The counter-focused thin POS (Decision 14) is the correct station surface and reuses the valid print, cash-toggle, and manager-gate thinking without a throwaway binary.
 
 ---
 
-## 3. Workstreams
-
-| ID | Deliverable | Status |
-|----|-------------|--------|
-| **K0** | Docs lock (this file + Decision 13) | **Done** |
-| **K1** | Admin feature toggles: cashOnPickup + cashPrintOnAcceptOnly | Open |
-| **K2** | Franchise printer config + category routing | Open |
-| **K3** | Thin Kitchen app shell: auth, franchise lock, order stream UI | Open |
-| **K4** | Status actions (cook) + manager-only void/cancel/refund gates | Open |
-| **K5** | Auto-print pipeline + idempotency (paid / cash rules) | Open |
-| **K6** | Heartbeat + manager push/SMS on failure | Open |
-| **K7** | Customer checkout: cash option when flag on; PAY CASH honesty | Open |
-| **K8** | Android pilot smoke (real + test orders) | Open |
-| **K9** | Acceptance + STATUS close | Open |
-
----
-
-## 4. Acceptance (implementation)
-
-- [ ] Cooks cannot reach full Admin features from Kitchen app
-- [ ] Manager can void/cancel/refund; cook cannot
-- [ ] Cash toggle off → no cash option in customer checkout
-- [ ] Cash toggle on → cash path + clear PAY CASH on board/ticket
-- [ ] Sub-toggle changes cash print timing (submit vs accept)
-- [ ] Card paid → auto-print
-- [ ] Multi-printer category routing + default fallback
-- [ ] Reprint does not create unbounded duplicates without control
-- [ ] Manager notified on tablet offline / print error
-- [ ] Android tablet pilot path documented
-
----
-
-## 5. Out of scope
-
-- Full POS, cash drawer, card-present terminal suite  
-- Geo, guest pay, marketplace logistics  
-- Replacing Decision 11/12  
-- iOS kitchen kiosk certification  
-
----
-
-## 6. Sequencing note
-
-Prefer **Stripe card paid orders** feeding the board for happy-path QA; cash flags can land with checkout. Kitchen UI may develop against seeded/test orders in parallel.
-
----
-
-## 7. Bottom line
-
-**Thin Kitchen Flutter app** for cooks; **Admin toggles** for cash and cash-print policy; **multi-printer by category**; **auto-print** with clear card vs cash rules; **manager-only** destructive money actions; **Android** pilot tablet with multi-platform code retained.
+**Do not start work from this file.** Use `pos-app-v1.md`.
