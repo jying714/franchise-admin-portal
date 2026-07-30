@@ -1,5 +1,5 @@
 /// Pure Dart QR payload utilities for franchise white-label deep linking and QR codes.
-/// 
+///
 /// Payload format (custom scheme for foundations):
 ///   fhq://f/{franchiseId}
 ///   fhq://f/{franchiseId}?name=EncodedName
@@ -15,15 +15,24 @@
 String generateFranchiseQR(
   String franchiseId, {
   String? name,
-  String scheme = 'fhq',
+
+  /// Prefer https so phone cameras and online QR tools open a real URL.
+  /// Custom scheme `fhq` remains supported by [parseFranchiseQR].
+  String scheme = 'https',
+  String host = 'franchisehq.io',
 }) {
   if (franchiseId.isEmpty) {
     throw ArgumentError('franchiseId cannot be empty');
   }
 
-  var payload = '$scheme://f/$franchiseId';
+  final String payload;
+  if (scheme == 'fhq') {
+    payload = 'fhq://f/$franchiseId';
+  } else {
+    payload = '$scheme://$host/f/$franchiseId';
+  }
   if (name != null && name.isNotEmpty) {
-    payload += '?name=${Uri.encodeComponent(name)}';
+    return '$payload?name=${Uri.encodeComponent(name)}';
   }
   return payload;
 }
@@ -36,40 +45,62 @@ Map<String, String> parseFranchiseQR(String qrContent) {
     return {'franchiseId': '', 'name': ''};
   }
 
+  String nameFrom(Uri uri) =>
+      uri.queryParameters['name'] ?? uri.queryParameters['n'] ?? '';
+
   try {
     final uri = Uri.parse(trimmed);
 
-    // Standard fhq://f/{id} or https://franchisehq.io/f/{id}
+    // fhq://f/{id}  → host is "f", path is /{id}
+    if ((uri.scheme == 'fhq' ||
+            uri.scheme == 'https' ||
+            uri.scheme == 'http') &&
+        uri.host == 'f' &&
+        uri.pathSegments.isNotEmpty) {
+      final id = uri.pathSegments.first.trim();
+      if (_isSafeFranchiseId(id)) {
+        return {'franchiseId': id, 'name': nameFrom(uri)};
+      }
+    }
+
+    // https://franchisehq.io/f/{id}  or  .../franchise/{id}
     if (uri.pathSegments.length >= 2) {
       final first = uri.pathSegments[0];
       if (first == 'f' || first == 'franchise') {
-        final id = uri.pathSegments[1];
-        if (id.isNotEmpty) {
-          return {
-            'franchiseId': id,
-            'name': uri.queryParameters['name'] ?? uri.queryParameters['n'] ?? '',
-          };
+        final id = uri.pathSegments[1].trim();
+        if (_isSafeFranchiseId(id)) {
+          return {'franchiseId': id, 'name': nameFrom(uri)};
         }
       }
     }
 
-    // Fallback: https://.../f/123 or raw id
     if (trimmed.contains('/f/')) {
       final afterF = trimmed.split('/f/').last;
-      final id = afterF.split('?').first.split('#').first;
-      if (id.isNotEmpty) {
+      final id = afterF.split('?').first.split('#').first.trim();
+      if (_isSafeFranchiseId(id)) {
         return {
           'franchiseId': id,
-          'name': Uri.splitQueryString(trimmed.split('?').lastOrNull ?? '')['name'] ?? '',
+          'name': nameFrom(Uri.parse(
+              trimmed.contains('://') ? trimmed : 'https://x?$trimmed')),
         };
       }
     }
-  } catch (_) {
-    // not a uri, treat as raw franchise id (test data etc)
+  } catch (_) {}
+
+  // Raw id only (no path separators)
+  if (_isSafeFranchiseId(trimmed)) {
+    return {'franchiseId': trimmed, 'name': ''};
   }
 
-  // Last resort: treat whole content as franchiseId (allows manual paste of just the id)
-  return {'franchiseId': trimmed, 'name': ''};
+  return {'franchiseId': '', 'name': ''};
+}
+
+bool _isSafeFranchiseId(String id) {
+  if (id.isEmpty || id == 'unknown') return false;
+  // Document ids must not contain '/' or the Firestore path is not a document.
+  if (id.contains('/')) return false;
+  if (id.contains(' ') || id.contains('\n')) return false;
+  return true;
 }
 
 /// Convenience: returns true if the payload looks like a valid franchise QR.

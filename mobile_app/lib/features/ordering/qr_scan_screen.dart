@@ -82,10 +82,11 @@ class _QrScanScreenState extends State<QrScanScreen> {
       final parsed = shared.parseFranchiseQR(raw);
       final franchiseId = parsed['franchiseId'] ?? '';
 
-      if (franchiseId.isEmpty) {
-        throw Exception('Invalid franchise QR payload');
+      if (franchiseId.isEmpty || franchiseId.contains('/')) {
+        throw Exception(
+          'Invalid franchise QR. Expected fhq://f/{id} or https://franchisehq.io/f/{id}',
+        );
       }
-
       final ok = await FranchiseBindService.bind(context, franchiseId);
       if (!mounted) return;
 

@@ -23,7 +23,7 @@ class FranchiseBindService {
     bool navigateToMainMenu = true,
   }) async {
     final id = franchiseId.trim();
-    if (id.isEmpty || id == 'unknown') return false;
+    if (id.isEmpty || id == 'unknown' || id.contains('/')) return false;
 
     final fp = Provider.of<shared.FranchiseProvider>(context, listen: false);
     final fromId = fp.currentFranchiseId;

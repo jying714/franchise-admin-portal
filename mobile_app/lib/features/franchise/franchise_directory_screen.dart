@@ -6,6 +6,7 @@ import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
 import 'package:franchise_mobile_app/features/auth/sign_in_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:franchise_mobile_app/features/ordering/qr_scan_screen.dart';
 
 /// CF7: Public directory foundation — listed franchises only; bind on select.
 class FranchiseDirectoryScreen extends StatefulWidget {
@@ -92,7 +93,6 @@ class _FranchiseDirectoryScreenState extends State<FranchiseDirectoryScreen> {
               )
             : null,
         actions: [
-          // When directory is root (post-auth, no franchise), user must reach Sign in again.
           if (Provider.of<shared.User?>(context, listen: false) == null)
             TextButton(
               onPressed: () {
@@ -124,6 +124,39 @@ class _FranchiseDirectoryScreenState extends State<FranchiseDirectoryScreen> {
                 ),
               ),
               onChanged: (v) => setState(() => _query = v),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: _binding
+                      ? null
+                      : () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const QrScanScreen(),
+                            ),
+                          );
+                        },
+                  icon: const Icon(Icons.qr_code_scanner),
+                  label: const Text('Scan restaurant QR'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Have a table or store QR? Scan it to open that restaurant’s menu. '
+                  'Or pick a location from the list below.',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                ),
+              ],
             ),
           ),
           if (_binding)

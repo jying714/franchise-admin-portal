@@ -63,6 +63,7 @@ class OnboardingProgressProviderImpl extends ChangeNotifier
         'ingredients',
         'categories',
         'onboarding_feature_setup',
+        'onboarding_design_branding',
         'onboarding_menu_foundation',
         'onboardingMenuItems',
         'onboardingReview',

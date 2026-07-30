@@ -125,43 +125,30 @@ class _MainMenuScreenState extends material.State<MainMenuScreen> {
                 tooltip: 'Change restaurant',
                 onPressed: () => ChangeRestaurantSheet.show(context),
               ),
-              ProfileIconButton(
-                tooltip: loc.profile,
-                onPressed: () {
-                  if (FirebaseAuth.instance.currentUser == null) {
+              // Signed-in only: profile + cart. Guest uses banner for Sign in;
+              // QR lives on directory / change-restaurant sheet.
+              if (FirebaseAuth.instance.currentUser != null) ...[
+                ProfileIconButton(
+                  tooltip: loc.profile,
+                  onPressed: () {
                     material.Navigator.push(
                       context,
                       material.MaterialPageRoute(
-                        builder: (_) => const SignInScreen(),
+                        builder: (_) => const ProfileScreen(),
                       ),
                     );
-                    return;
-                  }
-                  material.Navigator.push(
+                  },
+                ),
+                CartIconBadge(
+                  tooltip: loc.cart,
+                  onPressed: () => material.Navigator.push(
                     context,
                     material.MaterialPageRoute(
-                      builder: (_) => const ProfileScreen(),
+                      builder: (_) => const CartScreen(),
                     ),
-                  );
-                },
-              ),
-              material.IconButton(
-                icon: const material.Icon(material.Icons.qr_code_scanner),
-                tooltip: 'Scan Franchise QR',
-                onPressed: () => material.Navigator.push(
-                  context,
-                  material.MaterialPageRoute(
-                      builder: (_) => const QrScanScreen()),
+                  ),
                 ),
-              ),
-              CartIconBadge(
-                tooltip: loc.cart,
-                onPressed: () => material.Navigator.push(
-                  context,
-                  material.MaterialPageRoute(
-                      builder: (_) => const CartScreen()),
-                ),
-              ),
+              ],
               const material.SizedBox(width: shared.DesignTokens.gridSpacing),
             ],
           ),

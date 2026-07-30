@@ -172,13 +172,23 @@ void _handleDeepLink(Uri uri) {
     final franchiseId = parsed['franchiseId'];
     if (franchiseId == null || franchiseId.isEmpty) return;
 
-    final context = navigatorKey.currentContext;
-    if (context == null) return;
-
-    FranchiseBindService.bind(context, franchiseId).catchError((_) {});
+    _bindFranchiseFromDeepLink(franchiseId);
   } catch (_) {
     // invalid / unknown link - silently ignore
   }
+}
+
+/// Retries until navigator is ready (cold start) then binds once.
+void _bindFranchiseFromDeepLink(String franchiseId, {int attempt = 0}) {
+  final context = navigatorKey.currentContext;
+  if (context != null) {
+    FranchiseBindService.bind(context, franchiseId).catchError((_) {});
+    return;
+  }
+  if (attempt >= 40) return; // ~2s at 50ms
+  Future<void>.delayed(const Duration(milliseconds: 50), () {
+    _bindFranchiseFromDeepLink(franchiseId, attempt: attempt + 1);
+  });
 }
 
 /// T1: Derive semantic ColorScheme from franchise primary/secondary seeds.

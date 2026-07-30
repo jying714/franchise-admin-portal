@@ -24,6 +24,7 @@ import 'package:qr_flutter/qr_flutter.dart'; // P2 QR display foundations
 import 'package:franchise_mobile_app/features/ordering/qr_scan_screen.dart';
 import 'package:franchise_mobile_app/features/franchise/change_restaurant_sheet.dart';
 import 'package:franchise_mobile_app/core/services/franchise_bind_service.dart';
+import 'package:franchise_mobile_app/features/auth/sign_in_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -117,10 +118,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   }
                   final shared.User? user = snapshot.data;
                   if (user == null) {
-                    return EmptyStateWidget(
-                      title: l10n.notSignedIn,
-                      message: l10n.pleaseSignInToAccessProfile,
-                      iconData: Icons.person_off,
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.person_off, size: 64),
+                            const SizedBox(height: 16),
+                            Text(
+                              l10n.notSignedIn,
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              l10n.pleaseSignInToAccessProfile,
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                            const SizedBox(height: 24),
+                            FilledButton(
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const SignInScreen(),
+                                  ),
+                                );
+                              },
+                              child: Text(l10n.signIn),
+                            ),
+                          ],
+                        ),
+                      ),
                     );
                   }
 

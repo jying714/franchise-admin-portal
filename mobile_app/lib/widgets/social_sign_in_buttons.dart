@@ -200,8 +200,12 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
             width: double.infinity,
             child: ElevatedButton.icon(
               icon: const Icon(Icons.g_mobiledata, color: Colors.red, size: 24),
-              label: Text('Sign in with Google',
-                  style: shared.UiConfig.bodyBoldStyle),
+              label: Text(
+                'Sign in with Google',
+                style: shared.UiConfig.bodyBoldStyle.copyWith(
+                  color: Colors.black87,
+                ),
+              ),
               onPressed: isBusy
                   ? null
                   : () => _handleSignIn(
@@ -209,10 +213,11 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
                         () async => await authService.signInWithGoogle(),
                       ),
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    widget.googleButtonColor ?? shared.UiConfig.surfaceColor,
-                foregroundColor: shared.UiConfig.textColor,
+                backgroundColor: widget.googleButtonColor ?? Colors.white,
+                foregroundColor: Colors.black87,
+                disabledForegroundColor: Colors.black54,
                 padding: shared.UiConfig.defaultPadding,
+                side: BorderSide(color: Colors.grey.shade300),
               ),
             ),
           ),
