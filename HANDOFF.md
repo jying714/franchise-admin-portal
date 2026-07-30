@@ -1,8 +1,8 @@
 # HANDOFF.md — Agent Context & Project Status
 
-**Last Updated**: July 29, 2026 (~23:30 CDT — customer franchise context v1 complete)  
+**Last Updated**: July 29, 2026 (~23:55 CDT — customer franchise context v1 on main)  
 **Hardware**: MINISFORUM AI X1 Pro-470  
-**Active branch**: `feat/customer-franchise-context-v1`  
+**Active branch**: `main`  
 **Repo**: https://github.com/jying714/franchise-admin-portal  
 **Local path**: `C:\\projects\\franchise-admin-portal`  
 **Firebase**: `doughboyspizzeria-2b3d2`  
@@ -14,9 +14,7 @@ Prefer **STATUS.md + this handoff + `docs/slices/*` + `docs/DECISIONS.md`** over
 
 ## 1. Where we are
 
-**On `main` and done:** HQ onboarding, Design & Branding, Platform Owner, Admin ops, menu M1–M5 + wings/calzone, mobile design tokens T1–T9, developer dashboard D0–D10.
-
-**On `feat/customer-franchise-context-v1` (COMPLETE — human merge gate):** Decision 11 customer franchise context — bind pipeline, directory, QR/https, recents/switcher, cart clear, signed-out browse + auth-gated cart/checkout.
+**On `main` and done:** HQ onboarding, Design & Branding, Platform Owner, Admin ops, menu M1–M5 + wings/calzone, mobile design tokens T1–T9, developer dashboard D0–D10, **customer franchise context v1** (Decision 11).
 
 **Still locked for release / pilot MVP (not yet built):**
 
@@ -29,11 +27,11 @@ Pilot: **real + mock** franchise; make-line **Android tablet** + Ethernet ESC-PO
 
 ---
 
-## 2. Decision 11 — Customer multi-franchise (delivered)
+## 2. Decision 11 — Customer multi-franchise (on main)
 
-Hybrid binary; session = one franchiseId; QR/SMS/https primary + directory foundation; **signed-out browse menu**; **add-to-cart / cart / checkout require auth** (guest cart deferred); cart clear on switch; `FranchiseBindService` single pipeline.
+Hybrid binary; session = one franchiseId; QR/SMS/https primary + directory foundation; **signed-out browse menu**; **add-to-cart / cart / checkout require auth** (guest cart deferred); cart clear on switch; `FranchiseBindService` single pipeline; guest app bar slim (title + change restaurant).
 
-Authority: `docs/slices/customer-franchise-context-v1.md` (closed).
+Authority: `docs/slices/customer-franchise-context-v1.md` (**COMPLETE on main**).
 
 ---
 
@@ -62,13 +60,13 @@ Cash is **not** Connect; see Decision 13 toggles.
 
 ## 5. Do not regress (menu + franchise context)
 
-Pizza optionalAddOns; included not auto-charged; wings 2 portions + W2 pool; no dual menu write paths; no FranchiseProvider zero-arg / DesignTokens color invention; **no silent default tenant**; **no product bind outside FranchiseBindService**.
+Pizza optionalAddOns; included not auto-charged; wings 2 portions + W2 pool; no dual menu write paths; no FranchiseProvider zero-arg / DesignTokens color invention; **no silent default tenant**; **no product bind outside FranchiseBindService**; progress load includes **`onboarding_design_branding`**.
 
 ---
 
 ## 6. Implementation order
 
-1. ~~Customer franchise context v1~~ **DONE** (branch; merge when ready)  
+1. ~~Customer franchise context v1~~ **DONE on `main`**  
 2. Stripe checkout v1 (card path enables kitchen paid feed)  
 3. Kitchen ops v1 (board + print + cash flags + manager gates)  
 4. Pilot polish  
@@ -81,7 +79,7 @@ Kitchen can use test paid/submitted orders in parallel once order status model i
 
 - `STATUS.md`  
 - `docs/DECISIONS.md` (11–13)  
-- `docs/slices/customer-franchise-context-v1.md` (**COMPLETE**)  
+- `docs/slices/customer-franchise-context-v1.md` (**COMPLETE on main**)  
 - `docs/slices/stripe-checkout-v1.md`  
 - `docs/slices/kitchen-ops-v1.md`  
 - `docs/slices/mobile-design-tokens-v1.md`  
@@ -89,4 +87,4 @@ Kitchen can use test paid/submitted orders in parallel once order status model i
 
 ---
 
-**Bottom line:** Customer franchise context is implemented on the feature branch. Next build focus = **dual Stripe + thin kitchen ops**. Cooks never get full Admin on the pass tablet.
+**Bottom line:** Customer franchise context is on **`main`**. Next build focus = **dual Stripe**, then **thin kitchen ops**. Cooks never get full Admin on the pass tablet.
