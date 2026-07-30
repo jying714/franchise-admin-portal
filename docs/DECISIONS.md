@@ -1,6 +1,6 @@
 # Architecture Decision Log (DECISIONS.md)
 
-**Last Updated**: July 29, 2026 (Decision 11 implemented — customer franchise context v1)
+**Last Updated**: July 29, 2026 (Decision 11 complete on main — customer franchise context v1)
 
 This file records major architectural and design decisions for the Doughboys Pizzeria Franchise Platform.
 
@@ -54,7 +54,7 @@ This file records major architectural and design decisions for the Doughboys Piz
 
 ### 11. Customer App — Hybrid Multi-Tenant Binary & Franchise Context
 **Date**: July 29, 2026  
-**Status**: **Implemented** on `feat/customer-franchise-context-v1` (merge to `main` = human gate)  
+**Status**: **Complete on `main`**  
 **Summary:** One customer binary; session = one `franchiseId`; QR/SMS/https primary + directory foundation; signed-out **menu browse**; **add-to-cart / cart / checkout require auth** (cart is user-scoped in Firestore; guest cart deferred); cart clear on switch; single `FranchiseBindService` pipeline.  
 **Reference:** `docs/slices/customer-franchise-context-v1.md`.
 
