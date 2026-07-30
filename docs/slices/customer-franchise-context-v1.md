@@ -1,7 +1,7 @@
 # Slice: Customer Franchise Context v1
 
-**Status**: **COMPLETE** (implemented + smoke-passed July 29, 2026)  
-**Branch**: `feat/customer-franchise-context-v1`  
+**Status**: **COMPLETE on `main`** (implemented + smoke-passed + merged July 29–30, 2026)  
+**Branch**: merged; feature branch deleted  
 **Authority**: Decision **11** · STATUS · HANDOFF · this file  
 **Depends on**: FranchiseProvider, QR/deep link foundations, mobile tokens on `main`  
 **Pilot**: Real franchise + mock seeded franchise (both directory-listable)
@@ -30,6 +30,7 @@ Customer app can bind a franchise via QR/deep link foundations and holds `select
 | Bind | One pipeline (`FranchiseBindService`) for link, QR, directory, recents, switcher |
 | Landing | No franchise → **SignInScreen** (auth + Browse directory) |
 | Signed-out | **Browse menu OK**; **add-to-cart / cart / checkout require auth** (Firestore cart is user-scoped; guest cart deferred) |
+| Guest app bar | Title + change restaurant only (no profile/cart/QR clutter) |
 | Cart switch | Confirm → clear cart → switch |
 | Share QR payload | Prefer `https://franchisehq.io/f/{id}` (parse still accepts `fhq://f/{id}`) |
 | Geo | Out of v1 |
@@ -65,6 +66,8 @@ Customer app can bind a franchise via QR/deep link foundations and holds `select
 | `mobile_app/lib/main.dart` | HomeWrapper session routing; IngredientMetadataProvider reload |
 | `packages/shared_core/lib/src/core/utils/qr_utils.dart` | parse/generate franchise QR |
 
+**Web residual:** `OnboardingProgressProviderImpl` `defaultSteps` must include `onboarding_design_branding` so Step 2 survives cold load.
+
 ---
 
 ## 5. Directory data
@@ -86,6 +89,7 @@ Customer app can bind a franchise via QR/deep link foundations and holds `select
 - [x] Mock and real franchises switchable in QA
 - [x] No cross-franchise cart merge
 - [x] Directory QR scan CTA; share QR https-form
+- [x] Merged to `main`; feature branch deleted
 
 ---
 
@@ -101,4 +105,4 @@ Customer app can bind a franchise via QR/deep link foundations and holds `select
 
 ## 8. Bottom line
 
-**Shipped on `feat/customer-franchise-context-v1`:** link/QR/directory **bind pipeline**, cold start without silent tenant, directory foundation, recents/switcher, safe cart clear, signed-out **browse** with **auth-gated cart/checkout**, ingredient reload after bind. Next release epic: **`stripe-checkout-v1`**.
+**Shipped on `main`:** link/QR/directory **bind pipeline**, cold start without silent tenant, directory foundation, recents/switcher, safe cart clear, signed-out **browse** with **auth-gated cart/checkout**, ingredient reload after bind. Next release epic: **`stripe-checkout-v1`**.
