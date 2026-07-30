@@ -1,8 +1,8 @@
 # HANDOFF.md — Agent Context & Project Status
 
-**Last Updated**: July 29, 2026 (~23:55 CDT — customer franchise context v1 on main)  
+**Last Updated**: July 30, 2026 (~10:30 CDT — stripe-checkout-v1 active)  
 **Hardware**: MINISFORUM AI X1 Pro-470  
-**Active branch**: `main`  
+**Active branch**: `feat/stripe-checkout-v1`  
 **Repo**: https://github.com/jying714/franchise-admin-portal  
 **Local path**: `C:\\projects\\franchise-admin-portal`  
 **Firebase**: `doughboyspizzeria-2b3d2`  
@@ -16,11 +16,16 @@ Prefer **STATUS.md + this handoff + `docs/slices/*` + `docs/DECISIONS.md`** over
 
 **On `main` and done:** HQ onboarding, Design & Branding, Platform Owner, Admin ops, menu M1–M5 + wings/calzone, mobile design tokens T1–T9, developer dashboard D0–D10, **customer franchise context v1** (Decision 11).
 
-**Still locked for release / pilot MVP (not yet built):**
+**Active implementation:**
+
+| Slice | Decision | Branch |
+|--------|----------|--------|
+| `docs/slices/stripe-checkout-v1.md` | 12 | `feat/stripe-checkout-v1` (ST0 done; **ST1 next**) |
+
+**Still locked (not started):**
 
 | Slice | Decision |
 |--------|----------|
-| `docs/slices/stripe-checkout-v1.md` | 12 |
 | `docs/slices/kitchen-ops-v1.md` | 13 |
 
 Pilot: **real + mock** franchise; make-line **Android tablet** + Ethernet ESC-POS; DoorDash-like placement.
@@ -43,6 +48,8 @@ Card orders → Franchise Connect + application fee → Platform
 ```
 
 Cash is **not** Connect; see Decision 13 toggles.
+
+**Current work:** ST1 — franchise fields (`stripeConnectAccountId`, status, `paymentsEnabled`) + rules honesty. See slice for full ST0–ST8.
 
 ---
 
@@ -67,7 +74,7 @@ Pizza optionalAddOns; included not auto-charged; wings 2 portions + W2 pool; no 
 ## 6. Implementation order
 
 1. ~~Customer franchise context v1~~ **DONE on `main`**  
-2. Stripe checkout v1 (card path enables kitchen paid feed)  
+2. **Stripe checkout v1** (card path enables kitchen paid feed) — **in progress**  
 3. Kitchen ops v1 (board + print + cash flags + manager gates)  
 4. Pilot polish  
 
@@ -80,11 +87,11 @@ Kitchen can use test paid/submitted orders in parallel once order status model i
 - `STATUS.md`  
 - `docs/DECISIONS.md` (11–13)  
 - `docs/slices/customer-franchise-context-v1.md` (**COMPLETE on main**)  
-- `docs/slices/stripe-checkout-v1.md`  
+- `docs/slices/stripe-checkout-v1.md` (**active**)  
 - `docs/slices/kitchen-ops-v1.md`  
 - `docs/slices/mobile-design-tokens-v1.md`  
 - `docs/slices/menu-modifier-system-rebuild-v1.md`  
 
 ---
 
-**Bottom line:** Customer franchise context is on **`main`**. Next build focus = **dual Stripe**, then **thin kitchen ops**. Cooks never get full Admin on the pass tablet.
+**Bottom line:** Customer franchise context is on **`main`**. Active build focus = **dual Stripe on `feat/stripe-checkout-v1`** (ST1 next). Then **thin kitchen ops**. Cooks never get full Admin on the pass tablet.

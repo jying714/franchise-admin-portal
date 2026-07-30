@@ -1,7 +1,7 @@
 # Slice: Stripe Checkout v1 (Platform + Connect)
 
-**Status**: **Locked** (product approved July 29, 2026 — implementation open)  
-**Branch**: TBD (`feat/stripe-checkout-v1` when work starts)  
+**Status**: **In progress** (product approved July 29, 2026; implementation started July 30)  
+**Branch**: `feat/stripe-checkout-v1`  
 **Authority**: Decision **12** · STATUS · HANDOFF · this file  
 **Depends on**: Active `franchiseId` (Decision 11); Platform Owner billing surfaces may already list invoices  
 **Pilot**: Test mode for mock + real; live charges only when real franchise Connect-ready  
@@ -59,7 +59,7 @@ Cash on pickup      → No Connect charge; kitchen-ops feature flags (Decision 1
 | ID | Deliverable | Status |
 |----|-------------|--------|
 | **ST0** | Docs lock | **Done** |
-| **ST1** | Franchise fields: connected account id, status, `paymentsEnabled` | Open |
+| **ST1** | Franchise fields: connected account id, status, `paymentsEnabled` | **Next** |
 | **ST2** | HQ Connect onboarding entry + status honesty | Open |
 | **ST3** | Create PaymentIntent (Connect + application fee) | Open |
 | **ST4** | Webhooks → order paid/failed; idempotent | Open |
@@ -100,3 +100,5 @@ Cash on pickup      → No Connect charge; kitchen-ops feature flags (Decision 1
 ## 7. Bottom line
 
 **Platform Stripe** bills franchises for software. **Connect per franchise** takes **customer card** payments with an **application fee**. **Cash on pickup** is a separate toggled fulfillment mode under kitchen-ops, not a second card architecture.
+
+**Next concrete step:** ST1 — model + persist franchise Connect account id / status / `paymentsEnabled` (shared_core + Firestore rules honesty; fail-closed default).
