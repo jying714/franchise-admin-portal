@@ -18,7 +18,7 @@ class CartIconBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<shared.FranchiseProvider>(
       builder: (context, franchiseProvider, child) {
-        // Batch 2: already using FranchiseProvider for scoping + badge updates
+        // No franchise → plain icon (no stream).
         if (!franchiseProvider.hasValidFranchise) {
           return IconButton(
             icon: const Icon(Icons.shopping_cart_outlined),
@@ -27,7 +27,19 @@ class CartIconBadge extends StatelessWidget {
           );
         }
 
-        final userId = shared.FirebaseAuth.instance.currentUser?.uid ?? '';
+        // Signed-out browse: cart is auth-scoped; never call Firestore with empty userId.
+        final userId = shared.FirebaseAuth.instance.currentUser?.uid;
+        if (userId == null || userId.isEmpty) {
+          return IconButton(
+            icon: Icon(
+              Icons.shopping_cart_outlined,
+              size: shared.DesignTokens.iconSize,
+              color: shared.UiConfig.foregroundColor,
+            ),
+            onPressed: onPressed,
+            tooltip: tooltip ?? 'Cart',
+          );
+        }
 
         return StreamBuilder<int>(
           stream: Provider.of<shared.FirestoreService>(context, listen: false)

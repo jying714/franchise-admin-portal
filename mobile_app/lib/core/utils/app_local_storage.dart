@@ -31,6 +31,16 @@ class AppLocalStorage implements shared.LocalStorage {
     return _prefs!.getString(key);
   }
 
+  Future<void> setStringList(String key, List<String> value) async {
+    await _ensurePrefs();
+    await _prefs!.setStringList(key, value);
+  }
+
+  Future<List<String>> getStringListAsync(String key) async {
+    await _ensurePrefs();
+    return _prefs!.getStringList(key) ?? const <String>[];
+  }
+
   @override
   Future<void> remove(String key) async {
     await _ensurePrefs();

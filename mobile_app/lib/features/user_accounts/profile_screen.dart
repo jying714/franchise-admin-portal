@@ -14,7 +14,7 @@ import 'package:franchise_mobile_app/features/user_accounts/scheduled_orders_scr
 import 'package:franchise_mobile_app/features/user_accounts/favorites_screen.dart';
 import 'package:franchise_mobile_app/features/language/language_screen.dart';
 import 'package:franchise_mobile_app/features/chat_support/chat_screen.dart';
-import 'package:franchise_mobile_app/features/home/home_screen.dart';
+import 'package:franchise_mobile_app/features/auth/sign_in_screen.dart';
 import 'package:franchise_mobile_app/features/user_accounts/complete_profile_dialog.dart';
 import 'package:franchise_mobile_app/core/models/user.dart' as user_model;
 import 'package:franchise_mobile_app/features/loyalty/loyalty_screen.dart';
@@ -22,6 +22,8 @@ import 'package:franchise_mobile_app/widgets/loyalty_points_widget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // P2 theme test reload only
 import 'package:qr_flutter/qr_flutter.dart'; // P2 QR display foundations
 import 'package:franchise_mobile_app/features/ordering/qr_scan_screen.dart';
+import 'package:franchise_mobile_app/features/franchise/change_restaurant_sheet.dart';
+import 'package:franchise_mobile_app/core/services/franchise_bind_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -232,12 +234,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           // Loyalty points display (foundational, franchise-aware)
                           const LoyaltyPointsWidget(),
 
+                          ListTile(
+                            leading: Icon(
+                              Icons.storefront_outlined,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            title: const Text('Change restaurant'),
+                            subtitle: Text(
+                              franchiseProvider.hasValidFranchise
+                                  ? franchiseProvider.currentAppName
+                                  : 'Select a restaurant',
+                            ),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: () => ChangeRestaurantSheet.show(context),
+                          ),
+                          const Divider(),
                           // P2 dev-only: simple live theme switcher for white-label testing.
                           // Toggles shared.UiConfig + app-wide ThemeData via FranchiseProvider branding.
                           // In real use this would come from FranchiseSelector + full reload.
-                          _buildThemeTestSection(
-                              context, franchiseProvider, firestoreService),
-
                           // P2: Franchise QR display (shareable deep link) - foundations
                           _buildFranchiseQRSection(context, franchiseProvider),
 
@@ -283,7 +297,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               if (mounted) {
                                 Navigator.of(context).pushAndRemoveUntil(
                                   MaterialPageRoute(
-                                      builder: (_) => const HomeScreen()),
+                                      builder: (_) => const SignInScreen()),
                                   (route) => false,
                                 );
                               }
@@ -299,103 +313,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         );
       },
-    );
-  }
-
-  // P2 test helper - simple theme switcher (dev foundations only).
-  // Demonstrates live color/appName propagation without full app restart.
-  Widget _buildThemeTestSection(
-    BuildContext context,
-    shared.FranchiseProvider fp,
-    shared.FirestoreService fs,
-  ) {
-    // l10n available for future localization of test labels
-    final scheme = Theme.of(context).colorScheme;
-    return Card(
-      color: scheme.surface,
-      margin: const EdgeInsets.symmetric(vertical: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
-        side: BorderSide(color: scheme.outline),
-      ),
-      child: Padding(
-        padding: shared.UiConfig.cardPadding,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '🧪 Theme Test (P2 Dev)',
-              style:
-                  shared.UiConfig.bodyBoldStyle.copyWith(color: scheme.primary),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Tap to live-switch branding. Affects this screen + global ThemeData.',
-              style: shared.UiConfig.captionStyle,
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: [
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        const Color(0xFFE31837), // intentional test value
-                    foregroundColor: shared.UiConfig.onPrimaryColor,
-                  ),
-                  onPressed: () async {
-                    fp.setBrandingFromFranchiseDoc({
-                      'name': 'Doughboys Pizzeria',
-                      'appName': 'Doughboys Pizzeria',
-                      'primaryColorHex': '#E31837',
-                      'secondaryColorHex': '#FFD700',
-                      'logoUrl': null,
-                    });
-                    // Optional: also change the logical franchise id for full flow
-                    await fp.setFranchiseId('doughboys_pizzeria');
-                    if (mounted) setState(() {});
-                  },
-                  child: const Text('Doughboys (Red/Gold)'),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        const Color(0xFF2E7D32), // intentional test value
-                    foregroundColor: shared.UiConfig.onPrimaryColor,
-                  ),
-                  onPressed: () async {
-                    fp.setBrandingFromFranchiseDoc({
-                      'name': 'Test Green Bistro',
-                      'appName': 'Green Bistro',
-                      'primaryColorHex': '#2E7D32',
-                      'secondaryColorHex': '#81C784',
-                    });
-                    await fp.setFranchiseId('test_green');
-                    if (mounted) setState(() {});
-                  },
-                  child: const Text('Test Green'),
-                ),
-                OutlinedButton(
-                  onPressed: () async {
-                    // Re-load real data for current id (if exists in Firestore)
-                    try {
-                      final doc = await FirebaseFirestore.instance
-                          .collection('franchises')
-                          .doc(fp.currentFranchiseId)
-                          .get();
-                      if (doc.exists) {
-                        fp.setBrandingFromFranchiseDoc(doc.data()!);
-                      }
-                    } catch (_) {}
-                    if (mounted) setState(() {});
-                  },
-                  child: const Text('Reload Current'),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
     );
   }
 

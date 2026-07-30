@@ -8,6 +8,7 @@ import 'package:franchise_mobile_app/features/user_accounts/profile_screen.dart'
 import 'package:franchise_mobile_app/widgets/social_sign_in_buttons.dart';
 import 'package:franchise_mobile_app/generated/app_localizations.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase;
+import 'package:franchise_mobile_app/features/franchise/franchise_directory_screen.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -77,6 +78,15 @@ class _SignInScreenState extends State<SignInScreen> {
           Provider.of<shared.FranchiseProvider>(context, listen: false);
       await franchiseProvider.initializeWithUser(dbUser ?? user);
 
+      // Match email path: no franchise → directory (not MainMenu).
+      if (!franchiseProvider.hasValidFranchise) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const FranchiseDirectoryScreen()),
+          (route) => false,
+        );
+        return;
+      }
+
       if (dbUser == null || !(dbUser.completeProfile ?? false)) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const ProfileScreen()),
@@ -135,9 +145,12 @@ class _SignInScreenState extends State<SignInScreen> {
           Provider.of<shared.FranchiseProvider>(context, listen: false);
       await franchiseProvider.initializeWithUser(dbUser ?? user);
 
-      // Optional: Load full franchise details for branding
-      if (franchiseProvider.hasValidFranchise) {
-        // await franchiseProvider.loadCurrentFranchiseDetails(firestoreService); // Uncomment if you re-add this method
+      if (!franchiseProvider.hasValidFranchise) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const FranchiseDirectoryScreen()),
+          (route) => false,
+        );
+        return;
       }
 
       if (dbUser == null || !(dbUser.completeProfile ?? false)) {
@@ -215,7 +228,35 @@ class _SignInScreenState extends State<SignInScreen> {
                           setState(() => _loading = loading),
                       showPhone: true,
                     ),
+                    const SizedBox(height: 6),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _loading
+                            ? null
+                            : () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        const FranchiseDirectoryScreen(),
+                                  ),
+                                );
+                              },
+                        icon: const Icon(Icons.search),
+                        label: const Text('Browse directory'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: shared.UiConfig.primaryColor,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          side: BorderSide(color: shared.UiConfig.primaryColor),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                                shared.DesignTokens.buttonRadius),
+                          ),
+                        ),
+                      ),
+                    ),
                     const Divider(height: 36, thickness: 1),
+                    const SizedBox(height: 16),
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,

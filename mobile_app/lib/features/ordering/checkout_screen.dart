@@ -134,10 +134,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         Provider.of<shared.FirestoreService>(context, listen: false);
     final franchiseId = franchiseProvider.currentFranchiseId;
 
+    if (franchiseId.isEmpty || franchiseId == 'unknown') return;
+
     firestoreService
-        .getCart(user.uid,
-            franchiseId:
-                franchiseId != 'unknown' ? franchiseId : 'doughboyspizzeria')
+        .getCart(user.uid, franchiseId: franchiseId)
         .first
         .then((cart) {
       if (!mounted || cart == null) return;

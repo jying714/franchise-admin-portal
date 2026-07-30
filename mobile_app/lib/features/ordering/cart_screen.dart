@@ -7,6 +7,7 @@ import 'package:franchise_mobile_app/features/ordering/checkout_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:franchise_mobile_app/generated/app_localizations.dart';
 import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
+import 'package:franchise_mobile_app/features/auth/sign_in_screen.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -257,14 +258,35 @@ class _CartScreenState extends State<CartScreen> {
           }
 
           if (user == null) {
+            final scheme = Theme.of(context).colorScheme;
             return Center(
-              child: Text(
-                loc.mustSignInForCart,
-                style: TextStyle(
-                  fontSize: shared.DesignTokens.bodyFontSize,
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontFamily: shared.DesignTokens.fontFamily,
-                  fontWeight: shared.UiConfig.fontWeightMedium,
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      loc.mustSignInForCart,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: shared.DesignTokens.bodyFontSize,
+                        color: scheme.onSurface,
+                        fontFamily: shared.DesignTokens.fontFamily,
+                        fontWeight: shared.UiConfig.fontWeightMedium,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const SignInScreen(),
+                          ),
+                        );
+                      },
+                      child: Text(loc.signIn),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -678,6 +700,15 @@ class _CartScreenState extends State<CartScreen> {
                   elevation: shared.DesignTokens.buttonElevation,
                 ),
                 onPressed: () {
+                  if (FirebaseAuth.instance.currentUser == null) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const SignInScreen(),
+                      ),
+                    );
+                    return;
+                  }
                   Navigator.push(
                     context,
                     MaterialPageRoute(

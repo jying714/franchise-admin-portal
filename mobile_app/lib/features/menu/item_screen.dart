@@ -14,6 +14,7 @@ import 'package:franchise_mobile_app/widgets/add_to_cart_button.dart';
 import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/widgets/header/profile_icon_button.dart';
 import 'package:franchise_mobile_app/generated/app_localizations.dart';
+import 'package:franchise_mobile_app/features/auth/sign_in_screen.dart';
 
 class ItemScreen extends StatefulWidget {
   final String itemId;
@@ -99,6 +100,8 @@ class _ItemScreenState extends State<ItemScreen> {
     }
 
     if (_userId == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -109,8 +112,17 @@ class _ItemScreenState extends State<ItemScreen> {
             ),
           ),
           backgroundColor: shared.UiConfig.surfaceColor,
-          duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
+          duration: const Duration(seconds: 6),
           behavior: SnackBarBehavior.floating,
+          action: SnackBarAction(
+            label: loc.signIn,
+            textColor: shared.UiConfig.primaryColor,
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const SignInScreen()),
+              );
+            },
+          ),
         ),
       );
       return;

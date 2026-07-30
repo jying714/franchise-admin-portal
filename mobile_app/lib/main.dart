@@ -18,12 +18,14 @@ import 'package:shared_core/shared_core.dart' show DesignTokens;
 import 'package:franchise_mobile_app/features/language/language_provider.dart';
 import 'package:franchise_mobile_app/core/models/user.dart' as app_user;
 // Note: FranchiseProvider now comes exclusively from shared_core (single source of truth)
+import 'package:franchise_mobile_app/core/services/franchise_bind_service.dart';
 
 // Screens
 import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
 import 'package:franchise_mobile_app/features/auth/sign_in_screen.dart';
 import 'package:franchise_mobile_app/features/user_accounts/complete_profile_dialog.dart';
 import 'firebase_options.dart';
+import 'package:franchise_mobile_app/features/franchise/franchise_directory_screen.dart';
 
 /// Global navigator key for deep link / QR navigation from anywhere (foundations)
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -32,67 +34,111 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 class IngredientMetadataProvider extends ChangeNotifier {
   final Map<String, shared.IngredientMetadata> _ingredients = {};
   bool _isLoaded = false;
+  String? _loadedForFranchiseId;
+
   bool get isLoaded => _isLoaded;
   Map<String, shared.IngredientMetadata> get ingredients => _ingredients;
+  String? get loadedForFranchiseId => _loadedForFranchiseId;
 
   IngredientMetadataProvider() {
     _loadIngredients();
   }
 
-  Future<void> _loadIngredients() async {
+  /// Reload for a bound franchise (call after FranchiseBindService / setFranchiseId).
+  Future<void> reloadForFranchise(String franchiseId) async {
+    final id = franchiseId.trim();
+    if (id.isEmpty || id == 'unknown') {
+      _ingredients.clear();
+      _loadedForFranchiseId = null;
+      _isLoaded = true;
+      notifyListeners();
+      return;
+    }
+    await _loadIngredients(franchiseId: id);
+  }
+
+  Future<void> _loadIngredients({String? franchiseId}) async {
     try {
-      // P2.3 hardening: ingredient_metadata is under franchises/{franchiseId}/ingredient_metadata per schema.
-      // Use last selected (from storage) or safe default to avoid global collectionGroup/top-level leak.
-      String fid = 'doughboyspizzeria';
-      try {
-        final stored = await AppLocalStorage().getString('selectedFranchiseId');
-        if (stored != null && stored.isNotEmpty && stored != 'unknown') {
-          fid = stored;
-        }
-      } catch (_) {}
+      String? fid = franchiseId;
+      if (fid == null || fid.isEmpty || fid == 'unknown') {
+        try {
+          final stored =
+              await AppLocalStorage().getString('selectedFranchiseId');
+          if (stored != null && stored.isNotEmpty && stored != 'unknown') {
+            fid = stored;
+          }
+        } catch (_) {}
+      }
+      if (fid == null || fid.isEmpty || fid == 'unknown') {
+        _ingredients.clear();
+        _loadedForFranchiseId = null;
+        _isLoaded = true;
+        notifyListeners();
+        return;
+      }
+
       final snapshot = await FirebaseFirestore.instance
           .collection('franchises')
           .doc(fid)
           .collection('ingredient_metadata')
           .get();
+
+      _ingredients.clear();
       for (var doc in snapshot.docs) {
         final data = doc.data();
         final id = data['id'] ?? doc.id;
         _ingredients[id] =
             shared.IngredientMetadata.fromMap({...data, 'id': id});
       }
+      _loadedForFranchiseId = fid;
       _isLoaded = true;
       notifyListeners();
     } catch (e) {
       _isLoaded = true;
       notifyListeners();
-      // Error intentionally not logged here (one-time bootstrap provider)
     }
   }
 }
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
 
-  // P2.3 Production Readiness: Comprehensive error boundaries + resilience
-  // 1. Flutter framework errors
-  FlutterError.onError = (FlutterErrorDetails details) {
-    shared.ErrorLogger.log(
-      message: 'FlutterError: ${details.exception}',
-      source: 'FlutterError',
-      severity: 'fatal',
-      stack: details.stack?.toString(),
-      contextData: {
-        'library': details.library,
-        'context': details.context?.toString(),
-      },
+    FlutterError.onError = (FlutterErrorDetails details) {
+      shared.ErrorLogger.log(
+        message: 'FlutterError: ${details.exception}',
+        source: 'FlutterError',
+        severity: 'fatal',
+        stack: details.stack?.toString(),
+        contextData: {
+          'library': details.library,
+          'context': details.context?.toString(),
+        },
+      );
+      FlutterError.presentError(details);
+    };
+
+    shared.ErrorLogger.setCustomLogger(({
+      required String message,
+      String? source,
+      String? severity,
+      String? stack,
+      Map<String, dynamic>? contextData,
+    }) {
+      // Optional: Crashlytics in release
+    });
+
+    _initDeepLinks();
+
+    runApp(
+      GlobalErrorBoundary(
+        screenName: 'root',
+        child: const MyApp(),
+      ),
     );
-    FlutterError.presentError(details);
-  };
-
-  // 2. Async / Zone errors (catches errors in Futures, streams, etc. outside try/catch)
-  void _reportZoneError(Object error, StackTrace stack) {
+  }, (Object error, StackTrace stack) {
     shared.ErrorLogger.log(
       message: 'Uncaught async error: $error',
       source: 'Zone',
@@ -100,33 +146,7 @@ Future<void> main() async {
       stack: stack.toString(),
       contextData: {'phase': 'runApp'},
     );
-  }
-
-  // 3. Wire shared.ErrorLogger (can be overridden later with Crashlytics etc.)
-  shared.ErrorLogger.setCustomLogger(({
-    required String message,
-    String? source,
-    String? severity,
-    String? stack,
-    Map<String, dynamic>? contextData,
-  }) {
-    // Example: also send to Firebase Crashlytics in prod builds if package added
-    // if (kReleaseMode) FirebaseCrashlytics.instance.recordError(...);
-    // For now the default + our log above is sufficient
   });
-
-  // P2 deep link foundations (app_links)
-  _initDeepLinks();
-
-  // Run inside a guarded zone for full async coverage + wrap root with GlobalErrorBoundary
-  runZonedGuarded(() {
-    runApp(
-      GlobalErrorBoundary(
-        screenName: 'root',
-        child: const MyApp(),
-      ),
-    );
-  }, _reportZoneError);
 }
 
 /// P2: Initialize app_links for franchise deep links (fhq://f/{id} and https://franchisehq.io/f/{id})
@@ -153,30 +173,9 @@ void _handleDeepLink(Uri uri) {
     if (franchiseId == null || franchiseId.isEmpty) return;
 
     final context = navigatorKey.currentContext;
-    if (context != null) {
-      final fp = Provider.of<shared.FranchiseProvider>(context, listen: false);
+    if (context == null) return;
 
-      // Use the same pattern as QrScanScreen for consistency
-      fp.setFranchiseId(franchiseId).then((_) {
-        // Best-effort branding reload (FranchiseProvider + shared.UiConfig)
-        FirebaseFirestore.instance
-            .collection('franchises')
-            .doc(franchiseId)
-            .get()
-            .then((doc) {
-          if (doc.exists && doc.data() != null) {
-            fp.setBrandingFromFranchiseDoc(doc.data()!);
-          }
-        }).catchError((_) {});
-
-        if (navigatorKey.currentContext != null) {
-          Navigator.of(navigatorKey.currentContext!).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (_) => const MainMenuScreen()),
-            (route) => false,
-          );
-        }
-      }).catchError((_) {});
-    }
+    FranchiseBindService.bind(context, franchiseId).catchError((_) {});
   } catch (_) {
     // invalid / unknown link - silently ignore
   }
@@ -485,10 +484,26 @@ class _HomeWrapperState extends State<HomeWrapper> {
     final franchiseProvider =
         Provider.of<shared.FranchiseProvider>(context, listen: false);
 
-    if (sharedUser == null) {
+    // CF1 / Decision 11: cold-start + session franchise takes priority over auth.
+    // Signed-out users may browse when a franchise is already bound (storage / deep link).
+    // Checkout gate remains later (CF6).
+
+    // Kick branding stream as soon as we have a real franchiseId (signed-in or not).
+    if (franchiseProvider.hasValidFranchise) {
+      _listenBranding(franchiseProvider);
+    }
+
+    // No franchise: first landing is SignInScreen (auth + directory entry lives there).
+    if (!franchiseProvider.hasValidFranchise) {
       return const SignInScreen();
     }
 
+    // Franchise is bound. Allow signed-out browse (Decision 11 / CF6 partial).
+    if (sharedUser == null) {
+      return const MainMenuScreen();
+    }
+
+    // Signed-in path — keep existing initialize + profile-complete dialog logic.
     if (_isInitializing) {
       _isInitializing = false;
       WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -502,13 +517,7 @@ class _HomeWrapperState extends State<HomeWrapper> {
       _listenBranding(franchiseProvider);
     }
 
-    if (!franchiseProvider.hasValidFranchise) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    // Convert to local model for dialog
+    // Convert to local model for dialog (unchanged)
     final localUser = app_user.User(
       id: sharedUser.id,
       name: sharedUser.name,

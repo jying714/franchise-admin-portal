@@ -21,6 +21,8 @@ import 'package:franchise_mobile_app/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_mobile_app/generated/app_localizations.dart';
 import 'package:franchise_mobile_app/core/utils/app_local_storage.dart';
 import 'package:franchise_mobile_app/widgets/feedback/feedback_submission_dialog.dart';
+import 'package:franchise_mobile_app/features/franchise/change_restaurant_sheet.dart';
+import 'package:franchise_mobile_app/features/auth/sign_in_screen.dart';
 
 class MainMenuScreen extends material.StatefulWidget {
   const MainMenuScreen({super.key});
@@ -118,13 +120,30 @@ class _MainMenuScreenState extends material.State<MainMenuScreen> {
             title: franchiseTitle,
             centerTitle: true,
             actions: [
+              material.IconButton(
+                icon: const material.Icon(material.Icons.storefront_outlined),
+                tooltip: 'Change restaurant',
+                onPressed: () => ChangeRestaurantSheet.show(context),
+              ),
               ProfileIconButton(
                 tooltip: loc.profile,
-                onPressed: () => material.Navigator.push(
-                  context,
-                  material.MaterialPageRoute(
-                      builder: (_) => const ProfileScreen()),
-                ),
+                onPressed: () {
+                  if (FirebaseAuth.instance.currentUser == null) {
+                    material.Navigator.push(
+                      context,
+                      material.MaterialPageRoute(
+                        builder: (_) => const SignInScreen(),
+                      ),
+                    );
+                    return;
+                  }
+                  material.Navigator.push(
+                    context,
+                    material.MaterialPageRoute(
+                      builder: (_) => const ProfileScreen(),
+                    ),
+                  );
+                },
               ),
               material.IconButton(
                 icon: const material.Icon(material.Icons.qr_code_scanner),
@@ -153,6 +172,71 @@ class _MainMenuScreenState extends material.State<MainMenuScreen> {
                     child: material.CircularProgressIndicator())
                 : material.Column(
                     children: [
+                      // Guest: path back to Sign in after directory bind (stack was cleared).
+                      if (FirebaseAuth.instance.currentUser == null)
+                        material.DecoratedBox(
+                          decoration: material.BoxDecoration(
+                            border: material.Border(
+                              bottom: material.BorderSide(
+                                color: scheme.outline.withValues(alpha: 0.35),
+                              ),
+                            ),
+                          ),
+                          child: material.Material(
+                            color: material.Colors.transparent,
+                            child: material.InkWell(
+                              onTap: () {
+                                material.Navigator.of(context).push(
+                                  material.MaterialPageRoute(
+                                    builder: (_) => const SignInScreen(),
+                                  ),
+                                );
+                              },
+                              child: material.Padding(
+                                padding: const material.EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                                child: material.Row(
+                                  children: [
+                                    material.Icon(
+                                      material.Icons.login,
+                                      color: scheme.primary,
+                                    ),
+                                    const material.SizedBox(width: 12),
+                                    material.Expanded(
+                                      child: material.Text(
+                                        'Sign in to order and save your cart',
+                                        style: material.TextStyle(
+                                          color: scheme.onSurface,
+                                          fontWeight:
+                                              shared.UiConfig.fontWeightMedium,
+                                          fontFamily:
+                                              shared.DesignTokens.fontFamily,
+                                        ),
+                                      ),
+                                    ),
+                                    material.Text(
+                                      'Sign in',
+                                      style: material.TextStyle(
+                                        color: scheme.primary,
+                                        fontWeight:
+                                            shared.UiConfig.fontWeightBold,
+                                        fontFamily:
+                                            shared.DesignTokens.fontFamily,
+                                      ),
+                                    ),
+                                    material.Icon(
+                                      material.Icons.chevron_right,
+                                      color: scheme.primary,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+
                       // Promo banner — collapse completely when none / all inactive
                       material.StreamBuilder<List<shared.Banner>>(
                         stream: firestoreService.getBanners(

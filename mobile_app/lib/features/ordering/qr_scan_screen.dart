@@ -6,6 +6,7 @@ import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:franchise_mobile_app/core/services/franchise_bind_service.dart';
 
 /// Foundational QR scan screen for franchise switching (P2).
 ///
@@ -85,32 +86,17 @@ class _QrScanScreenState extends State<QrScanScreen> {
         throw Exception('Invalid franchise QR payload');
       }
 
-      final fp = Provider.of<shared.FranchiseProvider>(context, listen: false);
-
-      await fp.setFranchiseId(franchiseId);
-
-      // Best-effort reload branding (FranchiseProvider + shared.UiConfig pattern)
-      try {
-        final doc = await FirebaseFirestore.instance
-            .collection('franchises')
-            .doc(franchiseId)
-            .get();
-        if (doc.exists && doc.data() != null) {
-          fp.setBrandingFromFranchiseDoc(doc.data()!);
-        }
-      } catch (_) {}
-
+      final ok = await FranchiseBindService.bind(context, franchiseId);
       if (!mounted) return;
+
+      if (!ok) {
+        throw Exception('Could not switch franchise');
+      }
 
       setState(() {
         _statusMessage = 'Switched to franchise: $franchiseId';
       });
-
-      // Navigate to main menu (franchise now active)
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const MainMenuScreen()),
-        (route) => false,
-      );
+      // Navigation handled inside FranchiseBindService.bind
     } catch (e) {
       if (mounted) {
         setState(() {

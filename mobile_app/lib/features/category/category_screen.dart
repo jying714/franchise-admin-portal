@@ -13,6 +13,7 @@ import 'package:franchise_mobile_app/features/user_accounts/profile_screen.dart'
 import 'package:franchise_mobile_app/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_mobile_app/widgets/empty_state_widget.dart';
 import 'package:franchise_mobile_app/widgets/filter_dropdown.dart';
+import 'package:franchise_mobile_app/features/auth/sign_in_screen.dart';
 
 class CategoryScreen extends StatefulWidget {
   final String categoryId;
@@ -67,6 +68,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -77,9 +79,17 @@ class _CategoryScreenState extends State<CategoryScreen> {
               ),
             ),
             backgroundColor: shared.UiConfig.surfaceColor,
-            duration:
-                Duration(seconds: shared.DesignTokens.toastDurationSeconds),
+            duration: const Duration(seconds: 6),
             behavior: SnackBarBehavior.floating,
+            action: SnackBarAction(
+              label: loc.signIn,
+              textColor: shared.UiConfig.primaryColor,
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const SignInScreen()),
+                );
+              },
+            ),
           ),
         );
       }
@@ -165,6 +175,13 @@ class _CategoryScreenState extends State<CategoryScreen> {
         actions: [
           ProfileIconButton(
             onPressed: () {
+              if (FirebaseAuth.instance.currentUser == null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SignInScreen()),
+                );
+                return;
+              }
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const ProfileScreen()),
@@ -174,10 +191,19 @@ class _CategoryScreenState extends State<CategoryScreen> {
           ),
           CartIconBadge(
             tooltip: loc.cartTooltip,
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const CartScreen()),
-            ),
+            onPressed: () {
+              if (FirebaseAuth.instance.currentUser == null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SignInScreen()),
+                );
+                return;
+              }
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CartScreen()),
+              );
+            },
           ),
           const SizedBox(width: 10),
         ],

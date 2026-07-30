@@ -1725,7 +1725,8 @@ class FirestoreServiceImpl implements FirestoreService {
   // ===================== CART (customer) =====================
   @override
   Stream<Order?> getCart(String userId, {String? franchiseId}) {
-    if (franchiseId == null ||
+    if (userId.isEmpty ||
+        franchiseId == null ||
         franchiseId.isEmpty ||
         franchiseId == 'unknown' ||
         franchiseId == 'default') {
@@ -1891,7 +1892,11 @@ class FirestoreServiceImpl implements FirestoreService {
 
   @override
   Stream<int> getCartItemCountStream(String userId, {String? franchiseId}) {
-    if (franchiseId == null || franchiseId.isEmpty) {
+    if (userId.isEmpty ||
+        franchiseId == null ||
+        franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        franchiseId == 'default') {
       return Stream.value(0);
     }
 

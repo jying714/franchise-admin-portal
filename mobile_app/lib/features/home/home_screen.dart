@@ -8,6 +8,7 @@ import 'package:franchise_mobile_app/features/auth/sign_in_screen.dart';
 import 'package:franchise_mobile_app/features/auth/sign_up_screen.dart';
 import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
 import 'package:franchise_mobile_app/generated/app_localizations.dart';
+import 'package:franchise_mobile_app/features/franchise/franchise_directory_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -128,10 +129,11 @@ class HomeScreen extends StatelessWidget {
                     ),
                     SizedBox(height: shared.DesignTokens.gridSpacing * 1.75),
                     TextButton(
-                      onPressed: () => Navigator.pushReplacement(
+                      onPressed: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (_) => const MainMenuScreen()),
+                          builder: (_) => const FranchiseDirectoryScreen(),
+                        ),
                       ),
                       style: TextButton.styleFrom(
                         foregroundColor: shared.UiConfig.primaryColor,
