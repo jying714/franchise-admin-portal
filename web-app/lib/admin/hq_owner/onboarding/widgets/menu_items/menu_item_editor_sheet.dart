@@ -1146,9 +1146,17 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                     ),
                     const SizedBox(height: 8),
                     ImageUploadField(
-                      initialValue: session.draft.imageUrl ?? '',
+                      initialValue: session.draft.image?.isNotEmpty == true
+                          ? session.draft.image
+                          : (session.draft.imageUrl.isNotEmpty
+                              ? session.draft.imageUrl
+                              : ''),
+                      onChanged: (url) => session.updateDraft(
+                        session.draft.copyWith(image: url ?? ''),
+                      ),
                       onSaved: (url) => session.updateDraft(
-                          session.draft.copyWith(image: url ?? '')),
+                        session.draft.copyWith(image: url ?? ''),
+                      ),
                     ),
                     const Divider(height: 32),
 

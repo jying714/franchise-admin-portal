@@ -43,14 +43,24 @@ class FirebaseStorageServiceImpl implements shared.FirebaseStorageService {
 
     try {
       final extension = fileName.split('.').last.toLowerCase();
+      final safeExt = (extension == 'jpeg') ? 'jpg' : extension;
       final safeFileName =
-          '${DateTime.now().millisecondsSinceEpoch}_${_uuid.v4()}.$extension';
+          '${DateTime.now().millisecondsSinceEpoch}_${_uuid.v4()}.$safeExt';
       final storagePath = 'franchises/$franchiseId/$folder/$safeFileName';
 
       final ref = _storage.ref().child(storagePath);
 
+      final contentType = switch (safeExt) {
+        'jpg' || 'jpeg' => 'image/jpeg',
+        'png' => 'image/png',
+        'gif' => 'image/gif',
+        'webp' => 'image/webp',
+        'svg' => 'image/svg+xml',
+        _ => 'application/octet-stream',
+      };
+
       final metadata = SettableMetadata(
-        contentType: 'image/$extension',
+        contentType: contentType,
         customMetadata: {'franchiseId': franchiseId},
       );
 

@@ -86,7 +86,14 @@ class _OnboardingCategoriesScreenState
     );
 
     if (result != null) {
-      // No need to call addOrUpdateCategory again - createCategory already did it
+      final provider =
+          Provider.of<CategoryProviderImpl>(context, listen: false);
+      // Force provider + MobileMenuPreviewCard to pick up image from Firestore.
+      await provider.reload(
+        franchiseId,
+        forceReloadFromFirestore: true,
+      );
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(loc.categorySaved ?? 'Category saved successfully')),

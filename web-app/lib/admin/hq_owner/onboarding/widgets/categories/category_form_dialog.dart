@@ -5,6 +5,7 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/core/providers/category_provider_impl.dart'
     show CategoryProviderImpl;
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/image_upload_field.dart';
 
 class CategoryFormDialog extends StatefulWidget {
   final shared.Category? initialCategory;
@@ -49,6 +50,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _descriptionController;
+  String? _imageUrl;
   bool _loading = false;
 
   @override
@@ -58,6 +60,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
         TextEditingController(text: widget.initialCategory?.name ?? '');
     _descriptionController =
         TextEditingController(text: widget.initialCategory?.description ?? '');
+    _imageUrl = widget.initialCategory?.image;
   }
 
   @override
@@ -84,15 +87,18 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
         id: id,
         name: _nameController.text.trim(),
         description: _descriptionController.text.trim(),
+        image: (_imageUrl != null && _imageUrl!.trim().isNotEmpty)
+            ? _imageUrl!.trim()
+            : null,
         sortOrder: widget.initialCategory?.sortOrder ?? 0,
         isActive: true,
+        displayName: widget.initialCategory?.displayName,
+        status: widget.initialCategory?.status,
       );
 
-      if (isEdit) {
-        categoryProvider.addOrUpdateCategory(category);
-      } else {
-        await categoryProvider.createCategory(category);
-      }
+      // createCategory → AdminFirestoreService.addCategory uses set(..., merge: true).
+      // Required for edit so fields like image actually hit Firestore.
+      await categoryProvider.createCategory(category);
 
       if (mounted) {
         Navigator.of(context).pop(category);
@@ -168,6 +174,14 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                         labelText: loc.categoryDescriptionLabel,
                       ),
                       maxLines: 3,
+                    ),
+                    const SizedBox(height: 16),
+                    ImageUploadField(
+                      initialValue: _imageUrl ?? '',
+                      label: 'Category image',
+                      uploadFolder: 'categories',
+                      onChanged: (url) => setState(() => _imageUrl = url),
+                      onSaved: (url) => _imageUrl = url,
                     ),
                   ],
                 ),

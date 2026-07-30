@@ -1,6 +1,8 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 
 /// Renders an image upload or URL field combo.
 /// Used for admin editing of item preview image.
@@ -37,13 +39,52 @@ class _ImageUploadFieldState extends State<ImageUploadField> {
   }
 
   Future<void> _pickImage() async {
-    final picked = await _picker.pickImage(source: ImageSource.gallery);
-    if (picked != null) {
-      // In production: upload to storage & obtain secure URL
-      // For now: just simulate with file path
-      final simulatedUrl = picked.path;
-      _urlController.text = simulatedUrl;
-      widget.onChanged(simulatedUrl);
+    final franchiseProvider =
+        Provider.of<shared.FranchiseProvider>(context, listen: false);
+    final storageService =
+        Provider.of<shared.FirebaseStorageService>(context, listen: false);
+    final franchiseId = franchiseProvider.franchiseId;
+
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Select a franchise before uploading.')),
+      );
+      return;
+    }
+
+    final picked = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+    if (picked == null) return;
+
+    try {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Uploading image...')),
+      );
+
+      final bytes = await picked.readAsBytes();
+      final uploadedUrl = await storageService.uploadFranchiseImageBytes(
+        bytes: bytes,
+        fileName: picked.name,
+        franchiseId: franchiseId,
+        folder: 'menu_items',
+      );
+
+      if (!mounted) return;
+      setState(() => _urlController.text = uploadedUrl);
+      widget.onChanged(uploadedUrl);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Image uploaded successfully')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Upload failed: $e')),
+      );
     }
   }
 
@@ -101,5 +142,3 @@ class _ImageUploadFieldState extends State<ImageUploadField> {
     );
   }
 }
-
-

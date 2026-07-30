@@ -33,9 +33,10 @@ class CategoryCard extends StatelessWidget {
       label: loc.menuCategoryLabel(category.name),
       button: true,
       child: Material(
+        type: MaterialType.transparency,
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
-        elevation: shared.DesignTokens.cardElevation,
+        elevation: 0,
         child: InkWell(
           borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
           onTap: () => onTap?.call(category),
@@ -62,25 +63,34 @@ class CategoryCard extends StatelessWidget {
                 ClipRRect(
                   borderRadius:
                       BorderRadius.circular(shared.DesignTokens.cardRadius),
-                  child: imagePath.startsWith('http')
-                      ? Image.network(
-                          imagePath,
-                          width: double.infinity,
-                          height: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Image.asset(
-                            shared.BrandingConfig.defaultCategoryIcon,
+                  child: ColoredBox(
+                    color: Colors.transparent,
+                    child: imagePath.startsWith('http')
+                        ? Image.network(
+                            imagePath,
                             width: double.infinity,
                             height: double.infinity,
                             fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Image.asset(
+                              shared.BrandingConfig.defaultCategoryIcon,
+                              width: double.infinity,
+                              height: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : Image.asset(
+                            imagePath,
+                            width: double.infinity,
+                            height: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const ColoredBox(
+                              color: Colors.transparent,
+                              child: Center(
+                                child: Icon(Icons.restaurant_menu, size: 40),
+                              ),
+                            ),
                           ),
-                        )
-                      : Image.asset(
-                          imagePath,
-                          width: double.infinity,
-                          height: double.infinity,
-                          fit: BoxFit.cover,
-                        ),
+                  ),
                 ),
                 // Overlay gradient for text readability.
                 Positioned.fill(

@@ -195,10 +195,22 @@ class _SignInScreenState extends State<SignInScreen> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
 
+    final franchiseProvider =
+        Provider.of<shared.FranchiseProvider>(context, listen: true);
+    final hasFranchise = franchiseProvider.hasValidFranchise;
+    final scheme = Theme.of(context).colorScheme;
+
+    // No franchise: product name. With franchise: restaurant name (or still platform name if you prefer always HQ).
+    final appBarTitle = hasFranchise
+        ? (franchiseProvider.currentAppName.isNotEmpty
+            ? franchiseProvider.currentAppName
+            : 'Franchise HQ')
+        : 'Franchise HQ';
+
     return Scaffold(
-      backgroundColor: shared.UiConfig.backgroundColorDark,
+      backgroundColor: scheme.surface,
       appBar: FranchiseAppBar(
-        title: loc.signIn,
+        title: appBarTitle,
         showLogo: true,
         logoUrl: shared.UiConfig.currentLogoUrl,
         logoAsset: shared.BrandingConfig.appBarLogoAsset,

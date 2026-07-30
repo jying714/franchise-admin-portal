@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/image_upload_field.dart';
 
 class MenuItemFormDialog extends StatefulWidget {
   final shared.MenuItem? initialItem;
@@ -165,6 +166,13 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
                   title: Text(loc.colAvailable),
                   value: _availability,
                   onChanged: (v) => setState(() => _availability = v),
+                ),
+                const SizedBox(height: 16),
+                ImageUploadField(
+                  initialValue: _image ?? '',
+                  label: 'Item image',
+                  onChanged: (url) => setState(() => _image = url),
+                  onSaved: (url) => _image = url,
                 ),
                 const SizedBox(height: 16),
                 // M5: dual customizations tree removed from this day-2 form.

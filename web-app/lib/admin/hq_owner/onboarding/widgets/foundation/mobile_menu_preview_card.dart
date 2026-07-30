@@ -36,7 +36,6 @@ class _MobileMenuPreviewCardState extends State<MobileMenuPreviewCard> {
   @override
   void didUpdateWidget(covariant MobileMenuPreviewCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Franchise change → reset navigation
     if (oldWidget.franchiseId != widget.franchiseId) {
       _previewCategoryId = null;
     }
@@ -62,6 +61,24 @@ class _MobileMenuPreviewCardState extends State<MobileMenuPreviewCard> {
 
   Color get _primary => DesignTokens.primaryColor;
 
+  // App bar icons/title on brand primary (matches mobile onPrimary usage).
+  Color get _onPrimary => Colors.white;
+
+  // Light scaffold body — not a DesignTokens member; visual parity only.
+  Color get _surface => const Color(0xFFF7F7F7);
+
+  String _itemImageUrl(shared.MenuItem item) {
+    final raw = item.image?.trim();
+    if (raw != null && raw.isNotEmpty) return raw;
+    return item.imageUrl.trim();
+  }
+
+  String _categoryImageUrl(shared.Category category) {
+    final raw = category.image?.trim();
+    if (raw != null && raw.isNotEmpty) return raw;
+    return '';
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
@@ -71,6 +88,7 @@ class _MobileMenuPreviewCardState extends State<MobileMenuPreviewCard> {
 
     final categories = categoryProvider.categories;
     final appName = _resolveAppName(franchiseProvider);
+    final logoUrl = franchiseProvider.currentLogoUrl;
 
     final selectedCategory = _previewCategoryId == null
         ? null
@@ -108,73 +126,96 @@ class _MobileMenuPreviewCardState extends State<MobileMenuPreviewCard> {
         borderRadius: BorderRadius.circular(36),
         child: Column(
           children: [
-            // Status bar
+            // Status bar (device chrome only)
             Container(
-              height: 30,
+              height: 28,
               color: Colors.black,
               child: const Center(
                 child: Text(
                   '9:41',
-                  style: TextStyle(color: Colors.white, fontSize: 13),
+                  style: TextStyle(color: Colors.white, fontSize: 12),
                 ),
               ),
             ),
-            // Branded header
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            // App bar — matches signed-in mobile FranchiseAppBar shape
+            Material(
               color: _primary,
-              child: Row(
-                children: [
-                  if (showBack)
-                    InkWell(
-                      onTap: () => setState(() => _previewCategoryId = null),
-                      child: const Padding(
-                        padding: EdgeInsets.only(right: 8),
-                        child: Icon(Icons.arrow_back,
-                            color: Colors.white, size: 20),
+              child: SizedBox(
+                height: 56,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Row(
+                    children: [
+                      if (showBack)
+                        IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 40,
+                            minHeight: 40,
+                          ),
+                          icon: Icon(Icons.arrow_back, color: _onPrimary),
+                          onPressed: () =>
+                              setState(() => _previewCategoryId = null),
+                        )
+                      else if (logoUrl != null && logoUrl.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: Image.network(
+                              logoUrl,
+                              width: 36,
+                              height: 36,
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, __, ___) => Icon(
+                                Icons.storefront,
+                                color: _onPrimary,
+                                size: 28,
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Icon(Icons.storefront,
+                              color: _onPrimary, size: 28),
+                        ),
+                      Expanded(
+                        child: Text(
+                          headerTitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: _onPrimary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
                       ),
-                    )
-                  else if ((franchiseProvider.currentLogoUrl ?? '').isNotEmpty)
-                    CircleAvatar(
-                      backgroundImage:
-                          NetworkImage(franchiseProvider.currentLogoUrl!),
-                      radius: 18,
-                    )
-                  else
-                    CircleAvatar(
-                      backgroundColor: Colors.white,
-                      radius: 18,
-                      child: Icon(Icons.local_pizza, color: _primary),
-                    ),
-                  if (!showBack) const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      headerTitle,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                      // Signed-in chrome (visual only)
+                      if (!showBack) ...[
+                        Icon(Icons.storefront_outlined,
+                            color: _onPrimary, size: 22),
+                        const SizedBox(width: 10),
+                        Icon(Icons.person_outline, color: _onPrimary, size: 22),
+                        const SizedBox(width: 10),
+                        Icon(Icons.shopping_cart_outlined,
+                            color: _onPrimary, size: 22),
+                        const SizedBox(width: 4),
+                      ],
+                    ],
                   ),
-                  const Icon(Icons.search, color: Colors.white),
-                  const SizedBox(width: 16),
-                  const Icon(Icons.shopping_cart_outlined, color: Colors.white),
-                ],
+                ),
               ),
             ),
-            // Body
+            // Body — light surface like mobile scaffold
             Expanded(
-              child: Container(
-                color: Colors.black,
+              child: ColoredBox(
+                color: _surface,
                 child: showBack
                     ? _buildItemsGrid(itemsForCategory)
-                    : _buildCategoriesGrid(
-                        context,
-                        categories,
-                        loc,
-                      ),
+                    : _buildCategoriesGrid(context, categories, loc),
               ),
             ),
           ],
@@ -195,7 +236,8 @@ class _MobileMenuPreviewCardState extends State<MobileMenuPreviewCard> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.restaurant_menu, size: 48, color: Colors.grey),
+              Icon(Icons.restaurant_menu,
+                  size: 48, color: Colors.grey.shade500),
               const SizedBox(height: 16),
               Text(
                 loc.previewEmptyState ?? 'Add categories to see live preview',
@@ -203,7 +245,7 @@ class _MobileMenuPreviewCardState extends State<MobileMenuPreviewCard> {
                 style: Theme.of(context)
                     .textTheme
                     .bodyMedium
-                    ?.copyWith(color: Colors.grey),
+                    ?.copyWith(color: Colors.grey.shade600),
               ),
             ],
           ),
@@ -211,141 +253,181 @@ class _MobileMenuPreviewCardState extends State<MobileMenuPreviewCard> {
       );
     }
 
-    return SingleChildScrollView(
+    return GridView.builder(
       padding: const EdgeInsets.all(12),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 1.1,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-        ),
-        itemCount: categories.length,
-        itemBuilder: (context, index) {
-          final category = categories[index];
-          return Card(
-            elevation: 2,
-            color: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: InkWell(
-              onTap: widget.interactive
-                  ? () => setState(() => _previewCategoryId = category.id)
-                  : null,
-              borderRadius: BorderRadius.circular(12),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.local_pizza, size: 48, color: _primary),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Text(
-                      category.name,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.95,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+      ),
+      itemCount: categories.length,
+      itemBuilder: (context, index) {
+        final category = categories[index];
+        final imageUrl = _categoryImageUrl(category);
+
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: widget.interactive
+                ? () => setState(() => _previewCategoryId = category.id)
+                : null,
+            borderRadius: BorderRadius.circular(12),
+            child: Ink(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _primary, width: 1.5),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(11),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    if (imageUrl.isNotEmpty)
+                      Image.network(
+                        imageUrl,
+                        key: ValueKey(imageUrl),
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => ColoredBox(
+                          color: Colors.grey.shade200,
+                          child: Icon(Icons.restaurant_menu,
+                              size: 40, color: _primary),
+                        ),
+                      )
+                    else
+                      ColoredBox(
+                        color: Colors.grey.shade200,
+                        child: Icon(Icons.restaurant_menu,
+                            size: 40, color: _primary),
+                      ),
+                    // Bottom gradient for title readability (mobile CategoryCard)
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.transparent,
+                              Colors.black.withOpacity(0.55),
+                            ],
+                            stops: const [0.45, 1.0],
                           ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                    Positioned(
+                      left: 10,
+                      right: 10,
+                      bottom: 10,
+                      child: Text(
+                        category.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          shadows: [
+                            Shadow(blurRadius: 4, color: Colors.black54),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 
   Widget _buildItemsGrid(List<shared.MenuItem> items) {
     if (items.isEmpty) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(24),
+          padding: const EdgeInsets.all(24),
           child: Text(
             'No items in this category',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(color: Colors.grey.shade600),
           ),
         ),
       );
     }
 
-    return SingleChildScrollView(
+    return GridView.builder(
       padding: const EdgeInsets.all(12),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 1.1,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-        ),
-        itemCount: items.length,
-        itemBuilder: (context, index) {
-          final item = items[index];
-          final imageUrl = (item.imageUrl ?? item.image ?? '').toString();
-          final outOfStock =
-              item.available == false || item.availability == false;
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.78,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+      ),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+        final imageUrl = _itemImageUrl(item);
+        final outOfStock =
+            item.available == false || item.availability == false;
 
-          return Opacity(
-            opacity: outOfStock ? 0.45 : 1,
-            child: Card(
-              elevation: 2,
-              color: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(12),
-                      ),
-                      child: imageUrl.isNotEmpty
-                          ? Image.network(
-                              imageUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Center(
-                                child: Icon(Icons.local_pizza,
-                                    size: 40, color: _primary),
-                              ),
-                            )
-                          : Center(
-                              child: Icon(Icons.local_pizza,
-                                  size: 40, color: _primary),
-                            ),
-                    ),
-                  ),
-                  Padding(
+        return Opacity(
+          opacity: outOfStock ? 0.45 : 1,
+          child: Card(
+            elevation: 2,
+            color: Colors.white,
+            clipBehavior: Clip.antiAlias,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: _primary.withOpacity(0.35), width: 1),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: imageUrl.isNotEmpty
+                      ? Image.network(
+                          imageUrl,
+                          key: ValueKey(imageUrl),
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => ColoredBox(
+                            color: Colors.grey.shade100,
+                            child: Icon(Icons.broken_image_outlined,
+                                size: 36, color: Colors.grey.shade500),
+                          ),
+                        )
+                      : ColoredBox(
+                          color: Colors.grey.shade100,
+                          child: Icon(Icons.restaurant_menu,
+                              size: 40, color: _primary),
+                        ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Padding(
                     padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          item.name,
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                            color: Colors.black87,
+                        Expanded(
+                          child: Text(
+                            item.name,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              color: Colors.black87,
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 2),
                         Text(
                           '\$${item.price.toStringAsFixed(2)}',
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 12,
                             color: _primary,
                             fontWeight: FontWeight.w600,
                           ),
@@ -353,12 +435,12 @@ class _MobileMenuPreviewCardState extends State<MobileMenuPreviewCard> {
                       ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }

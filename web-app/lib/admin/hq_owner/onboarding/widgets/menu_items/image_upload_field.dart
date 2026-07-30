@@ -15,6 +15,7 @@ class ImageUploadField extends FormField<String?> {
     String? label,
     bool required = false,
     super.onSaved,
+    void Function(String?)? onChanged,
     String uploadFolder = 'menu_items',
   }) : super(
           validator: required
@@ -49,6 +50,7 @@ class ImageUploadField extends FormField<String?> {
                         storageService,
                         franchiseId,
                         uploadFolder,
+                        onChanged,
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
@@ -92,6 +94,7 @@ class ImageUploadField extends FormField<String?> {
                             storageService,
                             franchiseId,
                             uploadFolder,
+                            onChanged,
                           ),
                           icon: const Icon(Icons.upload_file),
                           label: Text(
@@ -99,7 +102,10 @@ class ImageUploadField extends FormField<String?> {
                         ),
                         if (state.value != null && state.value!.isNotEmpty)
                           TextButton.icon(
-                            onPressed: () => state.didChange(null),
+                            onPressed: () {
+                              state.didChange(null);
+                              onChanged?.call(null);
+                            },
                             icon: const Icon(Icons.clear, size: 18),
                             label: Text(loc.clear ?? 'Clear'),
                             style: TextButton.styleFrom(
@@ -139,7 +145,7 @@ class ImageUploadField extends FormField<String?> {
 
     return Image.network(
       safeUrl,
-      key: ValueKey('${safeUrl}_${DateTime.now().millisecondsSinceEpoch}'),
+      key: ValueKey(safeUrl),
       width: 80,
       height: 80,
       fit: BoxFit.cover,
@@ -176,6 +182,7 @@ class ImageUploadField extends FormField<String?> {
     shared.FirebaseStorageService storageService,
     String franchiseId,
     String uploadFolder,
+    void Function(String?)? onChanged,
   ) async {
     final loc = AppLocalizations.of(context)!;
 
@@ -210,11 +217,10 @@ class ImageUploadField extends FormField<String?> {
         folder: uploadFolder,
       );
 
-      Future.delayed(const Duration(milliseconds: 2500), () {
-        if (state.mounted) {
-          state.didChange(uploadedUrl);
-        }
-      });
+      if (state.mounted) {
+        state.didChange(uploadedUrl);
+      }
+      onChanged?.call(uploadedUrl);
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
