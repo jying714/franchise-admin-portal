@@ -1,0 +1,22 @@
+[
+  {
+    "origin": [
+      "http://localhost:54128",
+      "http://localhost:5000",
+      "http://localhost:*",
+      "http://127.0.0.1:*",
+      "https://franchisehq.io",
+      "https://*.web.app",
+      "https://*.firebaseapp.com"
+    ],
+    "method": ["GET", "HEAD", "PUT", "POST", "DELETE", "OPTIONS"],
+    "maxAgeSeconds": 3600,
+    "responseHeader": [
+      "Content-Type",
+      "Authorization",
+      "Content-Length",
+      "User-Agent",
+      "x-goog-resumable"
+    ]
+  }
+]
