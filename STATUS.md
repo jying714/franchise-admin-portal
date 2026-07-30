@@ -1,8 +1,8 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: July 29, 2026 (~17:40 CDT — kitchen-ops + cash on pickup locked for release MVP)  
+**Last Updated**: July 29, 2026 (~23:30 CDT — customer franchise context v1 complete on branch)  
 **Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
-**Branch (active)**: `main`  
+**Branch (active)**: `feat/customer-franchise-context-v1`  
 **Main**: menu M1–M5, wings/calzone, mobile design tokens T1–T9, developer D0–D10; Hosting deploy on push
 
 > This file is **always loaded in full** by every agent.
@@ -12,7 +12,7 @@
 ## Current Phase
 
 **Core platform vertical slice is on `main`.**  
-**Release / pilot MVP remaining work is locked** under Decisions **11–13** (customer franchise context, Stripe Connect dual accounts, kitchen ops + cash).
+**Release / pilot MVP remaining work** under Decisions **11–13** (customer franchise context, Stripe Connect dual accounts, kitchen ops + cash).
 
 | Area | State |
 |------|--------|
@@ -22,7 +22,7 @@
 | Menu modifier M1–M5 + wings/calzone W0–W7+W2 | **Done** |
 | Mobile Design Tokens v1 (T1–T9) | **Done** |
 | Developer Dashboard v1 (D0–D10) | **Done** |
-| **Customer franchise context v1** | **Locked — not implemented** |
+| **Customer franchise context v1** | **COMPLETE on `feat/customer-franchise-context-v1`** (merge gate: human) |
 | **Stripe checkout v1 (Connect)** | **Locked — not implemented** |
 | **Kitchen ops v1** (thin app, print, cash toggle) | **Locked — not implemented** |
 
@@ -36,6 +36,7 @@
 - [x] Mobile Design Tokens v1 — `main`
 - [x] Developer Dashboard v1 — `main`
 - [x] **Decision 11** Customer hybrid multi-tenant path (A+B) — July 29
+- [x] **Customer franchise context v1 implementation** — CF1–CF10 smoke-passed July 29–30 on `feat/customer-franchise-context-v1`
 - [x] **Decision 12** Stripe: platform SaaS + Connect per franchise — July 29
 - [x] **Decision 13** Kitchen ops: thin Flutter kitchen app, cash-on-pickup toggles, multi-printer, manager gates — July 29
 
@@ -43,7 +44,7 @@
 
 | Priority | Work | Authority |
 |----------|------|-----------|
-| **1** | **Customer franchise context v1** | `docs/slices/customer-franchise-context-v1.md` · Decision 11 |
+| **1** | **Merge `feat/customer-franchise-context-v1` → `main`** (human gate) | `docs/slices/customer-franchise-context-v1.md` · Decision 11 |
 | **2** | **Stripe checkout v1** (Connect + platform SaaS) | `docs/slices/stripe-checkout-v1.md` · Decision 12 |
 | **3** | **Kitchen ops v1** — thin Kitchen app, auto-print, category→printer routing, Admin cash toggles, manager-only void/refund, manager offline/print alerts | `docs/slices/kitchen-ops-v1.md` · Decision 13 |
 | **4** | Pilot polish: reorder, order status, closed hours, cart attach on sign-in | Explicit human tasks |
@@ -56,8 +57,10 @@
 |--------|------|
 | App binary | Hybrid multi-tenant; session = one `franchiseId` |
 | Acquisition | QR/SMS primary; directory required foundation |
-| Signed-out | Browse + cart OK; checkout requires sign-in |
+| Bind | `FranchiseBindService` only (no ad-hoc setFranchiseId for product flows) |
+| Signed-out | Browse menu OK; **add-to-cart / cart / checkout require auth** (guest cart deferred) |
 | Cart on switch | Confirm → clear cart & switch |
+| Share QR | Prefer `https://franchisehq.io/f/{id}` |
 | Stripe platform | HQ SaaS subscriptions / platform invoices |
 | Stripe Connect | Customer card orders → franchise connected account + application fee |
 | **Cash on pickup** | **v1 yes**, franchise **Admin feature toggle** |
@@ -73,8 +76,9 @@
 
 | Surface | Decision |
 |---------|----------|
+| Guest cart / guest checkout | Post-MVP |
+| Full OS App Links / AASA production hardening | Follow-up polish |
 | Geo / map directory | Post-MVP |
-| Guest checkout (pay without account) | Post-MVP |
 | Full POS / cash drawer / card-present terminal | Post-MVP |
 | iOS kitchen kiosk bring-up | Post-pilot |
 | HQ Design full semantic color editors | Deferred |
