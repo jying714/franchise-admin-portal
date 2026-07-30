@@ -6,6 +6,8 @@ import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/features/ordering/confirmation_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:flutter_stripe/flutter_stripe.dart' hide Card;
 import 'package:franchise_mobile_app/generated/app_localizations.dart';
 
 enum DeliveryType { delivery, pickup }
@@ -89,24 +91,78 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         toMin(t) <= toMin(_businessClose);
   }
 
-  Future<bool> _processPayment() async {
+  Future<bool> _processPayment({String? orderId}) async {
+    final franchiseProvider =
+        Provider.of<shared.FranchiseProvider>(context, listen: false);
+    final isCardRail = _selectedPayment == PaymentMethod.card ||
+        _selectedPayment == PaymentMethod.applePay ||
+        _selectedPayment == PaymentMethod.googlePay;
+
+    if (isCardRail && !franchiseProvider.paymentsEnabled) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Payments not set up for this restaurant'),
+            backgroundColor: shared.UiConfig.errorColor,
+          ),
+        );
+      }
+      return false;
+    }
+
     setState(() => _isPaying = true);
 
     try {
-      final result = await _paymentService.processPayment(
-        amount: _orderTotal,
-        currency: 'USD',
-        paymentMethod: _selectedPayment?.name ?? 'posMock',
-        metadata: {
-          'franchiseId':
-              Provider.of<shared.FranchiseProvider>(context, listen: false)
-                  .currentFranchiseId,
-          'userId': FirebaseAuth.instance.currentUser?.uid,
-        },
-      );
+      if (!isCardRail) {
+        final result = await _paymentService.processPayment(
+          amount: _orderTotal,
+          currency: 'USD',
+          paymentMethod: _selectedPayment?.name ?? 'posMock',
+          metadata: {
+            'franchiseId': franchiseProvider.currentFranchiseId,
+            'userId': FirebaseAuth.instance.currentUser?.uid,
+          },
+        );
+        setState(() => _isPaying = false);
+        return result.success;
+      }
 
+      // Card rails: Connect PaymentIntent + PaymentSheet (ST5).
+      final amountCents = (_orderTotal * 100).round();
+      final callable =
+          FirebaseFunctions.instance.httpsCallable('createOrderPaymentIntent');
+      final piResult = await callable.call(<String, dynamic>{
+        'franchiseId': franchiseProvider.currentFranchiseId,
+        'amountCents': amountCents,
+        'currency': 'usd',
+        if (orderId != null) 'orderId': orderId,
+      });
+      final piData = Map<String, dynamic>.from(piResult.data as Map);
+      final clientSecret = piData['clientSecret'] as String?;
+      if (clientSecret == null || clientSecret.isEmpty) {
+        setState(() => _isPaying = false);
+        return false;
+      }
+
+      await Stripe.instance.initPaymentSheet(
+        paymentSheetParameters: SetupPaymentSheetParameters(
+          paymentIntentClientSecret: clientSecret,
+          merchantDisplayName: franchiseProvider.currentAppName.isNotEmpty
+              ? franchiseProvider.currentAppName
+              : 'Franchise',
+        ),
+      );
+      await Stripe.instance.presentPaymentSheet();
       setState(() => _isPaying = false);
-      return result.success;
+      return true;
+    } on StripeException catch (e) {
+      setState(() => _isPaying = false);
+      shared.ErrorLogger.log(
+        message: 'Stripe PaymentSheet: ${e.error.localizedMessage}',
+        source: 'CheckoutScreen',
+        severity: 'error',
+      );
+      return false;
     } catch (e) {
       setState(() => _isPaying = false);
       shared.ErrorLogger.log(
@@ -220,7 +276,41 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     _updateOrderTotals();
 
-    final success = await _processPayment();
+    final orderId = _generateOrderId();
+    final isCardRail = _selectedPayment == PaymentMethod.card ||
+        _selectedPayment == PaymentMethod.applePay ||
+        _selectedPayment == PaymentMethod.googlePay;
+
+    // Persist order before PI so webhook metadata.orderId resolves (ST4/ST5).
+    if (isCardRail) {
+      final pending = cart.copyWith(
+        id: orderId,
+        storeId: franchiseId,
+        userId: user.uid,
+        items: List<shared.OrderItem>.from(cart.items),
+        subtotal: _orderSubtotal,
+        tax: _orderTax,
+        deliveryFee: _deliveryFee,
+        discount: _promoValue,
+        total: _orderTotal,
+        deliveryType: _deliveryType == DeliveryType.delivery
+            ? localizations.delivery
+            : localizations.pickup,
+        time: _selectedTime!.format(context),
+        status: 'pending_payment',
+        timestamp: DateTime.now(),
+        estimatedTime: 30,
+        timestamps: {
+          ...cart.timestamps,
+          'pending_payment': DateTime.now().toIso8601String(),
+        },
+      );
+      await firestoreService.addOrder(pending);
+    }
+
+    final success = await _processPayment(
+      orderId: isCardRail ? orderId : null,
+    );
     if (!context.mounted) return;
     if (!success) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -233,9 +323,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
 
     final now = DateTime.now();
-    final orderId = _generateOrderId();
     final order = cart.copyWith(
       id: orderId,
+      storeId: franchiseId,
+      userId: user.uid,
       items: List<shared.OrderItem>.from(cart.items),
       subtotal: _orderSubtotal,
       tax: _orderTax,
@@ -514,13 +605,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             ),
                           ),
                           ...PaymentMethod.values.map(
-                            (pm) => RadioListTile<PaymentMethod>(
-                              title: Text(_paymentLabel(pm, localizations)),
-                              value: pm,
-                              groupValue: _selectedPayment,
-                              onChanged: (v) =>
-                                  setState(() => _selectedPayment = v),
-                            ),
+                            (pm) {
+                              final isCardRail = pm == PaymentMethod.card ||
+                                  pm == PaymentMethod.applePay ||
+                                  pm == PaymentMethod.googlePay;
+                              final cardBlocked =
+                                  isCardRail && !provider.paymentsEnabled;
+                              return RadioListTile<PaymentMethod>(
+                                title: Text(
+                                  cardBlocked
+                                      ? '${_paymentLabel(pm, localizations)} (not set up)'
+                                      : _paymentLabel(pm, localizations),
+                                ),
+                                value: pm,
+                                groupValue: _selectedPayment,
+                                onChanged: cardBlocked
+                                    ? null
+                                    : (v) =>
+                                        setState(() => _selectedPayment = v),
+                              );
+                            },
                           ),
                           const SizedBox(height: 16),
                           Card(

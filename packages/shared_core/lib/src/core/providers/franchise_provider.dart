@@ -174,6 +174,17 @@ class FranchiseProvider extends ChangeNotifier {
         (_brandingData['logo'] as String?);
   }
 
+  /// Stripe Connect account id from franchises/{id}. Null = not onboarded.
+  String? get stripeConnectAccountId =>
+      _brandingData['stripeConnectAccountId'] as String?;
+
+  /// Connect status string from franchises/{id} (e.g. pending, restricted, enabled).
+  String? get stripeConnectStatus =>
+      _brandingData['stripeConnectStatus'] as String?;
+
+  /// True only when franchise doc has paymentsEnabled == true. Fail-closed.
+  bool get paymentsEnabled => _brandingData['paymentsEnabled'] == true;
+
   /// Update from full franchises/{id} document snapshot data.
   /// Safe to call any time; bumps version so listeners (theme) can react.
   /// Expected useful keys (read by currentPrimaryColorHex / currentSecondaryColorHex /
@@ -192,6 +203,9 @@ class FranchiseProvider extends ChangeNotifier {
       ..._brandingData,
       'name': info.name,
       'logoUrl': info.logoUrl,
+      'stripeConnectAccountId': info.stripeConnectAccountId,
+      'stripeConnectStatus': info.stripeConnectStatus,
+      'paymentsEnabled': info.paymentsEnabled,
       if (extraBranding != null) ...extraBranding,
     };
     _bumpConfig();

@@ -29,4 +29,8 @@ export {
   scheduledGenerateMonthlyPlatformInvoices,
   generatePlatformInvoiceOnDemand,
 } from "../functions/invoices";
-
+export {
+  createConnectAccountLink,
+  refreshConnectAccountStatus,
+  createOrderPaymentIntent,
+} from "../functions/stripe_connect";

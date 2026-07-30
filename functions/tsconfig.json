@@ -3,6 +3,7 @@
     "lib": ["es6", "dom"],
     "module": "commonjs",
     "esModuleInterop": true,
+    "ignoreDeprecations": "5.0",
     "moduleResolution": "node",
     "noImplicitReturns": true,
     "noUnusedLocals": true,

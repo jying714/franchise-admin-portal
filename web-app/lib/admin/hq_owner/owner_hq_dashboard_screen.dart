@@ -15,6 +15,8 @@ import 'package:franchise_admin_portal/widgets/header/notifications_icon_button.
 import 'package:franchise_admin_portal/admin/hq_owner/screens/design_branding_screen.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/hq_onboarding_shell_screen.dart';
 import 'package:franchise_admin_portal/core/providers/onboarding_progress_provider_impl.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class OwnerHQDashboardScreen extends StatelessWidget {
   final String currentScreen;
@@ -123,7 +125,7 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                     franchiseId: franchiseId,
                   ),
                   const OnboardingProgressCard(),
-                  const PayoutStatusInDevCard(),
+                  const CustomerCardPaymentsStatusCard(),
                   CashFlowForecastCard(franchiseId: franchiseId),
                 ],
               ),
@@ -536,14 +538,133 @@ class _PlatformBillingCardState extends State<PlatformBillingCard> {
   }
 }
 
-/// Payouts surface — not wired for MVP; no broken route.
-class PayoutStatusInDevCard extends StatelessWidget {
-  const PayoutStatusInDevCard({super.key});
+/// ST2: Connect status honesty + onboarding / refresh callables.
+class CustomerCardPaymentsStatusCard extends StatefulWidget {
+  const CustomerCardPaymentsStatusCard({super.key});
+
+  @override
+  State<CustomerCardPaymentsStatusCard> createState() =>
+      _CustomerCardPaymentsStatusCardState();
+}
+
+class _CustomerCardPaymentsStatusCardState
+    extends State<CustomerCardPaymentsStatusCard> {
+  bool _busy = false;
+
+  Future<void> _run(Future<void> Function() action) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      await action();
+    } on FirebaseFunctionsException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message ?? e.code),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$e'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _startOnboarding(String franchiseId) async {
+    final callable =
+        FirebaseFunctions.instance.httpsCallable('createConnectAccountLink');
+    final result = await callable.call(<String, dynamic>{
+      'franchiseId': franchiseId,
+      'returnUrl': 'https://franchisehq.io/',
+      'refreshUrl': 'https://franchisehq.io/',
+    });
+    final data = Map<String, dynamic>.from(result.data as Map);
+    final url = data['url'] as String?;
+    final accountId = data['accountId'] as String?;
+    if (url == null || url.isEmpty) {
+      throw StateError('No onboarding URL returned');
+    }
+
+    // Keep provider in sync so Refresh status enables on this tab.
+    if (accountId != null && accountId.isNotEmpty) {
+      final fp = Provider.of<shared.FranchiseProvider>(context, listen: false);
+      final merged = Map<String, dynamic>.from(fp.currentBranding)
+        ..['stripeConnectAccountId'] = accountId
+        ..['paymentsEnabled'] = false;
+      fp.setBrandingFromFranchiseDoc(merged);
+    }
+
+    final uri = Uri.parse(url);
+    final ok = await launchUrl(uri, webOnlyWindowName: '_blank');
+    if (!ok) {
+      throw StateError('Could not open Stripe onboarding link');
+    }
+  }
+
+  Future<void> _refreshStatus(String franchiseId) async {
+    final callable =
+        FirebaseFunctions.instance.httpsCallable('refreshConnectAccountStatus');
+    final result = await callable.call(<String, dynamic>{
+      'franchiseId': franchiseId,
+    });
+    final data = Map<String, dynamic>.from(result.data as Map);
+
+    final fp = Provider.of<shared.FranchiseProvider>(context, listen: false);
+    final merged = Map<String, dynamic>.from(fp.currentBranding)
+      ..['paymentsEnabled'] = data['paymentsEnabled'] == true
+      ..['stripeConnectStatus'] = data['stripeConnectStatus']
+      ..['stripeConnectAccountId'] = data['stripeConnectAccountId'];
+    fp.setBrandingFromFranchiseDoc(merged);
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          data['paymentsEnabled'] == true
+              ? 'Card payments enabled'
+              : 'Status updated — card payments still blocked',
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final fp = Provider.of<shared.FranchiseProvider>(context, listen: true);
+    final franchiseId = fp.franchiseId;
+    final enabled = fp.paymentsEnabled;
+    final accountId = fp.stripeConnectAccountId;
+    final status = fp.stripeConnectStatus;
+    final canAct = franchiseId.isNotEmpty && franchiseId != 'unknown';
+
+    final String headline;
+    final String detail;
+    if (enabled) {
+      headline = 'Card payments enabled';
+      detail = status != null && status.isNotEmpty
+          ? 'Connect status: $status'
+          : 'Ready to accept customer card orders.';
+    } else if (accountId != null && accountId.isNotEmpty) {
+      headline = 'Connect onboarding incomplete';
+      detail = status != null && status.isNotEmpty
+          ? 'Status: $status — card checkout stays blocked.'
+          : 'Account linked but not ready — card checkout blocked.';
+    } else {
+      headline = 'Card payments not set up';
+      detail =
+          'Customers cannot pay by card until Stripe Connect is completed.';
+    }
+
     return Card(
+      key: ValueKey('hq-card-payments-$franchiseId-${fp.currentConfigVersion}'),
       elevation: DesignTokens.adminCardElevation,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
@@ -555,31 +676,84 @@ class PayoutStatusInDevCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.payments_outlined,
-                    color: DesignTokens.primaryColor, size: 20),
+                Icon(
+                  enabled
+                      ? Icons.check_circle_outline
+                      : Icons.payments_outlined,
+                  color: enabled
+                      ? DesignTokens.primaryColor
+                      : theme.colorScheme.onSurfaceVariant,
+                  size: 20,
+                ),
                 const SizedBox(width: 8),
-                Text(
-                  'Payouts',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Text(
+                    'Customer card payments',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                if (_busy)
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
               ],
             ),
             const SizedBox(height: 12),
             Text(
-              'Franchise payout status and history.',
+              headline,
               style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: enabled
+                    ? DesignTokens.primaryColor
+                    : theme.colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              detail,
+              style: theme.textTheme.bodySmall?.copyWith(
                 color: DesignTokens.secondaryTextColor,
               ),
             ),
-            const Spacer(),
-            Text(
-              'In development',
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontStyle: FontStyle.italic,
-                color: theme.colorScheme.onSurfaceVariant,
+            if (accountId != null && accountId.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                'Account: $accountId',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: DesignTokens.secondaryTextColor,
+                  fontFamily: 'monospace',
+                ),
               ),
+            ],
+            const Spacer(),
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                TextButton(
+                  onPressed: (!canAct || _busy)
+                      ? null
+                      : () => _run(() => _startOnboarding(franchiseId)),
+                  child: Text(
+                    accountId == null || accountId.isEmpty
+                        ? 'Set up card payments'
+                        : 'Continue onboarding',
+                  ),
+                ),
+                TextButton(
+                  onPressed: (!canAct || _busy)
+                      ? null
+                      : () => _run(() => _refreshStatus(franchiseId)),
+                  child: const Text('Refresh status'),
+                ),
+              ],
             ),
           ],
         ),

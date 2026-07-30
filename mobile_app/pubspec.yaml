@@ -49,6 +49,8 @@ dependencies:
   qr_flutter: ^4.1.0
   app_links: ^6.4.1
   mobile_scanner: ^6.0.2
+  cloud_functions: ^5.5.0
+  flutter_stripe: ^11.4.0
 
 dev_dependencies:
   flutter_test:

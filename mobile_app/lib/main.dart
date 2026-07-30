@@ -19,6 +19,7 @@ import 'package:franchise_mobile_app/features/language/language_provider.dart';
 import 'package:franchise_mobile_app/core/models/user.dart' as app_user;
 // Note: FranchiseProvider now comes exclusively from shared_core (single source of truth)
 import 'package:franchise_mobile_app/core/services/franchise_bind_service.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 
 // Screens
 import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
@@ -105,6 +106,13 @@ Future<void> main() async {
     WidgetsFlutterBinding.ensureInitialized();
     await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform);
+
+    // ST5: Stripe publishable key only (pk_test_… / pk_live_…). Never sk_.
+    Stripe.publishableKey = const String.fromEnvironment(
+      'STRIPE_PK',
+      defaultValue:
+          'pk_test_51TywIOJSgqu1bbPtcTJZk86OAdmLI3T30J74rpi5uzjhWvdkZO9QUEiyv1rJVYqH8KLqmLrFavuFNeRgBW46DBDB00aAvGcrwt',
+    );
 
     FlutterError.onError = (FlutterErrorDetails details) {
       shared.ErrorLogger.log(
