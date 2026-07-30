@@ -1,11 +1,11 @@
 # Slice: Stripe Checkout v1 (Platform + Connect)
 
-**Status**: **In progress** (product approved July 29, 2026; implementation started July 30)  
+**Status**: **COMPLETE** (2026-07-30)  
 **Branch**: `feat/stripe-checkout-v1`  
 **Authority**: Decision **12** · STATUS · HANDOFF · this file  
 **Depends on**: Active `franchiseId` (Decision 11); Platform Owner billing surfaces may already list invoices  
 **Pilot**: Test mode for mock + real; live charges only when real franchise Connect-ready  
-**Related**: Cash on pickup is Decision **13** / `kitchen-ops-v1` (feature toggle) — **not** Connect
+**Related**: Cash on pickup / counter is Decision **14** / thin POS — **not** Connect
 
 ---
 
@@ -32,7 +32,7 @@ Ordering UX exists without a **locked multi-tenant card payment architecture**. 
 ```text
 Customer card order → Franchise Connect account  (+ application fee → Platform)
 HQ subscription     → Platform Stripe account only
-Cash on pickup      → No Connect charge; kitchen-ops feature flags (Decision 13)
+Cash on pickup / counter → Thin POS (Decision 14); no Connect charge
 ```
 
 ### Architecture choice
@@ -48,9 +48,9 @@ Cash on pickup      → No Connect charge; kitchen-ops feature flags (Decision 1
 | Checkout franchise | Always active session `franchiseId` |
 | Missing Connect / not ready | **Fail closed** on **card** pay — “Payments not set up” |
 | `paymentsEnabled` | True only when connected account can accept charges |
-| Cash option | Only if Admin **cashOnPickup** feature on (Decision 13); does not require Connect |
+| Cash option | Handled by thin POS (Decision 14); does not require Connect |
 | Application fee | Platform-configured % or flat |
-| Card order → kitchen | Status **`paid`** drives auto-print (kitchen-ops) |
+| Card order → kitchen / POS | Status **`paid`** drives downstream handling |
 
 ---
 
@@ -59,46 +59,56 @@ Cash on pickup      → No Connect charge; kitchen-ops feature flags (Decision 1
 | ID | Deliverable | Status |
 |----|-------------|--------|
 | **ST0** | Docs lock | **Done** |
-| **ST1** | Franchise fields: connected account id, status, `paymentsEnabled` | **Next** |
-| **ST2** | HQ Connect onboarding entry + status honesty | Open |
-| **ST3** | Create PaymentIntent (Connect + application fee) | Open |
-| **ST4** | Webhooks → order paid/failed; idempotent | Open |
-| **ST5** | Mobile checkout card pay UI + errors when not enabled | Open |
-| **ST6** | Test mode path mock + real; live gate | Open |
-| **ST7** | Minimal card refund path (manager-triggered per Decision 13) | Open |
-| **ST8** | Acceptance + STATUS close | Open |
+| **ST1** | Franchise fields: connected account id, status, `paymentsEnabled` | **Done** |
+| **ST2** | HQ Connect onboarding entry + status honesty | **Done** |
+| **ST3** | Create PaymentIntent (Connect + application fee) | **Done** |
+| **ST4** | Webhooks → order paid/failed; idempotent | **Done** |
+| **ST5** | Mobile checkout card pay UI + errors when not enabled | **Done** |
+| **ST6** | Test mode path mock + real; live gate | **Done** |
+| **ST7** | Minimal card refund path (manager-triggered) | Deferred / optional for later |
+| **ST8** | Acceptance + STATUS close | **Done** |
 
 ---
 
-## 4. Relation to Platform Owner billing and kitchen
+## 4. Relation to Platform Owner billing and station
 
 - SaaS invoices/subscriptions remain on **platform** Stripe.  
-- Kitchen board consumes **`paid`** for card; cash uses kitchen-ops states/flags.  
+- Station / kitchen surface consumes **`paid`** for card; cash uses thin POS (Decision 14).  
 - Manager refunds for card go through Connect-aware refund; cooks never initiate.
 
 ---
 
 ## 5. Acceptance (implementation)
 
-- [ ] HQ Connect onboarding + status
-- [ ] Mock/real test charges; live only when `paymentsEnabled`
-- [ ] Webhook marks paid once (idempotent)
-- [ ] Card checkout blocked when payments not enabled
-- [ ] Application fee on platform
-- [ ] Cash path not implemented inside this slice except coexistence with Decision 13 flags
+- [x] HQ Connect onboarding + status
+- [x] Mock/real test charges; live only when `paymentsEnabled`
+- [x] Webhook marks paid once (idempotent)
+- [x] Card checkout blocked when payments not enabled
+- [x] Application fee on platform
+- [x] Android PaymentSheet path (FlutterFragmentActivity + Theme.MaterialComponents)
+- [x] Test-mode end-to-end smoke pass (HQ enable → mobile Card → 4242… → paid)
 
 ---
 
-## 6. Out of scope
+## 6. Residual (deferred)
 
-- Cash drawer / card-present terminal  
-- Implementing kitchen UI (see `kitchen-ops-v1.md`)  
+Post-order UX: “How was your order?” survey currently surfaces immediately after the ease-of-use survey / Back to main menu.  
+**Desired:** scheduled push (or in-app) notification X minutes after paid status.  
+Do **not** change in this slice. Track under post-order experience / notifications.
+
+---
+
+## 7. Out of scope
+
+- Cash drawer / card-present terminal (thin POS Decision 14)  
+- Implementing station / kitchen UI  
 - Guest checkout without account  
+- Live refunds in v1 (optional ST7 later)
 
 ---
 
-## 7. Bottom line
+## 8. Bottom line
 
-**Platform Stripe** bills franchises for software. **Connect per franchise** takes **customer card** payments with an **application fee**. **Cash on pickup** is a separate toggled fulfillment mode under kitchen-ops, not a second card architecture.
+**Platform Stripe** bills franchises for software. **Connect per franchise** takes **customer card** payments with an **application fee**. **Cash** is handled by the thin POS (Decision 14).
 
-**Next concrete step:** ST1 — model + persist franchise Connect account id / status / `paymentsEnabled` (shared_core + Firestore rules honesty; fail-closed default).
+**Slice closed 2026-07-30** after successful test-mode smoke.

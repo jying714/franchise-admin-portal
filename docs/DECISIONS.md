@@ -1,6 +1,6 @@
 # Architecture Decision Log (DECISIONS.md)
 
-**Last Updated**: July 30, 2026 (Decision 14 — Thin POS Station App supersedes pure kitchen framing)
+**Last Updated**: July 30, 2026 (stripe-checkout-v1 COMPLETE; Decision 14 Thin POS)
 
 This file records major architectural and design decisions for the Doughboys Pizzeria Franchise Platform.
 
@@ -60,10 +60,10 @@ This file records major architectural and design decisions for the Doughboys Piz
 
 ### 12. Payments — Platform Stripe + Connect per Franchise
 **Date**: July 29, 2026  
-**Status**: **Approved — implementation in progress** (`feat/stripe-checkout-v1`)  
+**Status**: **Implemented & smoke-tested 2026-07-30 (test mode). Residual survey timing deferred.**  
 **Summary:** Platform Stripe for HQ SaaS; Connect per franchise for **card** customer orders + application fee.  
 **Cash** (on pickup / at counter) is handled by the thin POS (Decision **14**) and related feature toggles; it is not a substitute for Connect.  
-**Reference:** `docs/slices/stripe-checkout-v1.md`.
+**Reference:** `docs/slices/stripe-checkout-v1.md` (**COMPLETE**).
 
 ### 13. Kitchen Ops — Thin App, Print Routing, Cash Feature Toggles (HISTORICAL / PARTIALLY SUPERSEDED)
 **Date**: July 29, 2026  

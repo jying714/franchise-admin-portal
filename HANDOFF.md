@@ -1,6 +1,6 @@
 # HANDOFF.md — Agent Context & Project Status
 
-**Last Updated**: July 30, 2026 (~15:45 CDT — Decision 14 Thin POS locked)  
+**Last Updated**: July 30, 2026 (~17:05 CDT — stripe-checkout-v1 COMPLETE)  
 **Hardware**: MINISFORUM AI X1 Pro-470  
 **Active branch**: `feat/stripe-checkout-v1`  
 **Repo**: https://github.com/jying714/franchise-admin-portal  
@@ -16,11 +16,11 @@ Prefer **STATUS.md + this handoff + `docs/slices/*` + `docs/DECISIONS.md`** over
 
 **On `main` and done:** HQ onboarding, Design & Branding, Platform Owner, Admin ops, menu M1–M5 + wings/calzone, mobile design tokens T1–T9, developer dashboard D0–D10, **customer franchise context v1** (Decision 11).
 
-**Active implementation:**
+**Just closed:**
 
 | Slice | Decision | Branch |
 |--------|----------|--------|
-| `docs/slices/stripe-checkout-v1.md` | 12 | `feat/stripe-checkout-v1` (ST0 done; **ST1 next**) |
+| `docs/slices/stripe-checkout-v1.md` | 12 | `feat/stripe-checkout-v1` (**COMPLETE** — ST0–ST8 smoke pass) |
 
 **Locked (not started):**
 
@@ -57,7 +57,7 @@ Card orders → Franchise Connect + application fee → Platform
 
 Cash at counter / on pickup is handled by the thin POS (Decision 14), not Connect.
 
-**Current work:** ST1 — franchise fields (`stripeConnectAccountId`, status, `paymentsEnabled`) + rules honesty. See slice for full ST0–ST8.
+**Status:** **COMPLETE** (test-mode end-to-end smoke pass 2026-07-30). Residual only: move “How was your order?” survey to scheduled push (post-order experience).
 
 ---
 
@@ -85,7 +85,7 @@ Pizza optionalAddOns; included not auto-charged; wings 2 portions + W2 pool; no 
 ## 6. Implementation order
 
 1. ~~Customer franchise context v1~~ **DONE on `main`**  
-2. **Stripe checkout v1** (card path) — **in progress** (`feat/stripe-checkout-v1`, ST1 next)  
+2. ~~Stripe checkout v1~~ **DONE** (`feat/stripe-checkout-v1`, ST0–ST8 smoke pass)  
 3. Polish mobile_app + web-app management  
 4. **Thin POS (`pos_app`)** per Decision 14 / `pos-app-v1.md`  
 5. Customer website (part of hard release gate)  
@@ -98,7 +98,7 @@ Pizza optionalAddOns; included not auto-charged; wings 2 portions + W2 pool; no 
 - `STATUS.md`  
 - `docs/DECISIONS.md` (11–14; **14 is station authority**)  
 - `docs/slices/customer-franchise-context-v1.md` (**COMPLETE on main**)  
-- `docs/slices/stripe-checkout-v1.md` (**active**)  
+- `docs/slices/stripe-checkout-v1.md` (**COMPLETE**)  
 - `docs/slices/pos-app-v1.md` (**locked station surface**)  
 - `docs/slices/kitchen-ops-v1.md` (**superseded** — historical only)  
 - `docs/slices/mobile-design-tokens-v1.md`  
@@ -106,4 +106,11 @@ Pizza optionalAddOns; included not auto-charged; wings 2 portions + W2 pool; no 
 
 ---
 
-**Bottom line:** Customer franchise context is on **`main`**. Active build focus = **dual Stripe on `feat/stripe-checkout-v1`** (ST1 next). Station surface is now **thin POS (`pos_app`)** under Decision 14 — do **not** build a pure kitchen-only app. Hard release gate includes customer website.
+### 2026-07-30 — stripe-checkout-v1 closed
+Card path live in test mode on feat/stripe-checkout-v1.  
+Residual only: move “How was your order?” survey to scheduled push (post-order experience).  
+Next product focus remains polish + Thin POS (Decision 14).
+
+---
+
+**Bottom line:** Customer franchise context is on **`main`**. Stripe card path is **COMPLETE** on `feat/stripe-checkout-v1`. Station surface is **thin POS (`pos_app`)** under Decision 14 — do **not** build a pure kitchen-only app. Hard release gate includes customer website.
