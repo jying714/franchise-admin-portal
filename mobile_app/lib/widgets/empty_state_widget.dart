@@ -37,7 +37,8 @@ class EmptyStateWidget extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (iconData != null)
-              Icon(iconData, size: 80, color: shared.UiConfig.primaryColor)
+              Icon(iconData,
+                  size: 80, color: Theme.of(context).colorScheme.primary)
             else if (img != null && img.isNotEmpty)
               Image.asset(
                 img,
@@ -49,7 +50,7 @@ class EmptyStateWidget extends StatelessWidget {
             Text(
               title,
               style: shared.UiConfig.titleStyle.copyWith(
-                color: shared.UiConfig.primaryColor,
+                color: Theme.of(context).colorScheme.primary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -68,8 +69,8 @@ class EmptyStateWidget extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: onRetry,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: shared.UiConfig.secondaryColor,
-                    foregroundColor: shared.UiConfig.foregroundColor,
+                    backgroundColor: Theme.of(context).colorScheme.secondary,
+                    foregroundColor: Theme.of(context).colorScheme.onSecondary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(
                           shared.DesignTokens.buttonRadius),

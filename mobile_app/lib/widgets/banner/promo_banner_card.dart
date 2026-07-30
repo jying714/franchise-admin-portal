@@ -60,10 +60,15 @@ class PromoBannerCard extends StatelessWidget {
                     banner.title,
                     style: TextStyle(
                       fontSize: shared.DesignTokens.titleFontSize,
-                      color: shared.UiConfig.foregroundColor,
+                      color: Theme.of(context).colorScheme.onPrimary,
                       fontWeight: shared.UiConfig.fontWeightBold,
-                      shadows: const [
-                        Shadow(color: Colors.black54, blurRadius: 4),
+                      shadows: [
+                        Shadow(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .shadow
+                                .withOpacity(0.54),
+                            blurRadius: 4),
                       ],
                     ),
                     maxLines: 1,

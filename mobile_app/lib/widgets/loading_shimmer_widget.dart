@@ -26,7 +26,7 @@ class LoadingShimmerWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     if (isAdminGrid) {
       return Shimmer.fromColors(
-        baseColor: shared.UiConfig.shimmerBaseColor,
+        baseColor: Theme.of(context).colorScheme.surfaceContainerHighest,
         highlightColor: shared.UiConfig.shimmerHighlightColor,
         child: GridView.count(
           physics: const NeverScrollableScrollPhysics(),
@@ -40,7 +40,7 @@ class LoadingShimmerWidget extends StatelessWidget {
                 height: cardHeight,
                 width: cardWidth,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius:
                       BorderRadius.circular(shared.DesignTokens.cardRadius),
                 ),
@@ -53,7 +53,7 @@ class LoadingShimmerWidget extends StatelessWidget {
 
     return Shimmer.fromColors(
       baseColor: shared.UiConfig.shimmerBaseColor,
-      highlightColor: shared.UiConfig.shimmerHighlightColor,
+      highlightColor: Theme.of(context).colorScheme.surfaceContainerHigh,
       child: GridView.count(
         crossAxisCount: 2, // or 3 for tablet
         shrinkWrap: true,
@@ -65,7 +65,7 @@ class LoadingShimmerWidget extends StatelessWidget {
           (index) => Container(
             margin: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius:
                   BorderRadius.circular(shared.DesignTokens.cardRadius),
             ),

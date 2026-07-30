@@ -97,7 +97,7 @@ class _ChatScreenState extends State<ChatScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to send message'),
-            backgroundColor: shared.UiConfig.errorColor,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -116,13 +116,13 @@ class _ChatScreenState extends State<ChatScreen> {
     if (_userId == null) {
       return Scaffold(
         appBar: _buildAppBar(localize),
-        backgroundColor: shared.UiConfig.backgroundColorDark,
+        backgroundColor: Theme.of(context).colorScheme.background,
         body: Center(
           child: Text(
             localize.mustSignInForChat,
             style: TextStyle(
               fontSize: shared.DesignTokens.bodyFontSize,
-              color: shared.UiConfig.textColorDark,
+              color: Theme.of(context).colorScheme.onSurface,
               fontFamily: shared.DesignTokens.fontFamily,
               fontWeight: shared.UiConfig.fontWeightMedium,
             ),
@@ -134,14 +134,14 @@ class _ChatScreenState extends State<ChatScreen> {
     if (_isLoading || _chatId == null) {
       return Scaffold(
         appBar: _buildAppBar(localize),
-        backgroundColor: shared.UiConfig.backgroundColorDark,
+        backgroundColor: Theme.of(context).colorScheme.background,
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
       appBar: _buildAppBar(localize),
-      backgroundColor: shared.UiConfig.backgroundColorDark,
+      backgroundColor: Theme.of(context).colorScheme.background,
       body: Column(
         children: [
           Padding(
@@ -153,8 +153,8 @@ class _ChatScreenState extends State<ChatScreen> {
               style: TextStyle(
                 fontSize: shared.DesignTokens.bodyFontSize,
                 color: _isSupportOnline
-                    ? shared.UiConfig.successColor
-                    : shared.UiConfig.disabledTextColor,
+                    ? Colors.green
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
                 fontWeight: shared.UiConfig.fontWeightMedium,
                 fontFamily: shared.DesignTokens.fontFamily,
               ),
@@ -175,7 +175,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       localize.noMessages,
                       style: TextStyle(
                         fontSize: shared.DesignTokens.bodyFontSize,
-                        color: shared.UiConfig.disabledTextColor,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontFamily: shared.DesignTokens.fontFamily,
                       ),
                     ),
@@ -205,8 +205,9 @@ class _ChatScreenState extends State<ChatScreen> {
                     maxLines: 3,
                     decoration: InputDecoration(
                       hintText: localize.typeYourMessage,
-                      hintStyle:
-                          TextStyle(color: shared.UiConfig.hintTextColor),
+                      hintStyle: TextStyle(
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(
                             shared.DesignTokens.formFieldRadius),
@@ -214,7 +215,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       counterText: '',
                     ),
                     style: TextStyle(
-                      color: shared.UiConfig.textColorDark,
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontSize: shared.DesignTokens.bodyFontSize,
                       fontFamily: shared.DesignTokens.fontFamily,
                     ),
@@ -224,7 +225,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 IconButton(
                   icon: Icon(
                     Icons.send,
-                    color: shared.UiConfig.facebookColor,
+                    color: Theme.of(context).colorScheme.primary,
                     size: shared.DesignTokens.iconSize,
                   ),
                   onPressed: _sendMessage,
@@ -241,8 +242,8 @@ class _ChatScreenState extends State<ChatScreen> {
       FranchiseAppBar(
         title: localize.chatSupportTitle,
         showLogo: false,
-        backgroundColor: shared.UiConfig.facebookColor,
-        foregroundColor: shared.UiConfig.foregroundColorDark,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
         centerTitle: true,
         elevation: 0,
       );
@@ -264,8 +265,8 @@ class _MessageBubble extends StatelessWidget {
         padding: shared.UiConfig.defaultPadding,
         decoration: BoxDecoration(
           color: isUser
-              ? shared.UiConfig.accentColor.withAlpha(51)
-              : shared.UiConfig.surfaceColorDark,
+              ? Theme.of(context).colorScheme.primary.withAlpha(51)
+              : Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
         ),
         child: Column(
@@ -276,7 +277,7 @@ class _MessageBubble extends StatelessWidget {
               message.content,
               style: TextStyle(
                 fontSize: shared.DesignTokens.bodyFontSize,
-                color: shared.UiConfig.textColorDark,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontFamily: shared.DesignTokens.fontFamily,
               ),
             ),
@@ -285,7 +286,7 @@ class _MessageBubble extends StatelessWidget {
               _formatTime(message.timestamp),
               style: TextStyle(
                 fontSize: shared.DesignTokens.captionFontSize,
-                color: shared.UiConfig.hintTextColor,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontFamily: shared.DesignTokens.fontFamily,
               ),
             ),

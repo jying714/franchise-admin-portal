@@ -34,7 +34,7 @@ class CartIconBadge extends StatelessWidget {
             icon: Icon(
               Icons.shopping_cart_outlined,
               size: shared.DesignTokens.iconSize,
-              color: shared.UiConfig.foregroundColor,
+              color: Theme.of(context).colorScheme.onPrimary,
             ),
             onPressed: onPressed,
             tooltip: tooltip ?? 'Cart',
@@ -58,7 +58,7 @@ class CartIconBadge extends StatelessWidget {
                   Icon(
                     Icons.shopping_cart_outlined,
                     size: shared.DesignTokens.iconSize,
-                    color: shared.UiConfig.foregroundColor,
+                    color: Theme.of(context).colorScheme.onPrimary,
                   ),
                   if (count > 0)
                     Positioned(
@@ -67,7 +67,7 @@ class CartIconBadge extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(2),
                         decoration: BoxDecoration(
-                          color: shared.UiConfig.errorColor,
+                          color: Theme.of(context).colorScheme.error,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         constraints: const BoxConstraints(
@@ -77,8 +77,8 @@ class CartIconBadge extends StatelessWidget {
                         child: Center(
                           child: Text(
                             count > 99 ? '99+' : count.toString(),
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onError,
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
                             ),

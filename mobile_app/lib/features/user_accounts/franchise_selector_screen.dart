@@ -71,8 +71,8 @@ class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(loc.switchRestaurant),
-        backgroundColor:
-            shared.UiConfig.primaryColor, // Use your shared.UiConfig
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -82,7 +82,8 @@ class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
                   ? Center(
                       child: Text(
                         'No restaurant locations found for your account.',
-                        style: const TextStyle(color: Colors.black87),
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface),
                       ),
                     )
                   : ListView.builder(
@@ -96,7 +97,9 @@ class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
                           leading: f.logoUrl != null
                               ? CircleAvatar(
                                   backgroundImage: NetworkImage(f.logoUrl!),
-                                  backgroundColor: Colors.grey[200],
+                                  backgroundColor: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHighest,
                                 )
                               : const CircleAvatar(child: Icon(Icons.store)),
                           title: Text(
@@ -110,8 +113,8 @@ class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
                           ),
                           subtitle: f.status != null ? Text(f.status!) : null,
                           trailing: isCurrent
-                              ? const Icon(Icons.check_circle,
-                                  color: Colors.green)
+                              ? Icon(Icons.check_circle,
+                                  color: Theme.of(context).colorScheme.primary)
                               : null,
                           onTap: () async {
                             await franchiseProvider.setFranchiseId(f.id);

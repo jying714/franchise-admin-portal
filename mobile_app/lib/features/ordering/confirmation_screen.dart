@@ -102,7 +102,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
         }
 
         return Scaffold(
-          backgroundColor: shared.UiConfig.backgroundColor,
+          backgroundColor: Theme.of(context).colorScheme.background,
           appBar: FranchiseAppBar(
             title: localizations.orderConfirmed,
             showLogo: true,
@@ -118,7 +118,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
                 children: [
                   Icon(
                     Icons.check_circle,
-                    color: shared.UiConfig.secondaryColor,
+                    color: Theme.of(context).colorScheme.secondary,
                     size: 72,
                   ),
                   SizedBox(height: shared.DesignTokens.gridSpacing * 2),
@@ -126,7 +126,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
                     localizations.thankYouForYourOrder ??
                         'Thank you for your order!',
                     style: TextStyle(
-                      color: shared.UiConfig.primaryColor,
+                      color: Theme.of(context).colorScheme.primary,
                       fontSize: shared.DesignTokens.titleFontSize,
                       fontWeight: shared.UiConfig.fontWeightBold,
                       fontFamily: shared.DesignTokens.fontFamily,
@@ -137,7 +137,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
                   Text(
                     localizations.yourOrderIdIs ?? 'Your order ID is:',
                     style: TextStyle(
-                      color: shared.UiConfig.textColor,
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontSize: shared.DesignTokens.bodyFontSize,
                       fontFamily: shared.DesignTokens.fontFamily,
                       fontWeight: shared.UiConfig.fontWeightMedium,
@@ -147,7 +147,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
                   Text(
                     widget.orderId,
                     style: TextStyle(
-                      color: shared.UiConfig.accentColor,
+                      color: Theme.of(context).colorScheme.primary,
                       fontSize: shared.DesignTokens.bodyFontSize,
                       fontWeight: FontWeight.bold,
                       fontFamily: shared.DesignTokens.fontFamily,
@@ -156,8 +156,8 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
                   SizedBox(height: shared.DesignTokens.gridSpacing * 2),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: shared.UiConfig.primaryColor,
-                      foregroundColor: shared.UiConfig.foregroundColorDark,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
                       padding: shared.UiConfig.defaultPadding,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(
@@ -180,8 +180,10 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
                     ElevatedButton.icon(
                       icon: const Icon(Icons.delivery_dining),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: shared.UiConfig.secondaryColor,
-                        foregroundColor: shared.UiConfig.foregroundColorDark,
+                        backgroundColor:
+                            Theme.of(context).colorScheme.secondary,
+                        foregroundColor:
+                            Theme.of(context).colorScheme.onSecondary,
                         padding: shared.UiConfig.defaultPadding,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(

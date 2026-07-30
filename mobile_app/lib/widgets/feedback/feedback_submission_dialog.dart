@@ -167,7 +167,7 @@ class _FeedbackSubmissionDialogState extends State<FeedbackSubmissionDialog> {
                       _errorText = null;
                     }),
                     tooltip: null,
-                    color: shared.UiConfig.primaryColor,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
                 if (_rating == 0)
@@ -176,7 +176,7 @@ class _FeedbackSubmissionDialogState extends State<FeedbackSubmissionDialog> {
                     child: Text(
                       loc.ratingRequiredError,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: shared.UiConfig.errorColor,
+                        color: Theme.of(context).colorScheme.error,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -246,7 +246,7 @@ class _FeedbackSubmissionDialogState extends State<FeedbackSubmissionDialog> {
                     child: Text(
                       _errorText!,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: shared.UiConfig.errorColor,
+                        color: Theme.of(context).colorScheme.error,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -255,8 +255,8 @@ class _FeedbackSubmissionDialogState extends State<FeedbackSubmissionDialog> {
                   width: double.infinity,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: shared.UiConfig.primaryColor,
-                      foregroundColor: shared.UiConfig.foregroundColor,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(
@@ -304,7 +304,9 @@ class _StarRatingSelector extends StatelessWidget {
       return IconButton(
         icon: Icon(
           selected ? Icons.star : Icons.star_border,
-          color: selected ? color ?? Colors.amber : Colors.grey[400],
+          color: selected
+              ? color ?? Colors.amber
+              : Theme.of(context).colorScheme.onSurfaceVariant,
           size: 32,
         ),
         tooltip: tooltip,
@@ -358,11 +360,10 @@ class _CategoryRatingSelector extends StatelessWidget {
               onChanged(idx + 1);
             }
           },
-          fillColor: shared.UiConfig.primaryColor,
-          selectedColor: shared.UiConfig.foregroundColor,
-          color: theme.textTheme.bodyMedium?.color,
-          borderColor: shared.UiConfig.primaryColor.withOpacity(0.3),
-          selectedBorderColor: shared.UiConfig.primaryColor,
+          fillColor: Theme.of(context).colorScheme.primary,
+          selectedColor: Theme.of(context).colorScheme.onPrimary,
+          borderColor: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+          selectedBorderColor: Theme.of(context).colorScheme.primary,
           children: List.generate(
             5,
             (i) => Padding(
@@ -397,7 +398,7 @@ class _FeedbackThankYouDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.check_circle,
-                color: shared.UiConfig.primaryColor, size: 56),
+                color: Theme.of(context).colorScheme.primary, size: 56),
             const SizedBox(height: 18),
             Text(
               loc.feedbackThankYouTitle,
@@ -416,8 +417,8 @@ class _FeedbackThankYouDialog extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: shared.UiConfig.primaryColor,
-                  foregroundColor: shared.UiConfig.foregroundColor,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
                 ),
                 onPressed: () => Navigator.of(context).pop(),
                 child: Text(loc.feedbackBackToMenu),

@@ -189,7 +189,7 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
   Widget _buildEmptyState(AppLocalizations loc) {
     return Center(
       child: Card(
-        color: shared.UiConfig.surfaceColor,
+        color: Theme.of(context).colorScheme.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
         ),
@@ -202,7 +202,7 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
               Icon(
                 Icons.card_giftcard,
                 size: 64,
-                color: shared.UiConfig.primaryColor,
+                color: Theme.of(context).colorScheme.primary,
                 semanticLabel: 'loyalty',
               ),
               const SizedBox(height: 16),
@@ -259,7 +259,7 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
     return ListView(
       children: [
         Card(
-          color: shared.UiConfig.surfaceColor,
+          color: Theme.of(context).colorScheme.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
           ),
@@ -272,7 +272,7 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
                   children: [
                     Icon(
                       Icons.emoji_events,
-                      color: shared.UiConfig.primaryColor,
+                      color: Theme.of(context).colorScheme.primary,
                       size: 40,
                     ),
                     const SizedBox(width: 16),
@@ -286,7 +286,7 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
                               fontFamily: shared.DesignTokens.fontFamily,
                               fontSize: shared.DesignTokens.titleFontSize,
                               fontWeight: shared.UiConfig.fontWeightBold,
-                              color: shared.UiConfig.primaryColor,
+                              color: Theme.of(context).colorScheme.primary,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -341,8 +341,9 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
                 LinearProgressIndicator(
                   value: progress,
                   minHeight: 8,
-                  color: shared.UiConfig.primaryColor,
-                  backgroundColor: shared.UiConfig.shimmerBaseColor,
+                  color: Theme.of(context).colorScheme.primary,
+                  backgroundColor:
+                      Theme.of(context).colorScheme.surfaceContainerHighest,
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -367,7 +368,7 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
               fontFamily: shared.DesignTokens.fontFamily,
               fontSize: shared.DesignTokens.titleFontSize,
               fontWeight: shared.UiConfig.bold,
-              color: shared.UiConfig.primaryColor,
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
           const SizedBox(height: 8),
@@ -381,7 +382,7 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
             fontFamily: shared.DesignTokens.fontFamily,
             fontSize: shared.DesignTokens.titleFontSize,
             fontWeight: shared.UiConfig.bold,
-            color: shared.UiConfig.primaryColor,
+            color: Theme.of(context).colorScheme.primary,
           ),
         ),
         const SizedBox(height: 8),
@@ -424,7 +425,7 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
     final df = DateFormat.yMd();
 
     return Card(
-      color: shared.UiConfig.surfaceColor,
+      color: Theme.of(context).colorScheme.surface,
       margin: const EdgeInsets.symmetric(vertical: 6),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),

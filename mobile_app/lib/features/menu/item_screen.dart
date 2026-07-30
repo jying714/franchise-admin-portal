@@ -89,9 +89,9 @@ class _ItemScreenState extends State<ItemScreen> {
         SnackBar(
           content: Text(
             'Please select a franchise location to order.',
-            style: TextStyle(color: shared.UiConfig.textColor),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
           ),
-          backgroundColor: shared.UiConfig.surfaceColor,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
           behavior: SnackBarBehavior.floating,
         ),
@@ -116,7 +116,7 @@ class _ItemScreenState extends State<ItemScreen> {
           behavior: SnackBarBehavior.floating,
           action: SnackBarAction(
             label: loc.signIn,
-            textColor: shared.UiConfig.primaryColor,
+            textColor: Theme.of(context).colorScheme.primary,
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const SignInScreen()),
@@ -188,10 +188,10 @@ class _ItemScreenState extends State<ItemScreen> {
     return Scaffold(
       appBar: FranchiseAppBar(
         title: widget.menuItem.name,
-        titleStyle: shared.UiConfig.titleStyle.copyWith(
-          color: shared.UiConfig.foregroundColorDark,
-          fontSize: 20,
-        ),
+        titleStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: Theme.of(context).colorScheme.onPrimary,
+              fontSize: 20,
+            ),
         centerTitle: true,
         showLogo: true,
         logoUrl: shared.UiConfig.currentLogoUrl,
@@ -200,7 +200,7 @@ class _ItemScreenState extends State<ItemScreen> {
         actions: [
           ProfileIconButton(
             tooltip: loc.profile,
-            iconColor: shared.UiConfig.foregroundColorDark,
+            iconColor: Theme.of(context).colorScheme.onPrimary,
             iconSize: shared.DesignTokens.iconSize,
             onPressed: () {
               Navigator.pushNamed(context, '/profile');
@@ -209,7 +209,7 @@ class _ItemScreenState extends State<ItemScreen> {
           IconButton(
             icon: Icon(Icons.shopping_cart,
                 size: shared.DesignTokens.iconSize,
-                color: shared.UiConfig.foregroundColorDark),
+                color: Theme.of(context).colorScheme.onPrimary),
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const CartScreen()),
@@ -218,11 +218,11 @@ class _ItemScreenState extends State<ItemScreen> {
           ),
           FavoriteButton(itemId: widget.itemId, userId: _userId),
         ],
-        backgroundColor: shared.UiConfig.primaryColor,
-        foregroundColor: shared.UiConfig.foregroundColorDark,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
         elevation: 0,
       ),
-      backgroundColor: shared.UiConfig.backgroundColor,
+      backgroundColor: Theme.of(context).colorScheme.background,
       body: Consumer<shared.FranchiseProvider>(
         builder: (context, provider, child) {
           if (!provider.hasValidFranchise) {
@@ -249,20 +249,20 @@ class _ItemScreenState extends State<ItemScreen> {
                 // ITEM NAME + PRICE
                 Text(
                   widget.menuItem.name,
-                  style: shared.UiConfig.titleStyle.copyWith(
-                    color: Colors.black,
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                      ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   '\$${widget.menuItem.price.toStringAsFixed(2)}',
-                  style: shared.UiConfig.bodyBoldStyle.copyWith(
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
                 const SizedBox(height: shared.DesignTokens.gridSpacing),
 
@@ -271,7 +271,7 @@ class _ItemScreenState extends State<ItemScreen> {
                   widget.menuItem.description,
                   style: TextStyle(
                     fontSize: shared.DesignTokens.captionFontSize,
-                    color: shared.UiConfig.secondaryTextColor,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontFamily: shared.DesignTokens.fontFamily,
                   ),
                 ),

@@ -80,7 +80,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(localizations.selectedTimeOutsideBusinessHours),
-          backgroundColor: shared.UiConfig.errorColor,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
       return;
@@ -106,7 +106,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Payments not set up for this restaurant'),
-            backgroundColor: shared.UiConfig.errorColor,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -181,7 +181,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(msg),
-            backgroundColor: shared.UiConfig.errorColor,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -198,7 +198,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Payment setup failed: $msg'),
-            backgroundColor: shared.UiConfig.errorColor,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -214,7 +214,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('$e'),
-            backgroundColor: shared.UiConfig.errorColor,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -292,9 +292,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         SnackBar(
           content: Text(
             localizations.pleaseSelectTime,
-            style: TextStyle(color: shared.UiConfig.textColor),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
           ),
-          backgroundColor: shared.UiConfig.surfaceColor,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
           behavior: SnackBarBehavior.floating,
         ),
@@ -308,9 +308,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         SnackBar(
           content: Text(
             localizations.signInToOrder,
-            style: TextStyle(color: shared.UiConfig.textColor),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
           ),
-          backgroundColor: shared.UiConfig.surfaceColor,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
           behavior: SnackBarBehavior.floating,
         ),
@@ -333,9 +333,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         SnackBar(
           content: Text(
             localizations.cartEmpty,
-            style: TextStyle(color: shared.UiConfig.textColor),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
           ),
-          backgroundColor: shared.UiConfig.surfaceColor,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
           behavior: SnackBarBehavior.floating,
         ),
@@ -385,7 +385,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(localizations.paymentFailed),
-          backgroundColor: shared.UiConfig.errorColor,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
       return;
@@ -432,7 +432,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('${localizations.orderFailed}: $e'),
-          backgroundColor: shared.UiConfig.errorColor,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     }
@@ -526,7 +526,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 final showAllergenWarning = allAllergens.isNotEmpty;
 
                 return Scaffold(
-                  backgroundColor: shared.UiConfig.backgroundColor,
+                  backgroundColor: Theme.of(context).colorScheme.background,
                   appBar: FranchiseAppBar(
                     title: localizations.checkout,
                     showLogo: true,
@@ -548,7 +548,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   left: 4, right: 4, top: 2, bottom: 12),
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: shared.UiConfig.errorColor
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .error
                                     .withOpacity(0.12),
                                 borderRadius: BorderRadius.circular(
                                     shared.DesignTokens.cardRadius),
@@ -557,7 +559,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Icon(Icons.warning_amber_rounded,
-                                      color: shared.UiConfig.errorColor,
+                                      color:
+                                          Theme.of(context).colorScheme.error,
                                       size: 28),
                                   const SizedBox(width: 12),
                                   Expanded(
@@ -565,7 +568,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                       '${localizations.warning}: ${localizations.itemsInCartCouldContain}\n'
                                       '${allAllergens.join(", ")}',
                                       style: TextStyle(
-                                        color: shared.UiConfig.errorColor,
+                                        color:
+                                            Theme.of(context).colorScheme.error,
                                         fontWeight: FontWeight.bold,
                                         fontFamily:
                                             shared.DesignTokens.fontFamily,
@@ -627,9 +631,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             ),
                             trailing: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: shared.UiConfig.secondaryColor,
+                                backgroundColor:
+                                    Theme.of(context).colorScheme.secondary,
                                 foregroundColor:
-                                    shared.UiConfig.foregroundColorDark,
+                                    Theme.of(context).colorScheme.onSecondary,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(
                                       shared.DesignTokens.buttonRadius),
@@ -647,7 +652,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               labelText: localizations.promoCode,
                               errorText: _promoError,
                               suffixIcon: _promoApplied
-                                  ? const Icon(Icons.check, color: Colors.green)
+                                  ? Icon(Icons.check,
+                                      color:
+                                          Theme.of(context).colorScheme.primary)
                                   : IconButton(
                                       icon: const Icon(Icons.local_offer),
                                       onPressed: () =>
@@ -710,7 +717,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               borderRadius: BorderRadius.circular(
                                   shared.DesignTokens.cardRadius),
                             ),
-                            color: shared.UiConfig.surfaceColor,
+                            color: Theme.of(context).colorScheme.surface,
                             child: Padding(
                               padding: shared.UiConfig.cardPadding,
                               child: Column(
@@ -743,9 +750,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             ),
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: shared.UiConfig.primaryColor,
+                                backgroundColor:
+                                    Theme.of(context).colorScheme.primary,
                                 foregroundColor:
-                                    shared.UiConfig.foregroundColorDark,
+                                    Theme.of(context).colorScheme.onPrimary,
                                 padding: shared.UiConfig.defaultPadding,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(
@@ -757,12 +765,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   ? null
                                   : () => _submitOrder(localizations),
                               child: _isPaying
-                                  ? const SizedBox(
+                                  ? SizedBox(
                                       height: 20,
                                       width: 20,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2,
-                                        color: Colors.white,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onPrimary,
                                       ),
                                     )
                                   : Text(localizations.placeOrder),
@@ -783,7 +793,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Widget _emptyCheckout(AppLocalizations localizations) {
     return Scaffold(
-      backgroundColor: shared.UiConfig.backgroundColor,
+      backgroundColor: Theme.of(context).colorScheme.background,
       appBar: FranchiseAppBar(
         title: localizations.checkout,
         showLogo: true,
@@ -796,7 +806,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           localizations.cartEmpty,
           style: TextStyle(
             fontSize: shared.DesignTokens.bodyFontSize,
-            color: shared.UiConfig.textColor,
+            color: Theme.of(context).colorScheme.onSurface,
             fontWeight: FontWeight.bold,
             fontFamily: shared.DesignTokens.fontFamily,
           ),
@@ -825,8 +835,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             style: TextStyle(
               fontWeight: bold ? FontWeight.bold : FontWeight.normal,
               color: bold
-                  ? shared.UiConfig.primaryColor
-                  : shared.UiConfig.textColor,
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.onSurface,
               fontSize: shared.DesignTokens.bodyFontSize,
             ),
           ),
