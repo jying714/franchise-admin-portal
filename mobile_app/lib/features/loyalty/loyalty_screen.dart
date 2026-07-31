@@ -69,7 +69,7 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
             content: Text(loc.rewardClaimedSuccess),
             duration:
                 Duration(seconds: shared.DesignTokens.toastDurationSeconds),
-            backgroundColor: shared.UiConfig.surfaceColor,
+            backgroundColor: Theme.of(context).colorScheme.surface,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -231,8 +231,8 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
                 icon: const Icon(Icons.local_pizza_outlined),
                 label: Text(loc.loyaltyOrderNow),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: shared.UiConfig.primaryColor,
-                  foregroundColor: shared.UiConfig.foregroundColor,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
                   shape: RoundedRectangleBorder(
                     borderRadius:
                         BorderRadius.circular(shared.DesignTokens.buttonRadius),
@@ -492,7 +492,7 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
                         ? () => _handleClaim(reward, data, loc)
                         : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: shared.UiConfig.primaryColor,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
                       foregroundColor: shared.UiConfig.foregroundColor,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(

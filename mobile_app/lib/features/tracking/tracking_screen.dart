@@ -14,8 +14,8 @@ class TrackingScreen extends StatelessWidget {
       appBar: FranchiseAppBar(
         title: localizations.trackOrder,
         showLogo: false,
-        backgroundColor: shared.UiConfig.primaryColor,
-        foregroundColor: shared.UiConfig.foregroundColor,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
         centerTitle: true,
         elevation: 0,
       ),

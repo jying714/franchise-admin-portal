@@ -229,7 +229,7 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
       ),
       backgroundColor: shared.UiConfig.backgroundColorDark,
       floatingActionButton: FloatingActionButton(
-        backgroundColor: shared.UiConfig.primaryColor,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         onPressed: () =>
             _showOrderEditorDialog(firestoreService: firestoreService),
         child: Icon(Icons.add, color: shared.UiConfig.onPrimaryColor),
@@ -299,7 +299,7 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
                         IconButton(
                           icon: Icon(
                               order.isPaused ? Icons.play_arrow : Icons.pause),
-                          color: shared.UiConfig.primaryColor,
+                          color: Theme.of(context).colorScheme.primary,
                           tooltip: order.isPaused ? 'Resume' : 'Pause',
                           onPressed: () async {
                             final updated =

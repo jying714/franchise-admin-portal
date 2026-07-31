@@ -239,7 +239,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             value: fullUser.phoneNumber ?? '',
                             trailing: IconButton(
                               icon: Icon(Icons.edit,
-                                  color: shared.UiConfig.primaryColor),
+                                  color: Theme.of(context).colorScheme.primary),
                               tooltip: l10n.edit,
                               onPressed: () {
                                 _showEditFieldDialog(

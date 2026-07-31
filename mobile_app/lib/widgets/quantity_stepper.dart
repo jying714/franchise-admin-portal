@@ -36,8 +36,8 @@ class QuantityStepper extends StatelessWidget {
           iconSize: iconSize,
           onPressed: canDecrement ? onDecrement : null,
           color: canDecrement
-              ? shared.UiConfig.primaryColor
-              : shared.UiConfig.disabledTextColor,
+              ? Theme.of(context).colorScheme.primary
+              : Theme.of(context).colorScheme.onSurfaceVariant,
           splashRadius: 20,
         ),
         Container(
@@ -57,8 +57,8 @@ class QuantityStepper extends StatelessWidget {
           iconSize: iconSize,
           onPressed: canIncrement ? onIncrement : null,
           color: canIncrement
-              ? shared.UiConfig.primaryColor
-              : shared.UiConfig.disabledTextColor,
+              ? Theme.of(context).colorScheme.primary
+              : Theme.of(context).colorScheme.onSurfaceVariant,
           splashRadius: 20,
         ),
       ],

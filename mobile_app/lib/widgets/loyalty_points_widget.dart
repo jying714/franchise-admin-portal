@@ -81,7 +81,7 @@ class _LoyaltyPointsWidgetState extends State<LoyaltyPointsWidget> {
                     children: [
                       Icon(
                         Icons.emoji_events,
-                        color: shared.UiConfig.primaryColor,
+                        color: Theme.of(context).colorScheme.primary,
                         size: 28,
                       ),
                       const SizedBox(width: 12),
@@ -92,7 +92,7 @@ class _LoyaltyPointsWidgetState extends State<LoyaltyPointsWidget> {
                             Text(
                               tier,
                               style: shared.UiConfig.bodyBoldStyle.copyWith(
-                                color: shared.UiConfig.primaryColor,
+                                color: Theme.of(context).colorScheme.primary,
                                 fontSize: shared.DesignTokens.bodyFontSize,
                               ),
                             ),
@@ -133,7 +133,7 @@ class _LoyaltyPointsWidgetState extends State<LoyaltyPointsWidget> {
                     value: progress,
                     minHeight: 6,
                     backgroundColor: shared.UiConfig.shimmerBaseColor,
-                    color: shared.UiConfig.primaryColor,
+                    color: Theme.of(context).colorScheme.primary,
                     borderRadius: BorderRadius.circular(3),
                   ),
                   const SizedBox(height: 6),

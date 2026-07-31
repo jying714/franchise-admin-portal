@@ -83,7 +83,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
             behavior: SnackBarBehavior.floating,
             action: SnackBarAction(
               label: loc.signIn,
-              textColor: shared.UiConfig.primaryColor,
+              textColor: Theme.of(context).colorScheme.primary,
               onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const SignInScreen()),

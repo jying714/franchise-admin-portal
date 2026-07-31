@@ -89,8 +89,8 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
                   icon: const Icon(Icons.refresh),
                   label: const Text('Try Again'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: shared.UiConfig.primaryColor,
-                    foregroundColor: Colors.white,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
                   ),
                 ),
               ],

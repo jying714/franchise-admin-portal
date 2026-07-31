@@ -25,8 +25,9 @@ class ProfileNavTile extends StatelessWidget {
           ? Icon(
               icon,
               color: highlight
-                  ? shared.UiConfig.adminPrimaryColor
-                  : shared.UiConfig.primaryColor,
+                  ? shared.UiConfig
+                      .adminPrimaryColor // admin chrome; leave if web/admin-only
+                  : Theme.of(context).colorScheme.primary,
             )
           : null,
       title: Text(
@@ -40,7 +41,7 @@ class ProfileNavTile extends StatelessWidget {
       ),
       trailing: Icon(
         Icons.arrow_forward,
-        color: shared.UiConfig.primaryColor,
+        color: Theme.of(context).colorScheme.primary,
       ),
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => destination),

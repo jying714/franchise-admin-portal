@@ -83,8 +83,10 @@ class HomeScreen extends StatelessWidget {
                               builder: (_) => const SignInScreen()),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: shared.UiConfig.primaryColor,
-                          foregroundColor: shared.UiConfig.foregroundColorDark,
+                          backgroundColor:
+                              Theme.of(context).colorScheme.primary,
+                          foregroundColor:
+                              Theme.of(context).colorScheme.onPrimary,
                           padding: shared.UiConfig.defaultPadding,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(
@@ -136,7 +138,7 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ),
                       style: TextButton.styleFrom(
-                        foregroundColor: shared.UiConfig.primaryColor,
+                        foregroundColor: Theme.of(context).colorScheme.primary,
                         padding: EdgeInsets.symmetric(
                             vertical: shared.DesignTokens.gridSpacing * 1.5),
                         textStyle: TextStyle(
