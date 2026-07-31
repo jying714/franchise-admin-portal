@@ -185,7 +185,7 @@ class SauceSelectorGroup extends StatelessWidget {
                 margin: const EdgeInsets.symmetric(vertical: 4.0),
                 elevation: 0,
                 color: sauce.selected
-                    ? DesignTokens.surfaceColor
+                    ? Theme.of(context).colorScheme.surface
                     : Colors.transparent,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -202,8 +202,10 @@ class SauceSelectorGroup extends StatelessWidget {
                             sauce.name,
                             style: theme.textTheme.bodyLarge?.copyWith(
                               color: outOfStock
-                                  ? DesignTokens.secondaryTextColor
-                                  : DesignTokens.textColor,
+                                  ? Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant
+                                  : Theme.of(context).colorScheme.onSurface,
                               fontFamily: DesignTokens.fontFamily,
                             ),
                           ),
@@ -212,7 +214,8 @@ class SauceSelectorGroup extends StatelessWidget {
                           Padding(
                             padding: const EdgeInsets.only(left: 6.0),
                             child: Icon(Icons.block,
-                                color: DesignTokens.errorTextColor, size: 18),
+                                color: Theme.of(context).colorScheme.error,
+                                size: 18),
                           ),
                       ],
                     ),
@@ -299,7 +302,7 @@ class SauceSelectorGroup extends StatelessWidget {
                 child: Text(
                   "For half & half, both sides must have a sauce (including 'No Sauce').",
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: DesignTokens.errorTextColor,
+                    color: Theme.of(context).colorScheme.error,
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -356,7 +359,7 @@ class SauceSelectorGroup extends StatelessWidget {
                     child: Text(
                       meta?.name ?? ingId,
                       style: theme.textTheme.bodyLarge?.copyWith(
-                        color: DesignTokens.textColor,
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontFamily: DesignTokens.fontFamily,
                       ),
                     ),
@@ -371,7 +374,7 @@ class SauceSelectorGroup extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                         color: count > 0
                             ? DesignTokens.primaryColor
-                            : DesignTokens.secondaryTextColor,
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                         fontFamily: DesignTokens.fontFamily,
                       ),
                     ),

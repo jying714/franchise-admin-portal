@@ -46,9 +46,9 @@ class WingsPortionSelector extends StatelessWidget {
             ),
           ),
           Text(
-            "Choose a sauce for each portion below. 'Plain' means no sauceâ€”just crispy wings.",
+            "Choose a sauce for each portion below. 'Plain' means no sauce—just crispy wings.",
             style: theme.textTheme.bodySmall?.copyWith(
-              color: DesignTokens.secondaryTextColor,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontStyle: FontStyle.italic,
               fontFamily: DesignTokens.fontFamily,
             ),

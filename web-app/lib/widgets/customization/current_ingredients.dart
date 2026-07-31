@@ -78,7 +78,7 @@ class CurrentIngredients extends StatelessWidget {
             child: Text(
               'Add extra toppings or double any ingredient for just +${currencyFormat(context, getSaladToppingUpcharge())}.',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: DesignTokens.secondaryTextColor,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontStyle: FontStyle.italic,
                 fontFamily: DesignTokens.fontFamily,
               ),
@@ -198,8 +198,10 @@ class CurrentIngredients extends StatelessWidget {
                                     ? FontWeight.normal
                                     : FontWeight.bold,
                                 color: outOfStock
-                                    ? DesignTokens.secondaryTextColor
-                                    : DesignTokens.textColor,
+                                    ? Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant
+                                    : Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                           ),
@@ -310,8 +312,8 @@ class CurrentIngredients extends StatelessWidget {
                     padding: const EdgeInsets.only(left: 44.0, top: 2),
                     child: Text(
                       loc.cannotBeRemoved,
-                      style: const TextStyle(
-                        color: DesignTokens.hintTextColor,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontStyle: FontStyle.italic,
                       ),
                     ),
@@ -321,7 +323,7 @@ class CurrentIngredients extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 6.0),
                     child: Divider(
                       thickness: 1.0,
-                      color: Colors.grey[300],
+                      color: Theme.of(context).colorScheme.outlineVariant,
                       height: 1,
                     ),
                   ),

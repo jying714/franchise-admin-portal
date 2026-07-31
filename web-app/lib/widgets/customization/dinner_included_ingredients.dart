@@ -113,8 +113,10 @@ class DinnerIncludedIngredients extends StatelessWidget {
                               name,
                               style: theme.textTheme.bodyLarge?.copyWith(
                                 color: outOfStock
-                                    ? DesignTokens.secondaryTextColor
-                                    : DesignTokens.textColor,
+                                    ? Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant
+                                    : Theme.of(context).colorScheme.onSurface,
                                 fontWeight: outOfStock
                                     ? FontWeight.normal
                                     : FontWeight.w500,
@@ -155,7 +157,7 @@ class DinnerIncludedIngredients extends StatelessWidget {
                         child: Text(
                           loc.outOfStockLabel ?? "Out of Stock",
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: DesignTokens.errorTextColor,
+                            color: Theme.of(context).colorScheme.error,
                             fontStyle: FontStyle.italic,
                             fontWeight: FontWeight.bold,
                           ),
@@ -183,7 +185,7 @@ class DinnerIncludedIngredients extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 6.0),
                     child: Divider(
                       thickness: 1.0,
-                      color: Colors.grey[300],
+                      color: Theme.of(context).colorScheme.outlineVariant,
                       height: 1,
                     ),
                   ),
