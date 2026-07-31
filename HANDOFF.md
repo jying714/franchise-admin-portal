@@ -1,6 +1,6 @@
 # HANDOFF.md — Agent Context & Project Status
 
-**Last Updated**: July 30, 2026 (~21:10 CDT — pos_app scaffold PASS; plan Phases 0–14 locked)  
+**Last Updated**: July 30, 2026 (~23:55 CDT — POS Phases 0–4 + cash close-out smoke PASS)  
 **Hardware**: MINISFORUM AI X1 Pro-470  
 **Active branch**: `feat/pos-app-v1`  
 **Repo**: https://github.com/jying714/franchise-admin-portal  
@@ -21,10 +21,15 @@ Prefer **STATUS.md + this handoff + `docs/slices/*` + `docs/plans/*` + `docs/DEC
 | Item | State |
 |------|--------|
 | Decision 14 product lock | Done |
-| `pos_app` Flutter create + user feature tree | **PASS** |
-| Development plan Phases 0–14 | **Documented** → `docs/plans/pos-app-v1-development-plan.md` |
-| Phase 1 shared_core foundation | **Next** |
-| Phase 2 PIN shell | After Phase 1 |
+| Development plan Phases 0–14 | Documented |
+| Phase 0 scaffold | **PASS** |
+| Phase 1 shared_core domain + rules + PosFirestoreService | **PASS** |
+| Phase 2 PIN / bind / Auth claims | **PASS** (Android smoke) |
+| Phase 3 home + open board + action dialog | **PASS** |
+| Phase 4 carry-out + modifiers + send | **PASS** |
+| Phase 5 cash take-payment (pickup) | **PASS** partial |
+| Phase 5 card / drawer / splits / discount / re-PIN | Open |
+| Phases 6–14 | Open |
 
 **Superseded:** `kitchen-ops-v1` pure kitchen binary — do not implement.
 
@@ -32,54 +37,107 @@ Prefer **STATUS.md + this handoff + `docs/slices/*` + `docs/plans/*` + `docs/DEC
 
 ---
 
-## 2. POS development order (do not invent a different sequence)
+## 2. What was built (paths)
+
+### shared_core
+
+| Artifact | Path |
+|----------|------|
+| Order.source | `packages/shared_core/lib/src/core/models/order.dart` (+ ScheduledOrder forward) |
+| OrderStatus | `packages/shared_core/lib/src/core/constants/order_status.dart` |
+| Staff PIN/pay | `staff.dart` — `pinHash`, `hourlyPay`, `posEnabled`, `franchiseId` |
+| Driver / Waitress | `driver.dart`, `waitress.dart` |
+| PosSettings | `pos_settings.dart` |
+| PosTableLayout | `pos_table_layout.dart` |
+| PrintJob | `print_job.dart` |
+| PosFirestoreService | `packages/shared_core/lib/src/core/services/pos_firestore_service.dart` |
+
+### pos_app
+
+| Surface | Path |
+|---------|------|
+| Bootstrap / Auth / bind | `lib/app/bootstrap.dart`, `main.dart` |
+| Shell | `lib/app/pos_app.dart`, `theme.dart` |
+| PIN session | `lib/providers/pin_session_provider.dart` |
+| Permissions | `lib/core/constants/pos_permissions.dart`, `permission_gate.dart` |
+| PIN hash | `lib/core/utils/pin_hash.dart` (`v1:salt:sha256`) |
+| Unlock | `lib/features/session/pin_unlock_screen.dart` |
+| Home | `lib/features/home/station_home_screen.dart`, `order_type_tile.dart` |
+| Open orders + dialog | `lib/features/orders/open_orders_screen.dart` |
+| Carry-out entry | `lib/features/ordering/order_entry_screen.dart` |
+| Modifiers | `lib/features/ordering/pos_modifier_dialog.dart` (Decision 10 field names) |
+| Cash payment | `lib/features/payments/payment_screen.dart` |
+| Firebase options | `lib/firebase_options.dart` (FlutterFire; do not commit secrets/) |
+
+### Rules
+
+Live rules in repo `firestore.rules` must stay aligned with Console. Key POS pieces:
+
+- `isPosStation(franchiseId)` → `request.auth.token.stationFranchise == franchiseId`
+- `franchises/{id}/orders/{orderId}` read/write for HQ / franchise owner / pos station
+- `franchises/{id}/staff/{staffId}` get for posEnabled + signed-in (lab) / owners
+- `config/{docId}`, drivers, waitresses, print_jobs — franchise owner (and related)
+
+**Do not deploy an outdated divergent `firestore.rules` over live Console without diffing.**
+
+### Station run (smoke)
+
+```powershell
+cd C:\projects\franchise-admin-portal\pos_app
+flutter run -d R3GYC00Q3YN `
+  --dart-define=STATION_FRANCHISE_ID=doughboyspizzeria `
+  --dart-define=STATION_AUTH_EMAIL=... `
+  --dart-define=STATION_AUTH_PASSWORD=...
+```
+
+Staff test doc example: `franchises/doughboyspizzeria/staff/test1` with `posEnabled: true`, `pinHash` from `PinHash.hashPin`, permissions list.
+
+Claims one-off: Admin `setCustomUserClaims` with `stationFranchise`, `defaultFranchise`, `franchiseIds`. Force new token (`getIdToken(true)` / clear app data) after setting claims.
+
+---
+
+## 3. POS development order (remaining)
 
 Full plan: **`docs/plans/pos-app-v1-development-plan.md`**.
 
-Summary:
+| Phase | Status |
+|-------|--------|
+| 0–4 | **Done (smoke)** |
+| 5 | Cash close-out done; card, drawer, splits, discount, forced re-PIN **open** |
+| 6 | Dine-in table map |
+| 7 | Delivery + driver |
+| 8 | Staff/driver/waitress **UI** (models exist) |
+| 9–14 | Large order, 86, print, online intake, settings UI, offline, pilot |
 
-0. Scaffold (**done**)  
-1. shared_core: order source/states, staff PIN/permissions, drivers/waitresses, POS settings, table layout, print job, rules  
-2. PIN session + franchise lock + permissions  
-3. Home + open-order board  
-4. Carry-out order entry + modifiers  
-5. Payments (cash + card-present + drawer + splits + discount + manager void)  
-6. Dine-in table map (web editor + POS consume)  
-7. Delivery + required driver assign  
-8. Staff/driver/waitress ops UI  
-9. Large-order hold + 86 + allergens  
-10. Print pipeline  
-11. Incoming online orders auto-print + shared list  
-12. Settings panel  
-13. Offline cash-only + honesty  
-14. Pilot QA → polished MVP
+**Carry-out payment timing (product):** pay at **pickup** via open-order **Take payment**, not at send.
 
-**Next single step:** Phase 1.1–1.3 in shared_core (order `source`, station statuses, staff PIN/permissions) + rules.
+**Next single step (suggested):** Phase 5.3 card-present interface **or** Phase 7 delivery customer capture — human chooses.
 
 ---
 
-## 3. Locks (do not regress)
+## 4. Locks (do not regress)
 
 - Station = **`pos_app` only** — not a kitchen-only app  
 - shared_core owns models; POS owns tablet UX + hardware adapters  
-- No second menu modifier schema  
+- No second menu modifier schema (use `effectiveModifierGroups`)  
 - No silent default tenant; franchise must be bound  
-- Manager-only void/refund/86/approve/settings + forced re-PIN  
+- Manager-only void/refund/86/approve/settings + forced re-PIN (re-PIN UI still partial)  
 - Order `source` on every order  
-- Offline = cash only  
+- Offline = cash only (not implemented yet)  
+- Windows POS Firebase build may fail on CMake 4.x — prefer Android for smoke  
 
 ---
 
-## 4. Key references
+## 5. Key references
 
 - `STATUS.md`  
 - `docs/DECISIONS.md` (Decision **14**)  
 - `docs/slices/pos-app-v1.md`  
-- **`docs/plans/pos-app-v1-development-plan.md`** ← full phase plan  
+- **`docs/plans/pos-app-v1-development-plan.md`**  
 - `docs/slices/stripe-checkout-v1.md` (COMPLETE)  
 - `docs/slices/customer-franchise-context-v1.md` (COMPLETE)  
 - `docs/slices/kitchen-ops-v1.md` (superseded)
 
 ---
 
-**Bottom line:** Scaffold is up. Execute Phase 1 shared domain, then Phase 2 PIN shell. Do not jump to payments or table map first.
+**Bottom line:** Carry-out station loop works end-to-end on Android with PIN, modifiers, kitchen send, board actions, and cash close-out. Continue Phase 5 remainder or Phase 6/7 per product priority. Do not invent a kitchen-only app.

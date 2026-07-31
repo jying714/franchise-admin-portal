@@ -1,13 +1,12 @@
 # Slice: POS App v1 (Thin Counter Station)
 
-**Status**: **Active** (product approved July 30, 2026 — scaffold PASS; Phase 1 next)  
+**Status**: **Active** — Phases 0–4 + cash pickup close-out **smoke PASS** (2026-07-30)  
 **Branch**: `feat/pos-app-v1`  
 **Authority**: Decision **14** · STATUS · HANDOFF · this file · **`docs/plans/pos-app-v1-development-plan.md`**  
 **Depends on**: Decision 12 **COMPLETE**; franchise-scoped orders; shared_core menu/modifier system; mobile+web residual polish **COMPLETE**  
 **Pilot device**: **Android tablet** at counter; Flutter multi-platform retained; iOS station post-pilot  
+**Smoke device used**: Samsung S25 (Android 16)  
 **Supersedes**: Pure kitchen-only framing of Decision 13 / `kitchen-ops-v1.md`
-
-**Scaffold (2026-07-30):** `flutter create pos_app` + full user feature directory tree — **PASS**.
 
 ---
 
@@ -27,6 +26,7 @@ A standalone thin Kitchen management app will not be used long-term and does not
 | Order types | Dine-in (2D map), Carry-out, Delivery |
 | Menu | Full shared modifier system — no second tree |
 | Payments | Card-present + cash + drawer; splits; discounts |
+| **Carry-out pay timing** | **Pay at pickup** (open board → Take payment), **not** at send |
 | Large orders | Optional threshold → `needs_approval` |
 | 86 | Manager-only; multi-channel |
 | Staff | PIN session; roles; permissions; drivers/waitresses pay rates |
@@ -46,38 +46,40 @@ Full ordered plan: **`docs/plans/pos-app-v1-development-plan.md`** (Phases 0–1
 | Plan phase | Slice workstreams | Status |
 |------------|-------------------|--------|
 | 0 | P0 docs + Flutter scaffold + tree | **PASS** |
-| 1 | shared_core models + rules | **Next** |
-| 2 | P1 shell: franchise lock, PIN, permissions | Open |
-| 3 | Home + open-order board | Open |
-| 4 | P4/P5 carry-out entry + modifiers | Open |
-| 5 | P6 payments | Open |
-| 6 | P3 table map + dine-in ticket | Open |
-| 7 | P5 delivery + driver | Open |
-| 8 | P2 staff/driver/waitress UI | Open |
-| 9 | P7 + P8 large order + 86 | Open |
-| 10 | P9 printing | Open |
-| 11 | P10 incoming online | Open |
-| 12 | P11 settings | Open |
-| 13 | P12 offline | Open |
-| 14 | P13 pilot acceptance | Open |
+| 1 | shared_core models + rules + PosFirestoreService | **PASS** |
+| 2 | P1 shell: franchise lock, PIN, permissions, station Auth | **PASS** (smoke) |
+| 3 | Home + open-order board + centered action dialog | **PASS** (smoke) |
+| 4 | Carry-out entry + Decision 10 modifiers + send | **PASS** (smoke) |
+| 5 | Payments | **Partial** — cash Take payment PASS; card/drawer/splits/discount/re-PIN open |
+| 6 | Table map + dine-in ticket | Open |
+| 7 | Delivery + driver | Open |
+| 8 | Staff/driver/waitress UI | Open (models exist) |
+| 9 | Large order + 86 | Open |
+| 10 | Printing | Open |
+| 11 | Incoming online | Open (board can list when rules allow) |
+| 12 | Settings panel UI | Open (model exists) |
+| 13 | Offline | Open |
+| 14 | Pilot acceptance | Open |
 
 ---
 
 ## 4. Acceptance (implementation)
 
-- [ ] Counter can create full orders (menu + modifiers) for dine-in / carry-out / delivery
+- [x] Counter can create **carry-out** orders (menu + modifiers) and send to kitchen with `source: pos`
+- [ ] Counter can create full orders for **dine-in** / **delivery**
 - [ ] Dine-in uses owner-defined 2D table map; open ticket; pay at close
-- [ ] Card-present and cash + drawer work; split tenders respect max setting
+- [x] **Cash** take-payment from open orders (pickup close-out)
+- [ ] Card-present and cash **drawer** hardware; split tenders respect max setting
 - [ ] Discount UI functional under permission
 - [ ] Large-order hold + manager approve (or feature disabled)
-- [ ] 86 with channel selection; allergens prominent on ticket and on-screen
+- [ ] 86 with channel selection; allergens prominent on ticket and on-screen (dialog shows allergens only today)
 - [ ] Driver assignment required on delivery completion; pay-rate data recorded
-- [ ] PIN session + role permissions enforce elevated actions
+- [x] PIN session + role permissions gate actions (void/pay/take_order); forced re-PIN UI still incomplete
 - [ ] Incoming online orders auto-print and appear in shared list
 - [ ] Multi-printer category routing + default fallback; no silent drop
 - [ ] Offline limited to cash; customer channels reflect POS-down state
-- [ ] No full Admin / menu editing / promo / user admin on the tablet
-- [ ] Android tablet pilot path documented
+- [x] No full Admin / menu editing / promo / user admin on the tablet
+- [x] Android path smoke-tested (S25); tablet pilot still open
 
 ---
 
@@ -92,12 +94,22 @@ Live delivery tracking; full catering; complex inventory/recipe costing; advance
 1. ~~Stripe checkout v1~~ **DONE**  
 2. ~~Mobile + web residual polish~~ **DONE**  
 3. ~~pos_app scaffold + tree~~ **PASS**  
-4. **Phase 1 shared_core foundation** ← **NOW**  
-5. Phase 2–14 per development plan  
+4. ~~Phase 1–4 + cash close-out~~ **PASS** (2026-07-30)  
+5. **Phase 5 remainder / Phase 6 / Phase 7** ← choose next  
 6. Customer website (separate; hard release gate)
 
 ---
 
-## 7. Bottom line
+## 7. Implementation notes (for agents)
 
-**Thin counter POS** replaces pure kitchen-only app. Scaffold is up. Execute **`docs/plans/pos-app-v1-development-plan.md`** starting at Phase 1. shared_core reuse is mandatory. Hard release gate still includes customer website.
+- Modifier UI must use real fields: `ModifierGroup.label`, `min`/`max`, `selectMode`, `ModifierOption.label`, `defaultSelected`.
+- `MenuItem` availability filter: `availability && available && !archived && hideInMenu != true` (no `isAvailable` getter).
+- Hide Firestore `Order` name clash: `import 'package:cloud_firestore/cloud_firestore.dart' hide Order;`.
+- Prefer `Provider.of<T>(context, listen: false)` when `context.read` is ambiguous with shared_core extensions.
+- Never `FranchiseProvider()` zero-arg — requires `LocalStorage`.
+
+---
+
+## 8. Bottom line
+
+**Thin counter POS** replaces pure kitchen-only app. Carry-out loop is live on Android: PIN → menu/modifiers → send → board → cash pay at pickup. Continue payments depth or dine-in/delivery per plan. shared_core reuse is mandatory. Hard release gate still includes customer website.

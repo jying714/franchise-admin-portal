@@ -1,6 +1,6 @@
 # Doughboys Pizzeria Franchise Platform — Roadmap
 
-**Last Updated**: July 30, 2026  
+**Last Updated**: July 30, 2026 (~23:55 CDT)  
 **Hardware**: MINISFORUM AI X1 Pro-470 (64GB RAM + SSD)  
 **Current focus**: Thin POS Station App (`pos_app`) — Decision 14  
 **Active branch**: `feat/pos-app-v1`  
@@ -20,7 +20,9 @@ Build a scalable, multi-tenant white-label Flutter platform that allows any rest
 - Customer franchise context v1 (Decision 11)
 - Stripe checkout v1 Connect path (Decision 12)
 - Mobile + web residual design-tokens polish
-- **pos_app scaffold + feature directory tree (Phase 0 PASS)**
+- **pos_app Phase 0 scaffold**
+- **POS Phase 1 domain (Order.source, statuses, Staff PIN, drivers/waitresses, settings/layout/print models, rules, PosFirestoreService)**
+- **POS Phase 2–4 smoke:** PIN unlock, home tiles, open board, carry-out + modifiers + send, cash take-payment on pickup
 
 ---
 
@@ -28,16 +30,16 @@ Build a scalable, multi-tenant white-label Flutter platform that allows any rest
 
 **Authority**: `docs/slices/pos-app-v1.md`, `docs/plans/pos-app-v1-development-plan.md`
 
-| Milestone | Phases | Target |
-|-----------|--------|--------|
-| pos-m1-shell | 1–2 | Domain + PIN session |
-| pos-m2-carryout-pay | 3–5 | Board + carry-out + payments |
-| pos-m3-dine-in | 6 | Tables + open ticket |
-| pos-m4-delivery-staff | 7–8 | Delivery + staff records |
-| pos-m5-ops-print | 9–11 | 86, large order, print, online intake |
-| pos-m6-mvp | 12–14 | Settings, offline, pilot QA |
+| Milestone | Phases | Target | Status |
+|-----------|--------|--------|--------|
+| pos-m1-shell | 1–2 | Domain + PIN session | **Reached (smoke)** |
+| pos-m2-carryout-pay | 3–5 | Board + carry-out + payments | **Near** — cash close-out done; card/drawer/splits open |
+| pos-m3-dine-in | 6 | Tables + open ticket | Open |
+| pos-m4-delivery-staff | 7–8 | Delivery + staff records UI | Open |
+| pos-m5-ops-print | 9–11 | 86, large order, print, online intake | Open |
+| pos-m6-mvp | 12–14 | Settings UI, offline, pilot QA | Open |
 
-**Now:** Phase 1 (shared_core foundation).
+**Now:** Finish Phase 5 payments depth **or** start Phase 6/7 by product priority.
 
 ---
 
@@ -57,7 +59,7 @@ Build a scalable, multi-tenant white-label Flutter platform that allows any rest
 | 0–1 | Infra, config, branding | Delivered |
 | 2–3 | Dashboards, mobile multi-tenant | Delivered |
 | 4 | Stripe | Delivered |
-| 5 | Station + website + pilot | **POS in progress** |
+| 5 | Station + website + pilot | **POS in progress (carry-out baseline live)** |
 
 ---
 
