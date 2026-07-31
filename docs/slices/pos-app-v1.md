@@ -1,9 +1,9 @@
 # Slice: POS App v1 (Thin Counter Station)
 
-**Status**: **Locked** (product approved July 30, 2026 — implementation open)  
-**Branch**: TBD (`feat/pos-app-v1` when work starts)  
+**Status**: **Active** (product approved July 30, 2026 — implementation open)  
+**Branch**: `feat/pos-app-v1`  
 **Authority**: Decision **14** · STATUS · HANDOFF · this file  
-**Depends on**: Decision 12 (Stripe Connect + card-present path); franchise-scoped orders; shared_core menu/modifier system; Admin feature-toggle patterns  
+**Depends on**: Decision 12 (Stripe Connect + card-present path) **COMPLETE**; franchise-scoped orders; shared_core menu/modifier system; Admin feature-toggle patterns; mobile+web residual polish **COMPLETE**  
 **Pilot device**: **Android tablet** at counter; Flutter multi-platform codebase retained; iOS station post-pilot  
 **Supersedes**: Pure kitchen-only framing of Decision 13 / `kitchen-ops-v1.md`
 
@@ -135,7 +135,7 @@ The station must stay thin enough to ship after Stripe and mobile/web polish, wh
 | ID | Deliverable | Status |
 |----|-------------|--------|
 | **P0** | Docs lock (this file + Decision 14) | **Done** |
-| **P1** | `pos_app` target/shell: auth, franchise lock, PIN session, role permissions | Open |
+| **P1** | `pos_app` target/shell: auth, franchise lock, PIN session, role permissions | **Next** |
 | **P2** | Staff / driver / waitress lightweight records + pay rates | Open |
 | **P3** | Web-app 2D table layout editor + POS consume/seat/clear | Open |
 | **P4** | Order creation (full menu + modifiers) + dine-in open ticket / close-at-end | Open |
@@ -149,7 +149,7 @@ The station must stay thin enough to ship after Stripe and mobile/web polish, wh
 | **P12** | Offline cash-only path + customer-channel honesty when POS down | Open |
 | **P13** | Android pilot smoke + acceptance | Open |
 
-Exact ordering and parallelization after Stripe checkout v1 lands.
+**Prerequisites satisfied (July 30, 2026):** Stripe checkout v1 COMPLETE; mobile+web residual polish COMPLETE on `main`.
 
 ---
 
@@ -186,13 +186,15 @@ Exact ordering and parallelization after Stripe checkout v1 lands.
 
 ## 6. Sequencing note
 
-1. Finish Stripe checkout v1 (Decision 12) — required for card paths and paid state.
-2. Polish mobile_app + web-app management to solid MVP quality.
-3. Implement `pos_app` per this slice.
-4. Customer website (separate decision/slice) is part of the hard release gate alongside thin POS.
+1. ~~Finish Stripe checkout v1 (Decision 12)~~ **DONE**
+2. ~~Polish mobile_app + web-app management~~ **DONE**
+3. **Implement `pos_app` per this slice** ← current
+4. Customer website (separate decision/slice) remains part of the hard release gate alongside thin POS
 
 ---
 
 ## 7. Bottom line
 
 **Thin counter POS** (`pos_app`) replaces a pure kitchen-only app. Full order entry, dine-in tables (web-app 2D editor), card + cash + drawer, split tenders, discounts, large-order holds, multi-channel 86, allergens, staff/driver/waitress pay tracking, and shared online-order list. Manager-only destructive actions. Android pilot. Hard release gate includes customer website. shared_core reuse is mandatory.
+
+**Start here:** P1 — scaffold `pos_app`, franchise lock, PIN session, role permissions.

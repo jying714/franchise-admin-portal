@@ -1,6 +1,6 @@
 # Architecture Decision Log (DECISIONS.md)
 
-**Last Updated**: July 30, 2026 (stripe-checkout-v1 COMPLETE; Decision 14 Thin POS)
+**Last Updated**: July 30, 2026 (stripe COMPLETE; residual polish COMPLETE; Decision 14 Thin POS active)
 
 This file records major architectural and design decisions for the Doughboys Pizzeria Franchise Platform.
 
@@ -23,7 +23,7 @@ This file records major architectural and design decisions for the Doughboys Piz
 
 ### 4. Mobile App Dynamic UI
 **Date**: July 2026  
-**Status**: Approved (Decision 10 executed on `main`)
+**Status**: Approved (Decision 10 executed on `main`; residual ColorScheme polish COMPLETE July 30)
 
 ### 5. Multi-Agent Development Approach
 **Date**: July 2026  
@@ -86,7 +86,7 @@ This file records major architectural and design decisions for the Doughboys Piz
 
 ### 14. Thin POS Station App (`pos_app`) — Counter-Focused MVP Station
 **Date**: July 30, 2026  
-**Status**: **Approved — implementation not started** (docs locked)  
+**Status**: **Approved — implementation active on `feat/pos-app-v1`**  
 **Authority**: this decision · `docs/slices/pos-app-v1.md` · STATUS · HANDOFF  
 
 **Decision summary:**
@@ -113,7 +113,7 @@ This file records major architectural and design decisions for the Doughboys Piz
 18. **Settings panel (first version)**: large-order threshold + enable/disable; max split tenders; prep/promised time; PIN session timeout; auto-print rules; default tip prompts.
 19. **Explicitly out of this MVP**: live delivery status tracking, full catering packages, complex inventory/recipe costing, advanced tips pooling or full time-clock, rich offline card processing, iOS as primary pilot device, complex multi-station orchestration beyond category→printer.
 
-**Rationale:** A pure kitchen-only app would not be used long-term and would not make the product market-viable. A counter-focused thin POS that can take orders, accept card + cash, open a drawer, seat tables, assign drivers, and reuse shared_core is the correct station surface. It starts thin enough to ship after Stripe and mobile/web polish, then expands.
+**Rationale:** A pure kitchen-only app would not be used long-term and would not make the product market-viable. A counter-focused thin POS that can take orders, accept card + cash, open a drawer, seat tables, assign drivers, and reuse shared_core is the correct station surface. Prerequisites (Stripe + mobile/web polish) are complete as of July 30, 2026.
 
 **Impact:** New `pos_app` target; web-app table-layout editor; staff/driver/waitress lightweight records; order source + customer linkage; expanded order states; permission model; absorption of prior kitchen print/cash rules; hard release gate includes customer website.
 

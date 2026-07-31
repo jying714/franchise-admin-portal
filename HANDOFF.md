@@ -1,8 +1,8 @@
 # HANDOFF.md — Agent Context & Project Status
 
-**Last Updated**: July 30, 2026 (~17:05 CDT — stripe-checkout-v1 COMPLETE)  
+**Last Updated**: July 30, 2026 (~20:50 CDT — residual polish COMPLETE; active = Thin POS)  
 **Hardware**: MINISFORUM AI X1 Pro-470  
-**Active branch**: `feat/stripe-checkout-v1`  
+**Active branch**: `feat/pos-app-v1`  
 **Repo**: https://github.com/jying714/franchise-admin-portal  
 **Local path**: `C:\\projects\\franchise-admin-portal`  
 **Firebase**: `doughboyspizzeria-2b3d2`  
@@ -14,19 +14,20 @@ Prefer **STATUS.md + this handoff + `docs/slices/*` + `docs/DECISIONS.md`** over
 
 ## 1. Where we are
 
-**On `main` and done:** HQ onboarding, Design & Branding, Platform Owner, Admin ops, menu M1–M5 + wings/calzone, mobile design tokens T1–T9, developer dashboard D0–D10, **customer franchise context v1** (Decision 11).
+**On `main` and done:** HQ onboarding, Design & Branding, Platform Owner, Admin ops, menu M1–M5 + wings/calzone, mobile design tokens T1–T9, developer dashboard D0–D10, **customer franchise context v1** (Decision 11), **stripe-checkout-v1** (Decision 12), **mobile + web residual design-tokens polish**.
 
 **Just closed:**
 
-| Slice | Decision | Branch |
-|--------|----------|--------|
-| `docs/slices/stripe-checkout-v1.md` | 12 | `feat/stripe-checkout-v1` (**COMPLETE** — ST0–ST8 smoke pass) |
+| Slice / work | Decision | Notes |
+|--------------|----------|--------|
+| `docs/slices/stripe-checkout-v1.md` | 12 | COMPLETE — ST0–ST8 smoke pass |
+| Mobile + web residual polish | — | `feat/mobile-web-polish-v1` merged to `main` and deleted (July 30) |
 
-**Locked (not started):**
+**Active:**
 
 | Slice | Decision |
 |--------|----------|
-| `docs/slices/pos-app-v1.md` | **14** (Thin POS Station App) |
+| `docs/slices/pos-app-v1.md` | **14** Thin POS Station App — implementation open on `feat/pos-app-v1` |
 
 **Superseded:**
 
@@ -61,7 +62,17 @@ Cash at counter / on pickup is handled by the thin POS (Decision 14), not Connec
 
 ---
 
-## 4. Decision 14 — Thin POS Station App (summary)
+## 4. Residual polish (closed July 30, 2026)
+
+- **Mobile:** residual `UiConfig.*Color` / hard-coded chrome mapped to `Theme.of(context).colorScheme` roles on high-traffic + customization + feedback + address surfaces. **T8 auth/social still deferred.**
+- **Web:** HQ secondary text → `onSurfaceVariant`; keep `DesignTokens.primaryColor` / `secondaryColor` as live branding path; customization groups, invoice error honesty, language selector honesty, header help/settings cleanup.
+- Firestore rules: `users/{userId}/addresses` owner read/write for signed-in customer.
+
+Do not regress ColorScheme role discipline or invent new DesignTokens per-widget colors.
+
+---
+
+## 5. Decision 14 — Thin POS Station App (summary)
 
 - **Strike** standalone thin Kitchen management app.
 - **Station** = `pos_app` (new Flutter target), primary placement **counter / order-taking**.
@@ -74,43 +85,44 @@ Cash at counter / on pickup is handled by the thin POS (Decision 14), not Connec
 
 Authority: `docs/slices/pos-app-v1.md` · Decision 14.
 
----
-
-## 5. Do not regress (menu + franchise context + station)
-
-Pizza optionalAddOns; included not auto-charged; wings 2 portions + W2 pool; no dual menu write paths; no FranchiseProvider zero-arg / DesignTokens color invention; **no silent default tenant**; **no product bind outside FranchiseBindService**; progress load includes **`onboarding_design_branding`**; **do not implement a pure kitchen-only binary**.
+**First implementation focus (suggested):** P1 shell — `pos_app` target, franchise lock, PIN session, role permissions — then order list + entry.
 
 ---
 
-## 6. Implementation order
+## 6. Do not regress (menu + franchise context + station + tokens)
+
+Pizza optionalAddOns; included not auto-charged; wings 2 portions + W2 pool; no dual menu write paths; no FranchiseProvider zero-arg / DesignTokens color invention; **no silent default tenant**; **no product bind outside FranchiseBindService**; progress load includes **`onboarding_design_branding`**; **do not implement a pure kitchen-only binary**; mobile chrome uses ColorScheme roles; web live brand via DesignTokens primary/secondary.
+
+---
+
+## 7. Implementation order
 
 1. ~~Customer franchise context v1~~ **DONE on `main`**  
-2. ~~Stripe checkout v1~~ **DONE** (`feat/stripe-checkout-v1`, ST0–ST8 smoke pass)  
-3. Polish mobile_app + web-app management  
-4. **Thin POS (`pos_app`)** per Decision 14 / `pos-app-v1.md`  
+2. ~~Stripe checkout v1~~ **DONE on `main`**  
+3. ~~Polish mobile_app + web-app management~~ **DONE on `main`**  
+4. **Thin POS (`pos_app`)** per Decision 14 / `pos-app-v1.md` ← **NOW**  
 5. Customer website (part of hard release gate)  
 6. Pilot polish  
 
 ---
 
-## 7. Key references
+## 8. Key references
 
 - `STATUS.md`  
 - `docs/DECISIONS.md` (11–14; **14 is station authority**)  
-- `docs/slices/customer-franchise-context-v1.md` (**COMPLETE on main**)  
+- `docs/slices/customer-franchise-context-v1.md` (**COMPLETE**)  
 - `docs/slices/stripe-checkout-v1.md` (**COMPLETE**)  
-- `docs/slices/pos-app-v1.md` (**locked station surface**)  
+- `docs/slices/mobile-design-tokens-v1.md` (**COMPLETE**; residual polish absorbed)  
+- `docs/slices/pos-app-v1.md` (**active station surface**)  
 - `docs/slices/kitchen-ops-v1.md` (**superseded** — historical only)  
-- `docs/slices/mobile-design-tokens-v1.md`  
 - `docs/slices/menu-modifier-system-rebuild-v1.md`  
 
 ---
 
-### 2026-07-30 — stripe-checkout-v1 closed
-Card path live in test mode on feat/stripe-checkout-v1.  
-Residual only: move “How was your order?” survey to scheduled push (post-order experience).  
-Next product focus remains polish + Thin POS (Decision 14).
+### 2026-07-30 — residual polish closed; POS branch active
+Card path COMPLETE. Mobile+web residual design-tokens polish merged to `main`.  
+**Next product focus: Thin POS (`feat/pos-app-v1`) under Decision 14.**
 
 ---
 
-**Bottom line:** Customer franchise context is on **`main`**. Stripe card path is **COMPLETE** on `feat/stripe-checkout-v1`. Station surface is **thin POS (`pos_app`)** under Decision 14 — do **not** build a pure kitchen-only app. Hard release gate includes customer website.
+**Bottom line:** Platform core, customer context, Stripe, and residual polish are on **`main`**. Station surface is **thin POS (`pos_app`)** — do **not** build a pure kitchen-only app. Hard release gate still includes customer website.

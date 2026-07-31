@@ -1,11 +1,11 @@
 # Doughboys Pizzeria Franchise Platform — Roadmap
 
-**Last Updated**: July 27, 2026  
+**Last Updated**: July 30, 2026  
 **Hardware**: MINISFORUM AI X1 Pro-470 (64GB RAM + SSD)  
-**Current focus**: Menu modifier system rebuild + Admin ops fixes (on `main`)
+**Current focus**: Thin POS Station App (`pos_app`) — Decision 14
 
 ## Vision
-Build a scalable, multi-tenant white-label Flutter platform that allows any restaurant/franchise to launch a fully branded ordering system (web + mobile) rapidly and cost-effectively.
+Build a scalable, multi-tenant white-label Flutter platform that allows any restaurant/franchise to launch a fully branded ordering system (web + mobile + counter station) rapidly and cost-effectively.
 
 ---
 
@@ -14,57 +14,68 @@ Build a scalable, multi-tenant white-label Flutter platform that allows any rest
 - Core ordering flow; shared_core + FranchiseProvider unification
 - Phase 0 agent infra (Docker/Ollama/Orchestrator)
 - Phase 1 franchise-scoped config + HQ Design & Branding + HQ onboarding host migration
-- HQ foundation residual (orphan gate); Platform Owner MVP
-- `feat/onboarding-4step` merged to **`main`** (July 27, 2026); Hosting deploy live
+- HQ foundation residual; Platform Owner MVP; Admin ops v1
+- Menu modifier system rebuild M1–M5 + wings/calzone — `main`
+- Mobile Design Tokens v1 (T1–T9) — `main`
+- Developer Dashboard v1 — `main`
+- Customer franchise context v1 (Decision 11) — `main`
+- Stripe checkout v1 Connect path (Decision 12) — `main`
+- Mobile + web residual design-tokens polish — `main` (July 30, 2026)
 
 ---
 
-## Active epics (July 27, 2026)
+## Active epic (July 30, 2026)
 
-### A. Menu modifier system rebuild (primary product architecture)
-**Authority**: `docs/slices/menu-modifier-system-rebuild-v1.md`, Decision 10  
-**Why**: Dual customization trees + mobile category heuristics will not support multi-type restaurants or clean Doughboys live MVP testing. **Full rebuild**, not patch-only.
+### Thin POS Station App (`pos_app`) — primary
+**Authority**: `docs/slices/pos-app-v1.md`, Decision 14  
+**Branch**: `feat/pos-app-v1`  
+**Why**: Counter station is required for a market-viable product; pure kitchen-only app is superseded.
 
-Workstreams M1–M5: schema → migration → unified editors → mobile renderer → cutover.
+Workstreams P1–P13: shell/PIN → staff records → table map → order entry → payments → 86/allergens → print → online intake → settings → offline → pilot smoke.
 
-### B. Admin dashboard ops fixes (narrow)
-**Authority**: `docs/slices/admin-dashboard-ops-fixes-v1.md`  
-**Why**: Smoke (July 27) found broken categories/promos/orders/franchise refresh and stub KPI. Explicitly **excludes** modifier redesign.
+### Later (release gate + post)
 
-### C. Later
-- Developer dashboard inventory
+- Customer website (hard release gate alongside thin POS)
+- Pilot polish on Android tablet + printers + drawer + card-present
 - Cloud Functions Node 22 before ~2026-10-30
-- Post-MVP: Cash Flow / Multi-brand HQ cards; full Staff/Chat wiring; Inventory SKU link
+- Post-MVP: Cash Flow / Multi-brand full product; guest cart; live delivery tracking; complex inventory
 
 ---
 
-## Phase map (original planning — status sense)
+## Phase map (status sense)
 
 | Phase | Theme | Sense check |
 |-------|--------|-------------|
-| 0 | Agent infra & docs | Effectively complete |
-| 1 | Config scoping & branding | Core delivered; ongoing polish |
-| 2 | Hybrid location + dashboards | Partial; Platform/HQ advanced; Admin ops in flight |
-| 3 | Mobile multi-tenant / dynamic UI | **Tied to menu modifier rebuild** |
-| 4–5 | Monetization, onboarding polish, release | Stripe/plans exist in places; not closed |
+| 0 | Agent infra & docs | Complete |
+| 1 | Config scoping & branding | Delivered |
+| 2 | Hybrid location + dashboards | Core delivered |
+| 3 | Mobile multi-tenant / dynamic UI | Delivered (Decision 11 + tokens) |
+| 4 | Monetization (Stripe) | Card path delivered (Decision 12) |
+| 5 | Station + website + pilot release | **In progress — POS first** |
 
 ---
 
 ## Success criteria for polished MVP (updated)
 
 - Hybrid single/multi-location workable
-- **Menu modifiers**: one schema; pizza profile for Doughboys; standard profile for other types
+- Menu modifiers: one schema; pizza/wings/calzone profiles
 - Design management via HQ with live preview
-- Admin day-2 ops trustworthy (categories, orders, promos)
+- Admin day-2 ops trustworthy
+- Customer bind + signed-out browse + auth-gated cart/checkout
+- Card checkout via Connect (test mode proven)
+- Customer mobile + web management residual polish landed
+- **Thin POS at counter** (card + cash + drawer + tables + print)
+- **Customer website** at MVP quality
 - Strong human review on schema and payments
 
-## Risk register (additions)
+## Risk register
 
-- Menu dual-tree / heuristic debt if rebuild is deferred
-- Firestore menu migration mistakes on live Doughboys data
-- Agent scope creep mixing Admin ops fixes with modifier rebuild
+- POS scope creep beyond Decision 14 locks
+- Printer / drawer hardware variance at pilot
+- Customer website deferred too late relative to release gate
+- Agent inventing kitchen-only binary or new DesignTokens fields
 
 ## How to use
 
 - Agents: load STATUS + SCOPE_CARD + relevant slice; stay in slice scope
-- Human merge gate remains mandatory for schema and cutover
+- Human merge gate remains mandatory for schema, payments, and POS cutover
