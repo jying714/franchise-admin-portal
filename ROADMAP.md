@@ -2,43 +2,51 @@
 
 **Last Updated**: July 30, 2026  
 **Hardware**: MINISFORUM AI X1 Pro-470 (64GB RAM + SSD)  
-**Current focus**: Thin POS Station App (`pos_app`) — Decision 14
+**Current focus**: Thin POS Station App (`pos_app`) — Decision 14  
+**Active branch**: `feat/pos-app-v1`  
+**Plan**: `docs/plans/pos-app-v1-development-plan.md`
 
 ## Vision
+
 Build a scalable, multi-tenant white-label Flutter platform that allows any restaurant/franchise to launch a fully branded ordering system (web + mobile + counter station) rapidly and cost-effectively.
 
 ---
 
 ## Completed (high level)
 
-- Core ordering flow; shared_core + FranchiseProvider unification
-- Phase 0 agent infra (Docker/Ollama/Orchestrator)
-- Phase 1 franchise-scoped config + HQ Design & Branding + HQ onboarding host migration
-- HQ foundation residual; Platform Owner MVP; Admin ops v1
-- Menu modifier system rebuild M1–M5 + wings/calzone — `main`
-- Mobile Design Tokens v1 (T1–T9) — `main`
-- Developer Dashboard v1 — `main`
-- Customer franchise context v1 (Decision 11) — `main`
-- Stripe checkout v1 Connect path (Decision 12) — `main`
-- Mobile + web residual design-tokens polish — `main` (July 30, 2026)
+- Core ordering; shared_core; HQ onboarding + Design & Branding
+- Menu modifier rebuild M1–M5 + wings/calzone
+- Mobile Design Tokens v1; Developer Dashboard v1
+- Customer franchise context v1 (Decision 11)
+- Stripe checkout v1 Connect path (Decision 12)
+- Mobile + web residual design-tokens polish
+- **pos_app scaffold + feature directory tree (Phase 0 PASS)**
 
 ---
 
-## Active epic (July 30, 2026)
+## Active epic — Thin POS (Decision 14)
 
-### Thin POS Station App (`pos_app`) — primary
-**Authority**: `docs/slices/pos-app-v1.md`, Decision 14  
-**Branch**: `feat/pos-app-v1`  
-**Why**: Counter station is required for a market-viable product; pure kitchen-only app is superseded.
+**Authority**: `docs/slices/pos-app-v1.md`, `docs/plans/pos-app-v1-development-plan.md`
 
-Workstreams P1–P13: shell/PIN → staff records → table map → order entry → payments → 86/allergens → print → online intake → settings → offline → pilot smoke.
+| Milestone | Phases | Target |
+|-----------|--------|--------|
+| pos-m1-shell | 1–2 | Domain + PIN session |
+| pos-m2-carryout-pay | 3–5 | Board + carry-out + payments |
+| pos-m3-dine-in | 6 | Tables + open ticket |
+| pos-m4-delivery-staff | 7–8 | Delivery + staff records |
+| pos-m5-ops-print | 9–11 | 86, large order, print, online intake |
+| pos-m6-mvp | 12–14 | Settings, offline, pilot QA |
 
-### Later (release gate + post)
+**Now:** Phase 1 (shared_core foundation).
 
-- Customer website (hard release gate alongside thin POS)
-- Pilot polish on Android tablet + printers + drawer + card-present
-- Cloud Functions Node 22 before ~2026-10-30
-- Post-MVP: Cash Flow / Multi-brand full product; guest cart; live delivery tracking; complex inventory
+---
+
+## After POS polished MVP
+
+- Customer website (hard release gate)
+- Pilot polish on production hardware
+- CF Node 22 before ~2026-10-30
+- Post-MVP: guest cart, live delivery tracking, complex inventory, etc.
 
 ---
 
@@ -46,36 +54,23 @@ Workstreams P1–P13: shell/PIN → staff records → table map → order entry 
 
 | Phase | Theme | Sense check |
 |-------|--------|-------------|
-| 0 | Agent infra & docs | Complete |
-| 1 | Config scoping & branding | Delivered |
-| 2 | Hybrid location + dashboards | Core delivered |
-| 3 | Mobile multi-tenant / dynamic UI | Delivered (Decision 11 + tokens) |
-| 4 | Monetization (Stripe) | Card path delivered (Decision 12) |
-| 5 | Station + website + pilot release | **In progress — POS first** |
+| 0–1 | Infra, config, branding | Delivered |
+| 2–3 | Dashboards, mobile multi-tenant | Delivered |
+| 4 | Stripe | Delivered |
+| 5 | Station + website + pilot | **POS in progress** |
 
 ---
 
-## Success criteria for polished MVP (updated)
+## Success criteria (polished MVP product)
 
-- Hybrid single/multi-location workable
-- Menu modifiers: one schema; pizza/wings/calzone profiles
-- Design management via HQ with live preview
-- Admin day-2 ops trustworthy
-- Customer bind + signed-out browse + auth-gated cart/checkout
-- Card checkout via Connect (test mode proven)
-- Customer mobile + web management residual polish landed
-- **Thin POS at counter** (card + cash + drawer + tables + print)
+- Hybrid location + menu profiles + HQ branding
+- Customer bind + auth-gated cart + Connect card path
+- Residual mobile/web polish landed
+- **Thin POS at counter** (card + cash + drawer + tables + print) per plan acceptance
 - **Customer website** at MVP quality
-- Strong human review on schema and payments
-
-## Risk register
-
-- POS scope creep beyond Decision 14 locks
-- Printer / drawer hardware variance at pilot
-- Customer website deferred too late relative to release gate
-- Agent inventing kitchen-only binary or new DesignTokens fields
+- Human merge gate on schema and payments
 
 ## How to use
 
-- Agents: load STATUS + SCOPE_CARD + relevant slice; stay in slice scope
-- Human merge gate remains mandatory for schema, payments, and POS cutover
+- Agents: load STATUS + plan + slice; stay in current phase  
+- Human merge gate mandatory for schema, payments, POS cutover  
