@@ -107,7 +107,12 @@ class FranchiseeInvoiceTile extends StatelessWidget {
     final color = _statusColor(status);
 
     return Chip(
-      label: Text(label, style: const TextStyle(color: Colors.white)),
+      label: Text(
+        label,
+        style: TextStyle(
+          color: color.computeLuminance() > 0.5 ? Colors.black : Colors.white,
+        ),
+      ),
       backgroundColor: color,
     );
   }

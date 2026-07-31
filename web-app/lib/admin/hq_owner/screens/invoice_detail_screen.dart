@@ -63,14 +63,44 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
               severity: 'error',
               contextData: {'invoiceId': widget.invoiceId},
             );
-            return Center(child: Text(loc.errorLoadingInvoice));
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    loc.errorLoadingInvoice,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _invoiceFuture =
+                            _firestoreService.getInvoiceById(widget.invoiceId);
+                      });
+                    },
+                    child: Text(loc.retry),
+                  ),
+                ],
+              ),
+            );
           }
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
           final invoice = snapshot.data;
           if (invoice == null) {
-            return Center(child: Text(loc.invoiceNotFound));
+            return Center(
+              child: Text(
+                loc.invoiceNotFound,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            );
           }
           return _buildInvoiceDetail(context, invoice, loc);
         },
@@ -210,7 +240,10 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Text(
         '${_formatDateTime(event.timestamp)} - ${event.eventType} - ${event.userId} ${event.notes ?? ''}',
-        style: const TextStyle(fontSize: 12, color: Colors.black54),
+        style: TextStyle(
+          fontSize: 12,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
       ),
     );
   }
@@ -235,7 +268,10 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Text(
         '${_formatDateTime(note.createdAt)} - ${note.userId}: ${note.content}',
-        style: const TextStyle(fontSize: 12, color: Colors.black87),
+        style: TextStyle(
+          fontSize: 12,
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
       ),
     );
   }

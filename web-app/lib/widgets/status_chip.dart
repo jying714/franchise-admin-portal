@@ -72,15 +72,22 @@ class StatusChip extends StatelessWidget {
       label: Text(
         status,
         style: TextStyle(
-          color: color.computeLuminance() > 0.5 ? Colors.black : Colors.white,
+          color: color.computeLuminance() > 0.5
+              ? Colors.black
+              : Colors.white, // fixed contrast on status fill
           fontWeight: FontWeight.bold,
         ),
       ),
       backgroundColor: color,
-      avatar: icon != null ? Icon(icon, size: 18, color: Colors.white) : null,
+      avatar: icon != null
+          ? Icon(
+              icon,
+              size: 18,
+              color:
+                  color.computeLuminance() > 0.5 ? Colors.black : Colors.white,
+            )
+          : null,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
     );
   }
 }
-
-
