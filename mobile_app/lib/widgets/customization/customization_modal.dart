@@ -1571,7 +1571,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
           ),
-          backgroundColor: shared.UiConfig.surfaceColor,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           child: ConstrainedBox(
             constraints: BoxConstraints(
               maxHeight: MediaQuery.of(context).size.height * 0.85,
@@ -1725,7 +1725,9 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                       child: Container(
                                         width: double.infinity,
                                         decoration: BoxDecoration(
-                                          color: shared.UiConfig.primaryColor,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary,
                                           borderRadius:
                                               BorderRadius.circular(6),
                                         ),
@@ -1735,8 +1737,9 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                           "Current Toppings",
                                           style: theme.textTheme.titleMedium
                                               ?.copyWith(
-                                            color:
-                                                shared.UiConfig.onPrimaryColor,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onPrimary,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -1750,8 +1753,9 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                           "None — defaults appear here when set on the item. Add extras below.",
                                           style: theme.textTheme.bodySmall
                                               ?.copyWith(
-                                            color: shared
-                                                .UiConfig.secondaryTextColor,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurfaceVariant,
                                             fontStyle: FontStyle.italic,
                                           ),
                                         ),
@@ -1885,7 +1889,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                               child: Container(
                                 width: double.infinity,
                                 decoration: BoxDecoration(
-                                  color: shared.UiConfig.primaryColor,
+                                  color: Theme.of(context).colorScheme.primary,
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 padding: const EdgeInsets.symmetric(
@@ -1893,7 +1897,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                 child: Text(
                                   "Additional Toppings",
                                   style: theme.textTheme.titleMedium?.copyWith(
-                                    color: shared.UiConfig.onPrimaryColor,
+                                    color:
+                                        Theme.of(context).colorScheme.onPrimary,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -1907,10 +1912,14 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                   vertical: 6.0), // Much tighter vertical space
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: shared.UiConfig.cardColor,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHighest,
                                   borderRadius: BorderRadius.circular(30),
                                   border: Border.all(
-                                      color: shared.UiConfig.dividerColor,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .outlineVariant,
                                       width: 1),
                                 ),
                                 // The Row is now wrapped in a Container, acting like a tab bar.
@@ -1926,8 +1935,12 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                           duration: Duration(milliseconds: 150),
                                           decoration: BoxDecoration(
                                             color: selected
-                                                ? shared.UiConfig.secondaryColor
-                                                : shared.UiConfig.cardColor
+                                                ? Theme.of(context)
+                                                    .colorScheme
+                                                    .secondary
+                                                : Theme.of(context)
+                                                    .colorScheme
+                                                    .surface
                                                     .withValues(alpha: 0.0),
                                             borderRadius:
                                                 BorderRadius.circular(30),
@@ -1940,9 +1953,12 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                             style: theme.textTheme.bodyLarge
                                                 ?.copyWith(
                                               color: selected
-                                                  ? shared.UiConfig.cardColor
-                                                  : shared
-                                                      .UiConfig.secondaryColor,
+                                                  ? Theme.of(context)
+                                                      .colorScheme
+                                                      .onSecondary
+                                                  : Theme.of(context)
+                                                      .colorScheme
+                                                      .secondary,
                                               fontWeight: selected
                                                   ? FontWeight.bold
                                                   : FontWeight.normal,
@@ -1980,8 +1996,9 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                           top: 4, bottom: 4),
                                       child: Divider(
                                         thickness: 2,
-                                        color:
-                                            shared.UiConfig.secondaryTextColor,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant,
                                       ),
                                     ),
                                     ...ingredientIds
@@ -2060,8 +2077,9 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                       padding: const EdgeInsets.only(top: 10),
                                       child: Divider(
                                         thickness: 2,
-                                        color:
-                                            shared.UiConfig.secondaryTextColor,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant,
                                       ),
                                     ),
                                   ],
@@ -2126,7 +2144,9 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                         child: Container(
                                           width: double.infinity,
                                           decoration: BoxDecoration(
-                                            color: shared.UiConfig.primaryColor,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .primary,
                                             borderRadius:
                                                 BorderRadius.circular(6),
                                           ),
@@ -2136,8 +2156,9 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                             "Cheeses",
                                             style: theme.textTheme.titleMedium
                                                 ?.copyWith(
-                                              color: shared
-                                                  .UiConfig.onPrimaryColor,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onPrimary,
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
@@ -2150,8 +2171,9 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                           summary,
                                           style: theme.textTheme.bodySmall
                                               ?.copyWith(
-                                                  color: shared.UiConfig
-                                                      .secondaryTextColor),
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .onSurfaceVariant),
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
                                         ),
@@ -2162,8 +2184,9 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                             "Add extra cheeses for an additional charge.",
                                             style: theme.textTheme.bodySmall
                                                 ?.copyWith(
-                                              color:
-                                                  shared.UiConfig.hintTextColor,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
                                               fontStyle: FontStyle.italic,
                                             ),
                                           ),
@@ -2398,7 +2421,9 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                         child: Container(
                                           width: double.infinity,
                                           decoration: BoxDecoration(
-                                            color: shared.UiConfig.primaryColor,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .primary,
                                             borderRadius:
                                                 BorderRadius.circular(6),
                                           ),
@@ -2408,8 +2433,9 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                             "Sauces",
                                             style: theme.textTheme.titleMedium
                                                 ?.copyWith(
-                                              color: shared
-                                                  .UiConfig.onPrimaryColor,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onPrimary,
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
@@ -2792,7 +2818,9 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                         child: Container(
                                           width: double.infinity,
                                           decoration: BoxDecoration(
-                                            color: shared.UiConfig.primaryColor,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .primary,
                                             borderRadius:
                                                 BorderRadius.circular(6),
                                           ),
@@ -2802,8 +2830,9 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                             "Order Details",
                                             style: theme.textTheme.titleMedium
                                                 ?.copyWith(
-                                              color: shared
-                                                  .UiConfig.onPrimaryColor,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onPrimary,
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),

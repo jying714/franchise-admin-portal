@@ -145,13 +145,13 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
         logoAsset: shared.BrandingConfig.appBarLogoAsset,
         centerTitle: true,
       ),
-      backgroundColor: shared.UiConfig.backgroundColorDark,
+      backgroundColor: Theme.of(context).colorScheme.background,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: shared.UiConfig.defaultPadding,
             child: Card(
-              color: shared.UiConfig.surfaceColorDark,
+              color: Theme.of(context).colorScheme.surface,
               shape: RoundedRectangleBorder(
                 borderRadius:
                     BorderRadius.circular(shared.DesignTokens.cardRadius),
@@ -178,7 +178,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                         fontSize: shared.DesignTokens.titleFontSize,
                         fontWeight: shared.UiConfig.fontWeightBold,
                         fontFamily: shared.DesignTokens.fontFamily,
-                        color: shared.UiConfig.textColorDark,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -201,10 +201,10 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                                         : _selectedCategories.remove(cat);
                                   });
                                 },
-                                selectedColor:
-                                    shared.UiConfig.successColor.withAlpha(51),
+                                selectedColor: Colors.green.withAlpha(
+                                    51), // fixed feedback success (D4)
                                 backgroundColor:
-                                    shared.UiConfig.surfaceColorDark,
+                                    Theme.of(context).colorScheme.surface,
                               ))
                           .toList(),
                     ),
@@ -222,7 +222,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                         ),
                         counterStyle: TextStyle(
                           fontSize: shared.DesignTokens.captionFontSize,
-                          color: shared.UiConfig.hintTextColor,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ),
@@ -237,8 +237,8 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                         ),
                         Text(
                           loc.feedbackSubmitAnonymous,
-                          style:
-                              TextStyle(color: shared.UiConfig.textColorDark),
+                          style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface),
                         ),
                       ],
                     ),
@@ -273,7 +273,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                               width: 24,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: shared.UiConfig.onPrimaryColor,
+                                color: Theme.of(context).colorScheme.onPrimary,
                               ),
                             )
                           : Text(loc.feedbackSubmitButton),
@@ -311,8 +311,8 @@ class _StarRating extends StatelessWidget {
           icon: Icon(
             starFilled ? Icons.star : Icons.star_border,
             color: starFilled
-                ? shared.UiConfig.successColor
-                : shared.UiConfig.hintTextColor,
+                ? Colors.amber // fixed star feedback (D4)
+                : Theme.of(context).colorScheme.onSurfaceVariant,
             size: 32,
           ),
           tooltip: loc.feedbackStarTooltip(i + 1),

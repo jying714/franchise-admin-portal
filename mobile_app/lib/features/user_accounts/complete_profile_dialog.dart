@@ -95,7 +95,7 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
         ),
-        backgroundColor: shared.UiConfig.surfaceColor,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         insetPadding:
             const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
         child: Padding(
@@ -115,7 +115,7 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
                     style: TextStyle(
                       fontSize: shared.DesignTokens.titleFontSize,
                       fontWeight: shared.UiConfig.bold,
-                      color: shared.UiConfig.textColor,
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontFamily: shared.DesignTokens.fontFamily,
                     ),
                   ),
@@ -125,7 +125,7 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: shared.DesignTokens.bodyFontSize,
-                      color: shared.UiConfig.secondaryTextColor,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontFamily: shared.DesignTokens.fontFamily,
                     ),
                   ),
@@ -139,7 +139,8 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
                             shared.DesignTokens.formFieldRadius),
                       ),
                     ),
-                    style: TextStyle(color: shared.UiConfig.textColor),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface),
                     validator: (value) => value == null || value.trim().isEmpty
                         ? l10n.enterName
                         : null,
@@ -155,7 +156,8 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
                             shared.DesignTokens.formFieldRadius),
                       ),
                     ),
-                    style: TextStyle(color: shared.UiConfig.textColor),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface),
                     keyboardType: TextInputType.phone,
                     validator: (value) {
                       if (value != null &&
@@ -174,7 +176,8 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
                         child: ElevatedButton(
                           onPressed: _loading ? null : _submit,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: shared.UiConfig.primaryColor,
+                            backgroundColor:
+                                Theme.of(context).colorScheme.primary,
                             foregroundColor:
                                 Theme.of(context).colorScheme.onPrimary,
                             shape: RoundedRectangleBorder(
@@ -202,9 +205,10 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
                         child: OutlinedButton(
                           onPressed: _loading ? null : _skip,
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: shared.UiConfig.secondaryColor,
+                            foregroundColor:
+                                Theme.of(context).colorScheme.secondary,
                             side: BorderSide(
-                                color: shared.UiConfig.secondaryColor,
+                                color: Theme.of(context).colorScheme.secondary,
                                 width: 1),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(

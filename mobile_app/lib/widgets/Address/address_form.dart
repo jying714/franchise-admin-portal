@@ -108,7 +108,7 @@ class _AddressFormState extends State<AddressForm> {
                 widget.fieldValidators?['street'] ?? defaultStreetValidator,
             onSaved: (value) => _street = value,
             style: TextStyle(
-              color: shared.UiConfig.textColor,
+              color: Theme.of(context).colorScheme.onSurface,
               fontFamily: shared.DesignTokens.fontFamily,
               fontWeight: shared.UiConfig.fontWeightNormal,
             ),
@@ -129,7 +129,7 @@ class _AddressFormState extends State<AddressForm> {
             validator: widget.fieldValidators?['city'] ?? defaultCityValidator,
             onSaved: (value) => _city = value,
             style: TextStyle(
-              color: shared.UiConfig.textColor,
+              color: Theme.of(context).colorScheme.onSurface,
               fontFamily: shared.DesignTokens.fontFamily,
               fontWeight: shared.UiConfig.fontWeightNormal,
             ),
@@ -151,7 +151,7 @@ class _AddressFormState extends State<AddressForm> {
                 widget.fieldValidators?['state'] ?? defaultStateValidator,
             onSaved: (value) => _state = value,
             style: TextStyle(
-              color: shared.UiConfig.textColor,
+              color: Theme.of(context).colorScheme.onSurface,
               fontFamily: shared.DesignTokens.fontFamily,
               fontWeight: shared.UiConfig.fontWeightNormal,
             ),
@@ -172,7 +172,7 @@ class _AddressFormState extends State<AddressForm> {
             validator: widget.fieldValidators?['zip'] ?? defaultZipValidator,
             onSaved: (value) => _zip = value,
             style: TextStyle(
-              color: shared.UiConfig.textColor,
+              color: Theme.of(context).colorScheme.onSurface,
               fontFamily: shared.DesignTokens.fontFamily,
               fontWeight: shared.UiConfig.fontWeightNormal,
             ),
