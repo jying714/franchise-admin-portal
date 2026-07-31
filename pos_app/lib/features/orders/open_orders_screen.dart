@@ -1,39 +1,102 @@
 import 'package:cloud_firestore/cloud_firestore.dart' hide Order;
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart';
-import '../payments/payment_screen.dart';
+import '../delivery/driver_assign_sheet.dart';
 import '../../core/constants/pos_permissions.dart';
 import '../../providers/pin_session_provider.dart';
-import 'package:provider/provider.dart';
+import '../payments/payment_screen.dart';
+import '../session/force_repin_dialog.dart';
 
-class OpenOrdersScreen extends StatelessWidget {
+enum _OrderTypeFilter { all, dineIn, carryOut, delivery }
+
+class OpenOrdersScreen extends StatefulWidget {
   final String franchiseId;
 
   const OpenOrdersScreen({super.key, required this.franchiseId});
 
+  @override
+  State<OpenOrdersScreen> createState() => _OpenOrdersScreenState();
+}
+
+class _OpenOrdersScreenState extends State<OpenOrdersScreen> {
+  late _OrderTypeFilter _filter;
+  late final bool _driverLocked;
+
+  @override
+  void initState() {
+    super.initState();
+    final role =
+        Provider.of<PinSessionProvider>(
+          context,
+          listen: false,
+        ).staff?.role.trim().toLowerCase() ??
+        '';
+    _driverLocked = role == 'driver';
+    _filter = _driverLocked ? _OrderTypeFilter.delivery : _OrderTypeFilter.all;
+  }
+
   Stream<List<Order>> _ordersStream() {
-    // Prefer franchise-scoped orders collection used by the rest of the platform.
-    // Path: franchises/{id}/orders
     return FirebaseFirestore.instance
         .collection('franchises')
-        .doc(franchiseId)
+        .doc(widget.franchiseId)
         .collection('orders')
         .orderBy('timestamp', descending: true)
         .limit(50)
         .snapshots()
         .map((snap) {
-          final list = snap.docs
+          return snap.docs
               .map((d) => Order.fromFirestore(d.data(), d.id))
               .where((o) => OrderStatus.isOnOpenBoard(o.status))
               .toList();
-          return list;
         });
+  }
+
+  String _normalizeType(Order order) {
+    final t = order.deliveryType.trim().toLowerCase();
+    if (t == 'dine_in' || t == 'dine-in' || t == 'dinein') return 'dine_in';
+    if (t == 'delivery') return 'delivery';
+    if (t == 'carryout' ||
+        t == 'carry-out' ||
+        t == 'carry_out' ||
+        t == 'takeout') {
+      return 'carryout';
+    }
+    return t.isEmpty ? 'carryout' : t;
+  }
+
+  String _typeLabel(String normalized) {
+    switch (normalized) {
+      case 'dine_in':
+        return 'Dine-in';
+      case 'delivery':
+        return 'Delivery';
+      case 'carryout':
+        return 'Carry-out';
+      default:
+        return normalized;
+    }
+  }
+
+  bool _matchesFilter(Order order) {
+    if (_filter == _OrderTypeFilter.all) return true;
+    final t = _normalizeType(order);
+    switch (_filter) {
+      case _OrderTypeFilter.dineIn:
+        return t == 'dine_in';
+      case _OrderTypeFilter.carryOut:
+        return t == 'carryout';
+      case _OrderTypeFilter.delivery:
+        return t == 'delivery';
+      case _OrderTypeFilter.all:
+        return true;
+    }
   }
 
   Future<void> _showOrderActions(BuildContext context, Order order) async {
     final session = Provider.of<PinSessionProvider>(context, listen: false);
     final scheme = Theme.of(context).colorScheme;
-
+    final isDelivery = _normalizeType(order) == 'delivery';
     await showDialog<void>(
       context: context,
       builder: (dialogContext) {
@@ -46,7 +109,8 @@ class OpenOrdersScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  '${order.status} · \$${order.total.toStringAsFixed(2)} · ${_sourceLabel(order)}',
+                  '${order.status} · \$${order.total.toStringAsFixed(2)} · '
+                  '${_typeLabel(_normalizeType(order))} · ${_sourceLabel(order)}',
                   style: TextStyle(
                     color: scheme.onSurfaceVariant,
                     fontSize: 13,
@@ -62,9 +126,14 @@ class OpenOrdersScreen extends StatelessWidget {
                     final paid = await Navigator.of(context).push<bool>(
                       MaterialPageRoute<bool>(
                         builder: (_) => PaymentScreen(
-                          franchiseId: franchiseId,
+                          franchiseId: widget.franchiseId,
                           orderId: order.id,
                           amountDue: order.total,
+                          closeOutOrder: !isDelivery,
+                          statusWhenPaid: OrderStatus.sentToKitchen,
+                          allowedMethods: isDelivery
+                              ? const {'card'}
+                              : const {'cash', 'split', 'card'},
                         ),
                       ),
                     );
@@ -96,6 +165,17 @@ class OpenOrdersScreen extends StatelessWidget {
                   destructive: true,
                   onTap: () async {
                     Navigator.pop(dialogContext);
+
+                    if (session.requiresFreshPinFor(PosPermissions.voidOrder)) {
+                      final pinned = await ForceRepinDialog.show(
+                        context,
+                        franchiseId: widget.franchiseId,
+                        reasonLabel: 'Void order ${order.id}',
+                      );
+                      if (pinned != true) return;
+                    }
+
+                    if (!context.mounted) return;
                     final ok = await showDialog<bool>(
                       context: context,
                       builder: (ctx) => AlertDialog(
@@ -123,12 +203,46 @@ class OpenOrdersScreen extends StatelessWidget {
                     }
                   },
                 ),
+                if (isDelivery)
+                  _ActionRow(
+                    icon: Icons.delivery_dining,
+                    label: 'Assign / deliver',
+                    enabled:
+                        (session.staff?.role.trim().toLowerCase() ==
+                            'driver') ||
+                        session.hasPermission(PosPermissions.takeOrder) ||
+                        session.hasPermission(PosPermissions.managerOverride),
+                    onTap: () async {
+                      Navigator.pop(dialogContext);
+                      final ok = await DriverAssignSheet.show(
+                        context,
+                        franchiseId: widget.franchiseId,
+                        orderId: order.id,
+                      );
+                      if (ok && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Driver assigned')),
+                        );
+                      }
+                    },
+                  ),
                 _ActionRow(
                   icon: Icons.replay,
                   label: 'Refund',
                   enabled: session.hasPermission(PosPermissions.refund),
-                  onTap: () {
+                  onTap: () async {
                     Navigator.pop(dialogContext);
+
+                    if (session.requiresFreshPinFor(PosPermissions.refund)) {
+                      final pinned = await ForceRepinDialog.show(
+                        context,
+                        franchiseId: widget.franchiseId,
+                        reasonLabel: 'Refund order ${order.id}',
+                      );
+                      if (pinned != true) return;
+                    }
+
+                    if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
@@ -155,7 +269,7 @@ class OpenOrdersScreen extends StatelessWidget {
   Future<void> _updateStatus(String orderId, String status) async {
     await FirebaseFirestore.instance
         .collection('franchises')
-        .doc(franchiseId)
+        .doc(widget.franchiseId)
         .collection('orders')
         .doc(orderId)
         .set({
@@ -189,67 +303,181 @@ class OpenOrdersScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Open orders')),
-      body: StreamBuilder<List<Order>>(
-        stream: _ordersStream(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  'Could not load orders.\n${snapshot.error}',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: scheme.error),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _FilterButton(
+                    label: 'All',
+                    selected: _filter == _OrderTypeFilter.all,
+                    enabled: !_driverLocked,
+                    onTap: () => setState(() => _filter = _OrderTypeFilter.all),
+                  ),
                 ),
-              ),
-            );
-          }
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final orders = snapshot.data!;
-          if (orders.isEmpty) {
-            return Center(
-              child: Text(
-                'No open orders',
-                style: TextStyle(color: scheme.onSurfaceVariant),
-              ),
-            );
-          }
-
-          return ListView.separated(
-            padding: const EdgeInsets.all(12),
-            itemCount: orders.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              final order = orders[index];
-              final source = _sourceLabel(order);
-              return Card(
-                child: ListTile(
-                  title: Text(
-                    order.userNameDisplay,
-                    style: TextStyle(color: scheme.onSurface),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _FilterButton(
+                    label: 'Dine-in',
+                    selected: _filter == _OrderTypeFilter.dineIn,
+                    enabled: !_driverLocked,
+                    onTap: () =>
+                        setState(() => _filter = _OrderTypeFilter.dineIn),
                   ),
-                  subtitle: Text(
-                    '${order.status} · \$${order.total.toStringAsFixed(2)} · ${order.deliveryType}',
-                    style: TextStyle(color: scheme.onSurfaceVariant),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _FilterButton(
+                    label: 'Carry-out',
+                    selected: _filter == _OrderTypeFilter.carryOut,
+                    enabled: !_driverLocked,
+                    onTap: () =>
+                        setState(() => _filter = _OrderTypeFilter.carryOut),
                   ),
-                  trailing: Chip(
-                    label: Text(
-                      source.toUpperCase(),
-                      style: TextStyle(color: scheme.onPrimary, fontSize: 11),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _FilterButton(
+                    label: 'Delivery',
+                    selected: _filter == _OrderTypeFilter.delivery,
+                    enabled: true,
+                    onTap: () =>
+                        setState(() => _filter = _OrderTypeFilter.delivery),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: StreamBuilder<List<Order>>(
+              stream: _ordersStream(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(
+                        'Could not load orders.\n${snapshot.error}',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: scheme.error),
+                      ),
                     ),
-                    backgroundColor: _sourceColor(context, source),
-                    padding: EdgeInsets.zero,
-                    visualDensity: VisualDensity.compact,
-                  ),
-                  onTap: () => _showOrderActions(context, order),
-                ),
-              );
-            },
-          );
-        },
+                  );
+                }
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final orders = snapshot.data!
+                    .where(_matchesFilter)
+                    .toList(growable: false);
+
+                if (orders.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No open orders',
+                      style: TextStyle(color: scheme.onSurfaceVariant),
+                    ),
+                  );
+                }
+
+                return ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                  itemCount: orders.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final order = orders[index];
+                    final source = _sourceLabel(order);
+                    final typeLabel = _typeLabel(_normalizeType(order));
+                    return Card(
+                      child: ListTile(
+                        title: Text(
+                          order.userNameDisplay,
+                          style: TextStyle(color: scheme.onSurface),
+                        ),
+                        subtitle: Text(
+                          '$typeLabel · ${order.status} · '
+                          '\$${order.total.toStringAsFixed(2)}',
+                          style: TextStyle(color: scheme.onSurfaceVariant),
+                        ),
+                        trailing: Chip(
+                          label: Text(
+                            source.toUpperCase(),
+                            style: TextStyle(
+                              color: scheme.onPrimary,
+                              fontSize: 11,
+                            ),
+                          ),
+                          backgroundColor: _sourceColor(context, source),
+                          padding: EdgeInsets.zero,
+                          visualDensity: VisualDensity.compact,
+                        ),
+                        onTap: () => _showOrderActions(context, order),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FilterButton extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  const _FilterButton({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.enabled = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final bg = !enabled
+        ? scheme.surfaceContainerHighest.withValues(alpha: 0.45)
+        : selected
+        ? scheme.primary
+        : scheme.surfaceContainerHighest;
+    final fg = !enabled
+        ? scheme.onSurface.withValues(alpha: 0.38)
+        : selected
+        ? scheme.onPrimary
+        : scheme.onSurface;
+
+    return Material(
+      color: bg,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: fg,
+              fontWeight: selected && enabled
+                  ? FontWeight.w600
+                  : FontWeight.w500,
+              fontSize: 13,
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -2,12 +2,32 @@ import 'package:cloud_firestore/cloud_firestore.dart' hide Order;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart';
+
 import '../../core/constants/pos_permissions.dart';
 import '../../providers/pin_session_provider.dart';
 import '../payments/payment_screen.dart';
-import '../../features/ordering/pos_modifier_dialog.dart';
+import 'pos_modifier_dialog.dart';
 
-/// Carry-out order entry — Phase 4.1 shell (menu + empty ticket).
+class _DeliveryCustomer {
+  final String name;
+  final String phone;
+  final String street;
+  final String city;
+  final String state;
+  final String zip;
+
+  const _DeliveryCustomer({
+    required this.name,
+    required this.phone,
+    required this.street,
+    required this.city,
+    required this.state,
+    required this.zip,
+  });
+
+  String get addressLine => '$street, $city, $state $zip';
+}
+
 class OrderEntryScreen extends StatefulWidget {
   final String franchiseId;
   final String orderType; // carryout | dine_in | delivery
@@ -25,6 +45,33 @@ class OrderEntryScreen extends StatefulWidget {
 class _OrderEntryScreenState extends State<OrderEntryScreen> {
   final List<_TicketLine> _lines = [];
   bool _sending = false;
+  _DeliveryCustomer? _deliveryCustomer;
+
+  bool get _isDelivery => widget.orderType == 'delivery';
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isDelivery) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _promptDeliveryCustomer();
+      });
+    }
+  }
+
+  Future<void> _promptDeliveryCustomer() async {
+    final result = await showDialog<_DeliveryCustomer>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const _DeliveryCustomerDialog(),
+    );
+    if (!mounted) return;
+    if (result == null) {
+      Navigator.of(context).pop();
+      return;
+    }
+    setState(() => _deliveryCustomer = result);
+  }
 
   Stream<List<MenuItem>> _menuStream() {
     return FirebaseFirestore.instance
@@ -49,15 +96,19 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
   }
 
   Future<void> _addSimpleLine(MenuItem item) async {
+    if (_isDelivery && _deliveryCustomer == null) {
+      await _promptDeliveryCustomer();
+      if (_deliveryCustomer == null) return;
+    }
+
     Map<String, dynamic> customizations = {};
     if (item.effectiveModifierGroups.isNotEmpty) {
       final result = await PosModifierDialog.show(context, item);
-      if (result == null) return; // cancelled
+      if (result == null) return;
       customizations = result;
     }
 
     setState(() {
-      // Lines with different modifiers stay separate
       final existing = _lines.indexWhere(
         (l) =>
             l.menuItemId == item.id &&
@@ -92,85 +143,128 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
   double get _subtotal =>
       _lines.fold(0.0, (sum, l) => sum + l.unitPrice * l.quantity);
 
-  Future<void> _sendTicket() async {
-    if (_lines.isEmpty || _sending) return;
+  String? _validateDelivery() {
+    if (!_isDelivery) return null;
+    if (_deliveryCustomer == null) {
+      return 'Customer information required for delivery';
+    }
+    return null;
+  }
 
+  Future<String?> _createOrderDoc({required String status}) async {
     final session = Provider.of<PinSessionProvider>(context, listen: false);
     final staff = session.staff;
     if (staff == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Session locked — unlock again')),
       );
-      return;
+      return null;
     }
     if (!session.hasPermission(PosPermissions.takeOrder)) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('No take_order permission')));
-      return;
+      return null;
     }
 
+    final deliveryError = _validateDelivery();
+    if (deliveryError != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(deliveryError)));
+      return null;
+    }
+
+    final now = DateTime.now();
+    final items = _lines
+        .map(
+          (l) => OrderItem(
+            menuItemId: l.menuItemId,
+            name: l.name,
+            price: l.unitPrice,
+            quantity: l.quantity,
+            customizations: l.customizations,
+          ),
+        )
+        .toList();
+
+    final subtotal = _subtotal;
+    const tax = 0.0;
+    final total = subtotal + tax;
+
+    final customer = _deliveryCustomer;
+    final customerName = _isDelivery ? customer!.name : staff.name;
+
+    Address? deliveryAddress;
+    if (_isDelivery && customer != null) {
+      deliveryAddress = Address(
+        id: 'pos_delivery',
+        street: customer.street,
+        city: customer.city,
+        state: customer.state,
+        zip: customer.zip,
+        label: 'Delivery',
+        name: customer.name,
+      );
+    }
+
+    final order = Order(
+      id: '',
+      userId: staff.id,
+      storeId: widget.franchiseId,
+      items: items,
+      subtotal: subtotal,
+      tax: tax,
+      deliveryFee: 0,
+      discount: 0,
+      total: total,
+      deliveryType: widget.orderType,
+      time: '',
+      status: status,
+      timestamp: now,
+      estimatedTime: 20,
+      timestamps: {
+        'created': now.toIso8601String(),
+        status: now.toIso8601String(),
+      },
+      userName: customerName,
+      deliveryAddress: deliveryAddress,
+      specialInstructions: null,
+      source: 'pos',
+    );
+
+    final col = FirebaseFirestore.instance
+        .collection('franchises')
+        .doc(widget.franchiseId)
+        .collection('orders');
+    final ref = col.doc();
+    final data = order.copyWith(id: ref.id).toFirestore();
+    data['staffId'] = staff.id;
+    data['staffName'] = staff.name;
+    if (_isDelivery && customer != null) {
+      data['customerPhone'] = customer.phone;
+    }
+    await ref.set(data);
+    return ref.id;
+  }
+
+  Future<void> _sendUnpaid() async {
+    if (_lines.isEmpty || _sending) return;
     setState(() => _sending = true);
     try {
-      final now = DateTime.now();
-      final items = _lines
-          .map(
-            (l) => OrderItem(
-              menuItemId: l.menuItemId,
-              name: l.name,
-              price: l.unitPrice,
-              quantity: l.quantity,
-              customizations: l.customizations,
-            ),
-          )
-          .toList();
-
-      final subtotal = _subtotal;
-      final tax = 0.0; // tax calc later
-      final total = subtotal + tax;
-
-      final order = Order(
-        id: '', // assigned after doc create
-        userId: staff.id,
-        storeId: widget.franchiseId,
-        items: items,
-        subtotal: subtotal,
-        tax: tax,
-        deliveryFee: 0,
-        discount: 0,
-        total: total,
-        deliveryType: widget.orderType,
-        time: '',
-        status: OrderStatus.sentToKitchen,
-        timestamp: now,
-        estimatedTime: 20,
-        timestamps: {
-          'created': now.toIso8601String(),
-          'sent_to_kitchen': now.toIso8601String(),
-        },
-        userName: staff.name,
-        specialInstructions: null,
-        source: 'pos',
-      );
-
-      final col = FirebaseFirestore.instance
-          .collection('franchises')
-          .doc(widget.franchiseId)
-          .collection('orders');
-      final ref = col.doc();
-      final data = order.copyWith(id: ref.id).toFirestore();
-      data['staffId'] = staff.id;
-      data['staffName'] = staff.name;
-      await ref.set(data);
-
+      final id = await _createOrderDoc(status: OrderStatus.sentToKitchen);
+      if (id == null) {
+        if (mounted) setState(() => _sending = false);
+        return;
+      }
       if (!mounted) return;
       setState(() {
         _lines.clear();
         _sending = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Order ${ref.id} sent to kitchen')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Order $id sent to kitchen')));
       Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
@@ -179,6 +273,102 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
         context,
       ).showSnackBar(SnackBar(content: Text('Send failed: $e')));
     }
+  }
+
+  Future<void> _payAndSend() async {
+    if (_lines.isEmpty || _sending) return;
+    setState(() => _sending = true);
+    try {
+      final id = await _createOrderDoc(status: OrderStatus.open);
+      if (id == null) {
+        if (mounted) setState(() => _sending = false);
+        return;
+      }
+      if (!mounted) return;
+
+      final paid = await Navigator.of(context).push<bool>(
+        MaterialPageRoute<bool>(
+          builder: (_) => PaymentScreen(
+            franchiseId: widget.franchiseId,
+            orderId: id,
+            amountDue: _subtotal,
+            closeOutOrder: false,
+            statusWhenPaid: OrderStatus.sentToKitchen,
+          ),
+        ),
+      );
+
+      if (!mounted) return;
+      setState(() => _sending = false);
+
+      if (paid == true) {
+        setState(() => _lines.clear());
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Order $id paid and sent to kitchen')),
+        );
+        Navigator.of(context).pop();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Order $id saved as open — pay from board when ready',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _sending = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Pay & send failed: $e')));
+    }
+  }
+
+  Widget _buildDeliverySummary(ColorScheme scheme) {
+    final c = _deliveryCustomer;
+    if (c == null) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                'No customer info',
+                style: TextStyle(color: scheme.error, fontSize: 13),
+              ),
+            ),
+            TextButton(
+              onPressed: _promptDeliveryCustomer,
+              child: const Text('Add'),
+            ),
+          ],
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+      child: Row(
+        children: [
+          Icon(Icons.delivery_dining, size: 18, color: scheme.primary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '${c.name} · ${c.addressLine}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Edit customer',
+            icon: const Icon(Icons.edit_outlined, size: 18),
+            onPressed: _promptDeliveryCustomer,
+            visualDensity: VisualDensity.compact,
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -191,163 +381,359 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
     };
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(title: Text(title)),
-      body: Row(
-        children: [
-          Expanded(
-            flex: 3,
-            child: StreamBuilder<List<MenuItem>>(
-              stream: _menuStream(),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Text(
-                        'Menu error:\n${snapshot.error}',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: scheme.error),
-                      ),
-                    ),
-                  );
-                }
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final items = snapshot.data!;
-                if (items.isEmpty) {
-                  return Center(
-                    child: Text(
-                      'No menu items',
-                      style: TextStyle(color: scheme.onSurfaceVariant),
-                    ),
-                  );
-                }
-                return GridView.builder(
-                  padding: const EdgeInsets.all(12),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
-                    childAspectRatio: 1.4,
-                  ),
-                  itemCount: items.length,
-                  itemBuilder: (context, index) {
-                    final item = items[index];
-                    return Card(
-                      child: InkWell(
-                        onTap: () => _addSimpleLine(item),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item.name,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.titleSmall,
-                              ),
-                              const Spacer(),
-                              Text(
-                                '\$${item.price.toStringAsFixed(2)}',
-                                style: TextStyle(
-                                  color: scheme.primary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
+      body: SafeArea(
+        child: Row(
+          children: [
+            Expanded(
+              flex: 3,
+              child: StreamBuilder<List<MenuItem>>(
+                stream: _menuStream(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          'Menu error:\n${snapshot.error}',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: scheme.error),
                         ),
                       ),
                     );
-                  },
-                );
-              },
-            ),
-          ),
-          VerticalDivider(width: 1, color: scheme.outlineVariant),
-          Expanded(
-            flex: 2,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Text(
-                    'Ticket',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
-                Expanded(
-                  child: _lines.isEmpty
-                      ? Center(
-                          child: Text(
-                            'Tap items to add',
-                            style: TextStyle(color: scheme.onSurfaceVariant),
-                          ),
-                        )
-                      : ListView.builder(
-                          itemCount: _lines.length,
-                          itemBuilder: (context, index) {
-                            final line = _lines[index];
-                            return ListTile(
-                              title: Text(line.name),
-                              subtitle: Text(
-                                '\$${line.unitPrice.toStringAsFixed(2)} × ${line.quantity}',
-                              ),
-                              trailing: IconButton(
-                                icon: const Icon(Icons.remove_circle_outline),
-                                onPressed: () {
-                                  setState(() {
-                                    if (line.quantity <= 1) {
-                                      _lines.removeAt(index);
-                                    } else {
-                                      _lines[index] = line.copyWith(
-                                        quantity: line.quantity - 1,
-                                      );
-                                    }
-                                  });
-                                },
-                              ),
-                            );
-                          },
+                  }
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final items = snapshot.data!;
+                  if (items.isEmpty) {
+                    return Center(
+                      child: Text(
+                        'No menu items',
+                        style: TextStyle(color: scheme.onSurfaceVariant),
+                      ),
+                    );
+                  }
+                  return GridView.builder(
+                    padding: const EdgeInsets.all(12),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 8,
+                          crossAxisSpacing: 8,
+                          childAspectRatio: 1.4,
                         ),
-                ),
-                const Divider(height: 1),
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        'Subtotal  \$${_subtotal.toStringAsFixed(2)}',
-                        textAlign: TextAlign.right,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      FilledButton(
-                        onPressed: _lines.isEmpty || _sending
-                            ? null
-                            : _sendTicket,
-                        child: _sending
-                            ? const SizedBox(
-                                height: 22,
-                                width: 22,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
+                    itemCount: items.length,
+                    itemBuilder: (context, index) {
+                      final item = items[index];
+                      return Card(
+                        child: InkWell(
+                          onTap: () => _addSimpleLine(item),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item.name,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.titleSmall,
                                 ),
-                              )
-                            : const Text('Send to kitchen'),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                                const Spacer(),
+                                Text(
+                                  '\$${item.price.toStringAsFixed(2)}',
+                                  style: TextStyle(
+                                    color: scheme.primary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+            VerticalDivider(width: 1, color: scheme.outlineVariant),
+            Expanded(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                    child: Text(
+                      'Ticket',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  if (_isDelivery) ...[
+                    _buildDeliverySummary(scheme),
+                    const Divider(height: 1),
+                  ],
+                  Expanded(
+                    child: _lines.isEmpty
+                        ? Center(
+                            child: Text(
+                              'Tap items to add',
+                              style: TextStyle(color: scheme.onSurfaceVariant),
+                            ),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            itemCount: _lines.length,
+                            itemBuilder: (context, index) {
+                              final line = _lines[index];
+                              return ListTile(
+                                title: Text(line.name),
+                                subtitle: Text(
+                                  '\$${line.unitPrice.toStringAsFixed(2)} × ${line.quantity}',
+                                ),
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.remove_circle_outline),
+                                  onPressed: () {
+                                    setState(() {
+                                      if (line.quantity <= 1) {
+                                        _lines.removeAt(index);
+                                      } else {
+                                        _lines[index] = line.copyWith(
+                                          quantity: line.quantity - 1,
+                                        );
+                                      }
+                                    });
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                  const Divider(height: 1),
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      12,
+                      12,
+                      12,
+                      12 + MediaQuery.of(context).padding.bottom,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'Subtotal  \$${_subtotal.toStringAsFixed(2)}',
+                          textAlign: TextAlign.right,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        if (_isDelivery) ...[
+                          FilledButton(
+                            onPressed: _lines.isEmpty || _sending
+                                ? null
+                                : _payAndSend,
+                            child: _sending
+                                ? const SizedBox(
+                                    height: 22,
+                                    width: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text('Pay & send'),
+                          ),
+                          const SizedBox(height: 8),
+                          OutlinedButton(
+                            onPressed: _lines.isEmpty || _sending
+                                ? null
+                                : _sendUnpaid,
+                            child: const Text('Send unpaid (COD)'),
+                          ),
+                        ] else
+                          FilledButton(
+                            onPressed: _lines.isEmpty || _sending
+                                ? null
+                                : _sendUnpaid,
+                            child: _sending
+                                ? const SizedBox(
+                                    height: 22,
+                                    width: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text('Send to kitchen'),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
+    );
+  }
+}
+
+class _DeliveryCustomerDialog extends StatefulWidget {
+  const _DeliveryCustomerDialog();
+
+  @override
+  State<_DeliveryCustomerDialog> createState() =>
+      _DeliveryCustomerDialogState();
+}
+
+class _DeliveryCustomerDialogState extends State<_DeliveryCustomerDialog> {
+  final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _streetController = TextEditingController();
+  final _cityController = TextEditingController();
+  final _stateController = TextEditingController();
+  final _zipController = TextEditingController();
+  String? _error;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _streetController.dispose();
+    _cityController.dispose();
+    _stateController.dispose();
+    _zipController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final name = _nameController.text.trim();
+    final phone = _phoneController.text.trim();
+    final street = _streetController.text.trim();
+    final city = _cityController.text.trim();
+    final state = _stateController.text.trim();
+    final zip = _zipController.text.trim();
+
+    if (name.isEmpty ||
+        phone.isEmpty ||
+        street.isEmpty ||
+        city.isEmpty ||
+        state.isEmpty ||
+        zip.isEmpty) {
+      setState(() => _error = 'All fields are required');
+      return;
+    }
+
+    Navigator.of(context).pop(
+      _DeliveryCustomer(
+        name: name,
+        phone: phone,
+        street: street,
+        city: city,
+        state: state,
+        zip: zip,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return AlertDialog(
+      title: const Text('Delivery customer'),
+      content: SizedBox(
+        width: 420,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextField(
+                controller: _nameController,
+                autofocus: true,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  labelText: 'Customer name',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  labelText: 'Phone',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _streetController,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  labelText: 'Street',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: TextField(
+                      controller: _cityController,
+                      textInputAction: TextInputAction.next,
+                      decoration: const InputDecoration(
+                        labelText: 'City',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _stateController,
+                      textInputAction: TextInputAction.next,
+                      decoration: const InputDecoration(
+                        labelText: 'St',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 2,
+                    child: TextField(
+                      controller: _zipController,
+                      keyboardType: TextInputType.number,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => _submit(),
+                      decoration: const InputDecoration(
+                        labelText: 'ZIP',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (_error != null) ...[
+                const SizedBox(height: 10),
+                Text(_error!, style: TextStyle(color: scheme.error)),
+              ],
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(onPressed: _submit, child: const Text('Continue')),
+      ],
     );
   }
 }

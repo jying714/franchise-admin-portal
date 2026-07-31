@@ -12,6 +12,7 @@ class OrderStatus {
   static const String needsApproval = 'needs_approval';
   static const String sentToKitchen = 'sent_to_kitchen';
   static const String ready = 'ready';
+  static const String outForDelivery = 'out_for_delivery';
   static const String completed = 'completed';
   static const String cancelled = 'cancelled';
 
@@ -27,6 +28,7 @@ class OrderStatus {
     needsApproval,
     sentToKitchen,
     ready,
+    outForDelivery,
     placed,
     preparing,
   ];

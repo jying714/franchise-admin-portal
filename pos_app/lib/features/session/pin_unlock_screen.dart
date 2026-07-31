@@ -21,26 +21,33 @@ class PinUnlockScreen extends StatefulWidget {
 }
 
 class _PinUnlockScreenState extends State<PinUnlockScreen> {
-  final _staffIdController = TextEditingController();
   final _pinController = TextEditingController();
   final _posFs = PosFirestoreService();
+  final _pinFocus = FocusNode();
 
   bool _busy = false;
   String? _error;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _pinFocus.requestFocus();
+    });
+  }
+
+  @override
   void dispose() {
-    _staffIdController.dispose();
     _pinController.dispose();
+    _pinFocus.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
-    final staffId = _staffIdController.text.trim();
     final pin = _pinController.text.trim();
 
-    if (staffId.isEmpty || pin.isEmpty) {
-      setState(() => _error = 'Enter staff ID and PIN');
+    if (pin.isEmpty) {
+      setState(() => _error = 'Enter PIN');
       return;
     }
 
@@ -50,33 +57,38 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
     });
 
     try {
-      final staff = await _posFs.getStaff(widget.franchiseId, staffId);
-      if (staff == null) {
-        setState(() => _error = 'Staff not found');
-        return;
+      final staffList = await _posFs.streamStaff(widget.franchiseId).first;
+      Staff? matched;
+
+      for (final staff in staffList) {
+        if (staff.status != 'active') continue;
+        if (!staff.posEnabled) continue;
+        if (staff.pinHash == null || staff.pinHash!.isEmpty) continue;
+        if (PinHash.verify(pin, staff.pinHash)) {
+          matched = staff;
+          break;
+        }
       }
-      if (staff.status != 'active') {
-        setState(() => _error = 'Staff inactive');
-        return;
-      }
-      if (!staff.posEnabled) {
-        setState(() => _error = 'POS access disabled for this staff');
-        return;
-      }
-      if (staff.pinHash == null || staff.pinHash!.isEmpty) {
-        setState(() => _error = 'PIN not set — ask a manager');
-        return;
-      }
-      if (!PinHash.verify(pin, staff.pinHash)) {
+
+      if (matched == null) {
         setState(() => _error = 'Invalid PIN');
+        _pinController.clear();
+        _pinFocus.requestFocus();
         return;
       }
 
       if (!mounted) return;
-      Provider.of<PinSessionProvider>(context, listen: false).unlock(staff);
+      final session = Provider.of<PinSessionProvider>(context, listen: false);
+      try {
+        final settings = await _posFs.getPosSettings(widget.franchiseId);
+        session.setTimeoutMinutes(settings.pinSessionTimeoutMinutes);
+      } catch (_) {
+        // Keep provider default (15)
+      }
+      session.unlock(matched);
       _pinController.clear();
       widget.onUnlocked?.call();
-    } catch (e) {
+    } catch (_) {
       setState(() => _error = 'Unlock failed');
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -108,7 +120,7 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Franchise: ${widget.franchiseId}',
+                    'Enter PIN',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
@@ -116,17 +128,8 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
                   ),
                   const SizedBox(height: 32),
                   TextField(
-                    controller: _staffIdController,
-                    enabled: !_busy,
-                    textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(
-                      labelText: 'Staff ID',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
                     controller: _pinController,
+                    focusNode: _pinFocus,
                     enabled: !_busy,
                     obscureText: true,
                     keyboardType: TextInputType.number,

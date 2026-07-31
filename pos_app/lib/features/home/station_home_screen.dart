@@ -80,7 +80,16 @@ class StationHomeScreen extends StatelessWidget {
             title: 'Delivery',
             subtitle: 'Customer + address → order → driver at complete',
             icon: Icons.delivery_dining,
-            onTap: () => _toast(context, 'Delivery — Phase 7'),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => OrderEntryScreen(
+                    franchiseId: franchiseId,
+                    orderType: 'delivery',
+                  ),
+                ),
+              );
+            },
           ),
           const SizedBox(height: 24),
           Text(
