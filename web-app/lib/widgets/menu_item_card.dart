@@ -51,8 +51,9 @@ class _MenuItemCardState extends State<MenuItemCard> {
     return IconButton(
       icon: Icon(
         isFavorited ? Icons.favorite : Icons.favorite_border,
-        color:
-            isFavorited ? DesignTokens.accentColor : DesignTokens.hintTextColor,
+        color: isFavorited
+            ? DesignTokens.accentColor
+            : Theme.of(context).colorScheme.onSurfaceVariant,
       ),
       tooltip: enabled
           ? (isFavorited
@@ -222,7 +223,7 @@ class _MenuItemCardState extends State<MenuItemCard> {
                     style: TextStyle(
                       fontSize: DesignTokens.titleFontSize,
                       fontWeight: FontWeight.bold,
-                      color: DesignTokens.textColor,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -232,7 +233,7 @@ class _MenuItemCardState extends State<MenuItemCard> {
                     style: TextStyle(
                       fontSize: DesignTokens.bodyFontSize,
                       fontWeight: FontWeight.w600,
-                      color: DesignTokens.textColor,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   if (widget.showDescription &&
@@ -243,7 +244,7 @@ class _MenuItemCardState extends State<MenuItemCard> {
                         widget.menuItem.description,
                         style: TextStyle(
                           fontSize: DesignTokens.captionFontSize,
-                          color: DesignTokens.secondaryTextColor,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                         maxLines: widget.expanded ? 4 : 2,
                         overflow: TextOverflow.ellipsis,

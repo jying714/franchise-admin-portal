@@ -27,7 +27,7 @@ class ToppingCostLabel extends StatelessWidget {
         Text(
           loc.additionalToppingCostLabel ?? "Additional topping cost:",
           style: theme.textTheme.bodySmall?.copyWith(
-            color: DesignTokens.secondaryTextColor,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
             fontFamily: DesignTokens.fontFamily,
             fontWeight: FontWeight.w500,
           ),
@@ -45,5 +45,3 @@ class ToppingCostLabel extends StatelessWidget {
     );
   }
 }
-
-

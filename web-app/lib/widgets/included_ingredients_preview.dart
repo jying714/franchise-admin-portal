@@ -41,7 +41,7 @@ class IncludedIngredientsPreview extends StatelessWidget {
             style: TextStyle(
               fontSize: DesignTokens.captionFontSize,
               fontWeight: FontWeight.bold,
-              color: DesignTokens.secondaryTextColor,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontFamily: DesignTokens.fontFamily,
             ),
           ),
@@ -56,7 +56,8 @@ class IncludedIngredientsPreview extends StatelessWidget {
                             : '',
                         style: const TextStyle(fontSize: 13),
                       ),
-                      backgroundColor: DesignTokens.surfaceColor,
+                      backgroundColor:
+                          Theme.of(context).colorScheme.surfaceContainerHighest,
                     ))
                 .toList(),
           ),

@@ -45,7 +45,7 @@ class CustomizationHeader extends StatelessWidget {
               Text(
                 menuItem.name,
                 style: theme.textTheme.titleLarge?.copyWith(
-                  color: DesignTokens.textColor,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontWeight: FontWeight.bold,
                   fontFamily: DesignTokens.fontFamily,
                 ),
@@ -54,7 +54,7 @@ class CustomizationHeader extends StatelessWidget {
               Text(
                 menuItem.description,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: DesignTokens.secondaryTextColor,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontFamily: DesignTokens.fontFamily,
                 ),
                 maxLines: 2,
