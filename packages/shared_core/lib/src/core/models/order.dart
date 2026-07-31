@@ -23,6 +23,10 @@ class Order {
   final Address? deliveryAddress;
   final String? specialInstructions;
 
+  /// Channel that created the order: `pos` | `mobile` | `web`.
+  /// Missing on legacy docs → treated as `mobile`.
+  final String source;
+
   bool get isFeedbackEligible =>
       status.toLowerCase() == 'completed' ||
       status.toLowerCase() == 'placed' ||
@@ -49,6 +53,7 @@ class Order {
     this.refundStatus,
     this.deliveryAddress,
     this.specialInstructions,
+    this.source = 'mobile',
   });
 
   factory Order.fromFirestore(Map<String, dynamic> data, String id) {
@@ -82,6 +87,9 @@ class Order {
           : null,
       specialInstructions: data['specialInstructions'],
       storeId: data['storeId'] ?? '',
+      source: (data['source'] as String?)?.trim().isNotEmpty == true
+          ? (data['source'] as String).trim()
+          : 'mobile',
     );
   }
 
@@ -106,6 +114,7 @@ class Order {
       'refundStatus': refundStatus,
       'deliveryAddress': deliveryAddress?.toMap(),
       'specialInstructions': specialInstructions,
+      'source': source,
     };
   }
 
@@ -130,6 +139,7 @@ class Order {
     String? refundStatus,
     Address? deliveryAddress,
     String? specialInstructions,
+    String? source,
   }) {
     return Order(
       id: id ?? this.id,
@@ -152,6 +162,7 @@ class Order {
       refundStatus: refundStatus ?? this.refundStatus,
       deliveryAddress: deliveryAddress ?? this.deliveryAddress,
       specialInstructions: specialInstructions ?? this.specialInstructions,
+      source: source ?? this.source,
     );
   }
 

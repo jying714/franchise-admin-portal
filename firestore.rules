@@ -9,8 +9,9 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // === HELPERS (kept from PM-reviewed version) ===
-    function isSignedIn() { return request.auth != null; }
+    function isSignedIn() {
+      return request.auth != null;
+    }
 
     function hasAnyRole(roles) {
       return isSignedIn() &&
@@ -18,115 +19,166 @@ service cloud.firestore {
              request.auth.token.roles.hasAny(roles);
     }
 
-    function isOwnerOfUser(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+    function isHqOwner() {
+      return hasAnyRole(['hq_owner', 'platform_owner', 'developer']);
     }
 
-    function isFranchiseStaff(franchiseId) {
+    function isFranchiseOwner(franchiseId) {
+      return isHqOwner() ||
+             request.auth.token.defaultFranchise == franchiseId ||
+             (request.auth.token.franchiseIds is list &&
+              request.auth.token.franchiseIds.hasAny([franchiseId]));
+    }
+
+    function isPosStation(franchiseId) {
       return isSignedIn() &&
-             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             franchiseId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.franchiseIds;
+             request.auth.token.stationFranchise == franchiseId;
     }
 
-    function isFranchiseOwnerOrStaff(franchiseId) {
-      return hasAnyRole(['platform_owner', 'developer', 'hq_owner']) ||
-             isFranchiseStaff(franchiseId) ||
-             hasAnyRole(['owner', 'manager', 'staff']);
+    // === PUBLIC CUSTOMER READS ===
+    match /{path=**}/menu_items/{doc} {
+      allow read: if true;
+    }
+    match /{path=**}/categories/{doc} {
+      allow read: if true;
+    }
+    match /{path=**}/ingredient_metadata/{doc} {
+      allow read: if true;
+    }
+    match /{path=**}/ingredient_types/{doc} {
+      allow read: if true;
+    }
+    match /{path=**}/banners/{doc} {
+      allow read: if true;
+    }
+    match /platform_features/{doc} {
+      allow read: if true;
     }
 
-    // === PUBLIC READS (menu, categories, banners, ingredients) - required for white-label customer app ===
-    match /{path=**}/menu_items/{doc} { allow read: if true; }
-    match /{path=**}/categories/{doc} { allow read: if true; }
-    match /{path=**}/banners/{doc} { allow read: if true; }
-    match /{path=**}/ingredient_metadata/{doc} { allow read: if true; }
-    match /{path=**}/ingredient_types/{doc} { allow read: if true; }
-
-    // === USERS + PER-FRANCHISE PROFILES (Favorites + Loyalty live here) ===
+    // === USERS ===
     match /users/{userId} {
-      allow read, write: if isOwnerOfUser(userId) || hasAnyRole(['platform_owner', 'developer', 'hq_owner', 'manager']);
+      allow read, write: if request.auth.uid == userId || isHqOwner();
 
-      // Favorites / Loyalty / Scheduled per franchise (current architecture)
-      match /franchise_profiles/{franchiseId} {
-        allow read, write: if isOwnerOfUser(userId) || hasAnyRole(['platform_owner', 'developer', 'hq_owner', 'manager']);
+    match /franchise_profiles/{franchiseId} {
+      allow read, write: if request.auth.uid == userId || isHqOwner();
+    }
+
+    // Customer delivery addresses: users/{uid}/addresses/{addressId}
+    match /addresses/{addressId} {
+      allow read, write: if request.auth.uid == userId || isHqOwner();
+    }
+
+    // Optional — only if these paths are used client-side
+    match /favorite_orders/{orderId} {
+      allow read, write: if request.auth.uid == userId || isHqOwner();
       }
     }
 
-    // === FRANCHISE-SCOPED CUSTOMER DATA (Master Plan requirement) ===
-    // Carts
-    match /franchises/{franchiseId}/carts/{userId} {
-      allow read, write: if isOwnerOfUser(userId) || isFranchiseOwnerOrStaff(franchiseId);
+    // === FRANCHISE DATA ===
+    match /franchises/{franchiseId} {
+    	allow read: if resource.data.get('listedInDirectory', false) == true
+                || isHqOwner()
+                || isFranchiseOwner(franchiseId);
+      allow write: if isHqOwner();
+
+    // Existing one-level subcollections (menu_items, categories, etc.)
+    match /{collection}/{doc} {
+      allow read, write: if isHqOwner() || isFranchiseOwner(franchiseId);
     }
 
-    // Per-franchise customer profiles (loyalty, favorites, addresses when stored here)
-    match /franchises/{franchiseId}/users/{userId} {
-      allow read, write: if isOwnerOfUser(userId) || isFranchiseOwnerOrStaff(franchiseId);
+    // Nested user profiles under the franchise (the path that is failing)
+    match /users/{userId} {
+      allow read, write: if isHqOwner() || isFranchiseOwner(franchiseId)
+                        || request.auth.uid == userId;
+
+      match /franchise_profiles/{profileId} {
+        allow read, write: if isHqOwner() || isFranchiseOwner(franchiseId)
+                          || request.auth.uid == userId;
+      }
     }
 
-    // Orders
-    match /franchises/{franchiseId}/orders/{orderId} {
-      allow create, read, update: if isOwnerOfUser(request.resource.data.userId) ||
-                                     request.auth.uid == resource.data.userId ||
-                                     isFranchiseOwnerOrStaff(franchiseId);
-      allow delete: if isFranchiseOwnerOrStaff(franchiseId);
+      // Onboarding progress: franchises/{id}/onboarding_progress/progress
+      match /onboarding_progress/{docId} {
+        allow read, write: if isHqOwner() || isFranchiseOwner(franchiseId);
+      }
+
+      // === POS station (Decision 14) ===
+      // Nested config docs (one-level {collection}/{doc} does not cover these).
+      match /config/{configDocId} {
+        allow read, write: if isHqOwner() || isFranchiseOwner(franchiseId);
+      }
+
+      // Explicit POS collections (same gate as generic one-level match;
+      // listed for clarity + future station-claim tightening).
+      // POS staff: managers keep full access; station may get a single doc
+      // when signed in and posEnabled (PIN verify client-side).
+      // Do not allow list for random signed-in customers.
+      match /staff/{staffId} {
+        allow get: if isHqOwner() || isFranchiseOwner(franchiseId) ||
+          (isSignedIn() && resource.data.get('posEnabled', false) == true);
+        allow list, create, update, delete: if isHqOwner() || isFranchiseOwner(franchiseId);
+      }
+      match /drivers/{driverId} {
+        allow read, write: if isHqOwner() || isFranchiseOwner(franchiseId);
+      }
+      match /waitresses/{waitressId} {
+        allow read, write: if isHqOwner() || isFranchiseOwner(franchiseId);
+      }
+      match /print_jobs/{jobId} {
+        allow read, write: if isHqOwner() || isFranchiseOwner(franchiseId);
+      }
+      match /orders/{orderId} {
+        allow read: if isHqOwner() || isFranchiseOwner(franchiseId) || isPosStation(franchiseId);
+        allow write: if isHqOwner() || isFranchiseOwner(franchiseId) || isPosStation(franchiseId);
+      }
     }
 
-    // Scheduled Orders (critical customer flow)
-    match /franchises/{franchiseId}/scheduledOrders/{orderId} {
-      allow create, read, update, delete: if isOwnerOfUser(request.resource.data.userId) ||
-                                             request.auth.uid == resource.data.userId ||
-                                             isFranchiseOwnerOrStaff(franchiseId);
-    }
-
-    // Feedback - collectionGroup intentionally allowed for hasOrderFeedback() cross-tenant check in lightweight service
-    match /{path=**}/feedback/{feedbackId} {
-      allow read: if isSignedIn();
-      allow create, update: if isSignedIn();
-      allow delete: if isFranchiseOwnerOrStaff(resource.data.franchiseId);
-    }
-
-    // Promotions (franchise-scoped + legacy top-level support)
-    match /franchises/{franchiseId}/promotions/{promoId} {
-      allow read: if true;
-      allow write: if isFranchiseOwnerOrStaff(franchiseId);
-    }
-    match /promotions/{promoId} {
-      allow read: if true;
-      allow write: if hasAnyRole(['platform_owner', 'developer', 'hq_owner']);
-    }
-
-    // Support / Chat
-    match /franchises/{franchiseId}/support_chats/{chatId} {
-      allow read, write: if isOwnerOfUser(resource.data.userId) || isFranchiseOwnerOrStaff(franchiseId);
-      allow create: if isSignedIn();
-    }
-    match /support_chats/{chatId} {
-      allow read, write: if hasAnyRole(['platform_owner', 'developer', 'hq_owner', 'manager']);
-    }
-
-    // Franchise config (features, business hours, etc.)
-    match /franchises/{franchiseId}/config/{docId} {
-      allow read: if true;                    // needed for white-label bootstrap
-      allow write: if isFranchiseOwnerOrStaff(franchiseId);
-    }
-
-    // === PLATFORM / ADMIN PATHS ===
-    match /onboarding_progress/{franchiseId} {
-      allow read, write: if hasAnyRole(['platform_owner', 'developer', 'hq_owner']);
-    }
-    match /franchise_subscriptions/{subId} {
-      allow read: if hasAnyRole(['platform_owner', 'developer', 'hq_owner', 'manager']);
-    }
+    // === AUDIT & ERROR LOGS ===
     match /audit_logs/{logId} {
-      allow read, write: if hasAnyRole(['platform_owner', 'developer']);
+      allow create: if isSignedIn();
+      allow read, write: if isHqOwner();
     }
     match /error_logs/{docId} {
       allow create: if isSignedIn();
-      allow read, write: if hasAnyRole(['platform_owner', 'developer']);
+      allow read, write: if isHqOwner();
+    }
+    match /public_error_logs/{docId} {
+      allow create: if isSignedIn();
+      allow read, write: if isHqOwner();
+    }
+    
+
+    // === PLATFORM LEVEL ===
+    match /platform_plans/{planId} {
+      allow read: if isHqOwner();
+    }
+    match /platform_invoices/{invId} {
+      allow read, write: if isHqOwner();
+    }
+    match /payouts/{payoutId} {
+      allow read, write: if isHqOwner();
+    }
+    match /franchise_subscriptions/{subId} {
+      allow read, write: if isHqOwner();
     }
 
-    // Top-level users (staff profiles) - already covered above
+    // === FRANCHISEE INVITATIONS (top-level collection) ===
+    // Client list/stream/update/cancel from Platform Owner / HQ / Developer.
+    // Creates are performed by Cloud Function (Admin SDK) and bypass rules.
+    match /franchisee_invitations/{invitationId} {
+      allow read: if isHqOwner();
+      allow update, delete: if isHqOwner();
+      // No client create — inviteAndSetRole writes via Admin SDK.
+    }
 
-    // Final deny
+    // === ALERTS ===
+    match /alerts/{doc} {
+      allow read, write: if isHqOwner() ||
+        (request.resource.data.franchiseId == null ||
+         isFranchiseOwner(request.resource.data.franchiseId));
+    }
+
+    // Deny everything else (including top-level onboarding_progress/{id})
     match /{document=**} {
       allow read, write: if false;
     }

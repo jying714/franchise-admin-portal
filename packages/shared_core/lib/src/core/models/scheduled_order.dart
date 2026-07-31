@@ -25,6 +25,7 @@ class ScheduledOrder extends base_order.Order {
     int estimatedTime = 30,
     Map<String, dynamic> timestamps = const {},
     Address? address,
+    String source = 'mobile',
     this.frequency = 'weekly',
     DateTime? nextDate,
     this.endDate,
@@ -47,6 +48,7 @@ class ScheduledOrder extends base_order.Order {
           estimatedTime: estimatedTime,
           timestamps: timestamps,
           address: address,
+          source: source,
         );
 
   factory ScheduledOrder.fromFirestore(Map<String, dynamic> data, String id) {
@@ -77,6 +79,9 @@ class ScheduledOrder extends base_order.Order {
       timestamp: data['timestamp'] is firestore.Timestamp
           ? (data['timestamp'] as firestore.Timestamp).toDate()
           : DateTime.now(),
+      source: (data['source'] as String?)?.trim().isNotEmpty == true
+          ? (data['source'] as String).trim()
+          : 'mobile',
     );
   }
 
@@ -114,6 +119,7 @@ class ScheduledOrder extends base_order.Order {
     String? refundStatus,
     Address? deliveryAddress,
     String? specialInstructions,
+    String? source,
     String? frequency,
     DateTime? nextDate,
     DateTime? endDate,
@@ -136,6 +142,7 @@ class ScheduledOrder extends base_order.Order {
       estimatedTime: estimatedTime ?? this.estimatedTime,
       timestamps: timestamps ?? this.timestamps,
       address: address ?? this.address,
+      source: source ?? this.source,
       frequency: frequency ?? this.frequency,
       nextDate: nextDate ?? this.nextDate,
       endDate: endDate ?? this.endDate,

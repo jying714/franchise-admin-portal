@@ -6,6 +6,7 @@ export 'src/core/services/audit_log_service.dart';
 export 'src/core/services/auth_service.dart';
 export 'src/core/services/firebase_storage_service.dart';
 export 'src/core/services/firestore_service.dart';
+export 'src/core/services/pos_firestore_service.dart';
 export 'src/core/services/franchise_feature_service.dart';
 export 'src/core/services/franchise_onboarding_service.dart';
 export 'src/core/services/franchise_subscription_service.dart';
