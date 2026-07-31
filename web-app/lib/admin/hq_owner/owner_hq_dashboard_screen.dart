@@ -13,6 +13,7 @@ import 'package:franchise_admin_portal/widgets/header/settings_icon_button.dart'
 import 'package:franchise_admin_portal/widgets/header/help_icon_button.dart';
 import 'package:franchise_admin_portal/widgets/header/notifications_icon_button.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/screens/design_branding_screen.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/screens/table_layout_editor_screen.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/hq_onboarding_shell_screen.dart';
 import 'package:franchise_admin_portal/core/providers/onboarding_progress_provider_impl.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -202,6 +203,17 @@ class QuickLinksPanel extends StatelessWidget {
               spacing: 12,
               runSpacing: 12,
               children: [
+                _QuickLinkTile(
+                  icon: Icons.table_restaurant_outlined,
+                  label: 'Floor plan',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const TableLayoutEditorScreen(),
+                      ),
+                    );
+                  },
+                ),
                 _QuickLinkTile(
                   icon: Icons.checklist_outlined,
                   label: 'Onboarding',

@@ -4,17 +4,12 @@ import '../orders/open_orders_screen.dart';
 import '../../providers/pin_session_provider.dart';
 import 'widgets/order_type_tile.dart';
 import '../ordering/order_entry_screen.dart';
+import '../dine_in/dine_in_floor_map_screen.dart';
 
 class StationHomeScreen extends StatelessWidget {
   final String franchiseId;
 
   const StationHomeScreen({super.key, required this.franchiseId});
-
-  void _toast(BuildContext context, String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,52 +41,61 @@ class StationHomeScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(
-            'New order',
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(color: scheme.onSurfaceVariant),
-          ),
-          const SizedBox(height: 12),
-          OrderTypeTile(
-            title: 'Dine-in',
-            subtitle: 'Seat table → open ticket → pay at close',
-            icon: Icons.table_restaurant,
-            onTap: () => _toast(context, 'Dine-in — Phase 6 (tables)'),
-          ),
-          const SizedBox(height: 8),
-          OrderTypeTile(
-            title: 'Carry-out',
-            subtitle: 'Full menu + modifiers → pay',
-            icon: Icons.takeout_dining,
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => OrderEntryScreen(
-                    franchiseId: franchiseId,
-                    orderType: 'carryout',
+          if (session.staff?.role.trim().toLowerCase() != 'driver') ...[
+            Text(
+              'New order',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 12),
+            OrderTypeTile(
+              title: 'Dine-in',
+              subtitle: 'Floor map → seat table → pay at close',
+              icon: Icons.table_restaurant,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) =>
+                        DineInFloorMapScreen(franchiseId: franchiseId),
                   ),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 8),
-          OrderTypeTile(
-            title: 'Delivery',
-            subtitle: 'Customer + address → order → driver at complete',
-            icon: Icons.delivery_dining,
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => OrderEntryScreen(
-                    franchiseId: franchiseId,
-                    orderType: 'delivery',
+                );
+              },
+            ),
+            const SizedBox(height: 8),
+            OrderTypeTile(
+              title: 'Carry-out',
+              subtitle: 'Full menu + modifiers → pay',
+              icon: Icons.takeout_dining,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => OrderEntryScreen(
+                      franchiseId: franchiseId,
+                      orderType: 'carryout',
+                    ),
                   ),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 24),
+                );
+              },
+            ),
+            const SizedBox(height: 8),
+            OrderTypeTile(
+              title: 'Delivery',
+              subtitle: 'Customer + address → order → driver at complete',
+              icon: Icons.delivery_dining,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => OrderEntryScreen(
+                      franchiseId: franchiseId,
+                      orderType: 'delivery',
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 24),
+          ],
           Text(
             'Board',
             style: Theme.of(

@@ -13,6 +13,9 @@ class OrderStatus {
   static const String sentToKitchen = 'sent_to_kitchen';
   static const String ready = 'ready';
   static const String outForDelivery = 'out_for_delivery';
+
+  /// Delivery handed off; COD cash not yet put in till.
+  static const String pendingTill = 'pending_till';
   static const String completed = 'completed';
   static const String cancelled = 'cancelled';
 
@@ -29,6 +32,7 @@ class OrderStatus {
     sentToKitchen,
     ready,
     outForDelivery,
+    pendingTill,
     placed,
     preparing,
   ];

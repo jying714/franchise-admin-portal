@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart' hide Order;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart';
-
+import '../dine_in/table_status.dart';
 import '../../core/constants/pos_permissions.dart';
 import '../../providers/pin_session_provider.dart';
 import '../payments/payment_screen.dart';
@@ -31,13 +31,20 @@ class _DeliveryCustomer {
 class OrderEntryScreen extends StatefulWidget {
   final String franchiseId;
   final String orderType; // carryout | dine_in | delivery
+  final String? tableId;
+  final String? tableLabel;
+
+  /// When set, Send **appends** lines to this order instead of creating one.
+  final String? existingOrderId;
 
   const OrderEntryScreen({
     super.key,
     required this.franchiseId,
     this.orderType = 'carryout',
+    this.tableId,
+    this.tableLabel,
+    this.existingOrderId,
   });
-
   @override
   State<OrderEntryScreen> createState() => _OrderEntryScreenState();
 }
@@ -151,6 +158,14 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
     return null;
   }
 
+  Future<void> _markTableSeated(String tableId) async {
+    await setTableStatus(
+      franchiseId: widget.franchiseId,
+      tableId: tableId,
+      status: 'seated',
+    );
+  }
+
   Future<String?> _createOrderDoc({required String status}) async {
     final session = Provider.of<PinSessionProvider>(context, listen: false);
     final staff = session.staff;
@@ -237,6 +252,47 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
         .collection('franchises')
         .doc(widget.franchiseId)
         .collection('orders');
+
+    // Append to open dine-in ticket
+    final existingId = widget.existingOrderId;
+    if (existingId != null && existingId.isNotEmpty) {
+      final ref = col.doc(existingId);
+      final snap = await ref.get();
+      if (!snap.exists || snap.data() == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Open order not found')));
+        }
+        return null;
+      }
+      final existing = Order.fromFirestore(snap.data()!, snap.id);
+      final mergedItems = [...existing.items, ...items];
+      final subtotal = mergedItems.fold<double>(
+        0,
+        (s, i) => s + i.price * i.quantity,
+      );
+      await ref.set({
+        'items': mergedItems
+            .map(
+              (i) => <String, dynamic>{
+                'menuItemId': i.menuItemId,
+                'name': i.name,
+                'price': i.price,
+                'quantity': i.quantity,
+                'customizations': i.customizations,
+              },
+            )
+            .toList(),
+        'subtotal': subtotal,
+        'total':
+            subtotal + existing.tax + existing.deliveryFee - existing.discount,
+        'timestamps.updated': DateTime.now().toIso8601String(),
+      }, SetOptions(merge: true));
+      // Do not change table status on append
+      return existingId;
+    }
+
     final ref = col.doc();
     final data = order.copyWith(id: ref.id).toFirestore();
     data['staffId'] = staff.id;
@@ -244,7 +300,21 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
     if (_isDelivery && customer != null) {
       data['customerPhone'] = customer.phone;
     }
+    if (widget.tableId != null && widget.tableId!.isNotEmpty) {
+      data['tableId'] = widget.tableId;
+      data['tableLabel'] = widget.tableLabel ?? widget.tableId;
+    }
     await ref.set(data);
+    final tableId = widget.tableId;
+    if (tableId != null &&
+        tableId.isNotEmpty &&
+        widget.orderType == 'dine_in') {
+      try {
+        await _markTableSeated(tableId);
+      } catch (_) {
+        // Order is already written; map color can be fixed on refresh.
+      }
+    }
     return ref.id;
   }
 
@@ -467,9 +537,23 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-                    child: Text(
-                      'Ticket',
-                      style: Theme.of(context).textTheme.titleMedium,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.existingOrderId != null
+                              ? 'Add to order'
+                              : 'Ticket',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        if (widget.tableLabel != null &&
+                            widget.tableLabel!.isNotEmpty)
+                          Text(
+                            'Table ${widget.tableLabel}',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: scheme.onSurfaceVariant),
+                          ),
+                      ],
                     ),
                   ),
                   if (_isDelivery) ...[
@@ -564,7 +648,11 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
                                       strokeWidth: 2,
                                     ),
                                   )
-                                : const Text('Send to kitchen'),
+                                : Text(
+                                    widget.existingOrderId != null
+                                        ? 'Add to order'
+                                        : 'Send to kitchen',
+                                  ),
                           ),
                       ],
                     ),

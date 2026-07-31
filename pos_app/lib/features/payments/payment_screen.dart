@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart';
-
+import '../dine_in/table_status.dart';
 import '../../core/constants/pos_permissions.dart';
 import '../../providers/pin_session_provider.dart';
 import '../ordering/widgets/discount_sheet.dart';
@@ -272,6 +272,29 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
       // ignore: avoid_print
       print('[POS] cash drawer kick (mock)');
+
+      if (widget.closeOutOrder) {
+        try {
+          final snap = await ref.get();
+          final data = snap.data();
+          final tableId = data?['tableId'] as String?;
+          final deliveryType =
+              (data?['deliveryType'] as String?)?.trim().toLowerCase() ?? '';
+          if (tableId != null &&
+              tableId.isNotEmpty &&
+              (deliveryType == 'dine_in' ||
+                  deliveryType == 'dine-in' ||
+                  deliveryType == 'dinein')) {
+            await setTableStatus(
+              franchiseId: widget.franchiseId,
+              tableId: tableId,
+              status: 'free',
+            );
+          }
+        } catch (_) {
+          // Payment already committed; map can be corrected on refresh.
+        }
+      }
 
       if (!mounted) return;
       Navigator.of(context).pop(true);

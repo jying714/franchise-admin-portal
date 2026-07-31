@@ -7,6 +7,7 @@ import '../../core/constants/pos_permissions.dart';
 import '../../providers/pin_session_provider.dart';
 import '../payments/payment_screen.dart';
 import '../session/force_repin_dialog.dart';
+import '../dine_in/table_status.dart';
 
 enum _OrderTypeFilter { all, dineIn, carryOut, delivery }
 
@@ -78,6 +79,23 @@ class _OpenOrdersScreenState extends State<OpenOrdersScreen> {
     }
   }
 
+  String _statusLabel(String status) {
+    switch (status.trim().toLowerCase()) {
+      case OrderStatus.outForDelivery:
+        return 'Out for delivery';
+      case OrderStatus.pendingTill:
+        return 'Pending till';
+      case OrderStatus.sentToKitchen:
+        return 'Sent to kitchen';
+      case OrderStatus.open:
+        return 'Open';
+      case OrderStatus.ready:
+        return 'Ready';
+      default:
+        return status;
+    }
+  }
+
   bool _matchesFilter(Order order) {
     if (_filter == _OrderTypeFilter.all) return true;
     final t = _normalizeType(order);
@@ -91,6 +109,23 @@ class _OpenOrdersScreenState extends State<OpenOrdersScreen> {
       case _OrderTypeFilter.all:
         return true;
     }
+  }
+
+  String _rowSubtitle(Order order, String typeLabel) {
+    final parts = <String>[
+      typeLabel,
+      _statusLabel(order.status),
+      '\$${order.total.toStringAsFixed(2)}',
+    ];
+    if (_normalizeType(order) == 'delivery') {
+      final addr = order.deliveryAddress;
+      if (addr != null && addr.street.trim().isNotEmpty) {
+        parts.add(addr.street.trim());
+      }
+    }
+    // tableLabel is merge-only today; show via timestamps/name fallback later.
+    // Prefer deliveryAddress-style once Order maps tableLabel.
+    return parts.join(' · ');
   }
 
   Future<void> _showOrderActions(BuildContext context, Order order) async {
@@ -195,6 +230,24 @@ class _OpenOrdersScreenState extends State<OpenOrdersScreen> {
                     );
                     if (ok == true) {
                       await _updateStatus(order.id, OrderStatus.cancelled);
+                      if (_normalizeType(order) == 'dine_in') {
+                        try {
+                          final snap = await FirebaseFirestore.instance
+                              .collection('franchises')
+                              .doc(widget.franchiseId)
+                              .collection('orders')
+                              .doc(order.id)
+                              .get();
+                          final tableId = snap.data()?['tableId'] as String?;
+                          if (tableId != null && tableId.isNotEmpty) {
+                            await setTableStatus(
+                              franchiseId: widget.franchiseId,
+                              tableId: tableId,
+                              status: 'free',
+                            );
+                          }
+                        } catch (_) {}
+                      }
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Order voided')),
@@ -223,6 +276,108 @@ class _OpenOrdersScreenState extends State<OpenOrdersScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Driver assigned')),
                         );
+                      }
+                    },
+                  ),
+                if (isDelivery)
+                  _ActionRow(
+                    icon: Icons.home_outlined,
+                    label: 'Mark delivered',
+                    enabled:
+                        (session.staff?.role.trim().toLowerCase() ==
+                            'driver') ||
+                        session.hasPermission(PosPermissions.takeOrder) ||
+                        session.hasPermission(PosPermissions.managerOverride),
+                    onTap: () async {
+                      Navigator.pop(dialogContext);
+                      final ok = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Mark delivered?'),
+                          content: Text(
+                            'Close delivery ${order.id}'
+                            '${order.userNameDisplay.isNotEmpty ? ' for ${order.userNameDisplay}' : ''}?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, false),
+                              child: const Text('Cancel'),
+                            ),
+                            FilledButton(
+                              onPressed: () => Navigator.pop(ctx, true),
+                              child: const Text('Delivered'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (ok == true) {
+                        final paid = _isPaid(order);
+                        if (paid) {
+                          await _updateStatus(order.id, OrderStatus.delivered);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Marked delivered')),
+                            );
+                          }
+                        } else {
+                          // COD: food delivered, cash still owed to till
+                          await _updateStatus(
+                            order.id,
+                            OrderStatus.pendingTill,
+                          );
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Delivered — close till when cash is in drawer',
+                                ),
+                              ),
+                            );
+                          }
+                        }
+                      }
+                    },
+                  ),
+                if (isDelivery &&
+                    order.status.trim().toLowerCase() ==
+                        OrderStatus.pendingTill)
+                  _ActionRow(
+                    icon: Icons.point_of_sale,
+                    label: 'Close till (cash)',
+                    enabled:
+                        session.hasPermission(PosPermissions.takePayment) &&
+                        session.hasPermission(PosPermissions.openDrawer),
+                    onTap: () async {
+                      Navigator.pop(dialogContext);
+                      final ok = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Close till?'),
+                          content: Text(
+                            'Record \$${order.total.toStringAsFixed(2)} cash '
+                            'into the till for ${order.id}?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, false),
+                              child: const Text('Cancel'),
+                            ),
+                            FilledButton(
+                              onPressed: () => Navigator.pop(ctx, true),
+                              child: const Text('Cash in till'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (ok == true) {
+                        await _closeTillCash(order);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Till closed — delivery complete'),
+                            ),
+                          );
+                        }
                       }
                     },
                   ),
@@ -266,6 +421,13 @@ class _OpenOrdersScreenState extends State<OpenOrdersScreen> {
     );
   }
 
+  bool _isPaid(Order order) {
+    final paidAt = order.timestamps['paid'];
+    if (paidAt != null && paidAt.toString().isNotEmpty) return true;
+    // Fall back: prepaid write paths set timestamps.paid
+    return false;
+  }
+
   Future<void> _updateStatus(String orderId, String status) async {
     await FirebaseFirestore.instance
         .collection('franchises')
@@ -276,6 +438,42 @@ class _OpenOrdersScreenState extends State<OpenOrdersScreen> {
           'status': status,
           'timestamps.$status': DateTime.now().toIso8601String(),
         }, SetOptions(merge: true));
+  }
+
+  Future<void> _closeTillCash(Order order) async {
+    final session = Provider.of<PinSessionProvider>(context, listen: false);
+    if (!session.hasPermission(PosPermissions.takePayment) ||
+        !session.hasPermission(PosPermissions.openDrawer)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Till close needs take_payment + open_drawer'),
+        ),
+      );
+      return;
+    }
+
+    final now = DateTime.now();
+    await FirebaseFirestore.instance
+        .collection('franchises')
+        .doc(widget.franchiseId)
+        .collection('orders')
+        .doc(order.id)
+        .set({
+          'status': OrderStatus.delivered,
+          'paymentMethod': 'cash',
+          'amountTendered': order.total,
+          'changeDue': 0,
+          'amountDueAtPay': order.total,
+          'paidAt': now.toIso8601String(),
+          'tillClosedAt': now.toIso8601String(),
+          'timestamps.paid': now.toIso8601String(),
+          'timestamps.delivered': now.toIso8601String(),
+          'timestamps.till_closed': now.toIso8601String(),
+        }, SetOptions(merge: true));
+
+    // ignore: avoid_print
+    print('[POS] cash drawer kick (mock) — delivery till close ${order.id}');
   }
 
   String _sourceLabel(Order order) {
@@ -399,8 +597,9 @@ class _OpenOrdersScreenState extends State<OpenOrdersScreen> {
                           style: TextStyle(color: scheme.onSurface),
                         ),
                         subtitle: Text(
-                          '$typeLabel · ${order.status} · '
-                          '\$${order.total.toStringAsFixed(2)}',
+                          _rowSubtitle(order, typeLabel),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(color: scheme.onSurfaceVariant),
                         ),
                         trailing: Chip(
