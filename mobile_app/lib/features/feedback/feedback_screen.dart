@@ -233,7 +233,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                           value: _anonymous,
                           onChanged: (val) =>
                               setState(() => _anonymous = val ?? false),
-                          activeColor: shared.UiConfig.primaryColor,
+                          activeColor: Theme.of(context).colorScheme.primary,
                         ),
                         Text(
                           loc.feedbackSubmitAnonymous,
@@ -248,7 +248,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                         child: Text(
                           _error!,
                           style: TextStyle(
-                            color: shared.UiConfig.errorColor,
+                            color: Theme.of(context).colorScheme.error,
                             fontWeight: shared.UiConfig.fontWeightBold,
                           ),
                         ),
@@ -257,8 +257,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                     ElevatedButton(
                       onPressed: _loading ? null : _submitFeedback,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: shared.UiConfig.primaryColor,
-                        foregroundColor: shared.UiConfig.foregroundColorDark,
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        foregroundColor:
+                            Theme.of(context).colorScheme.onPrimary,
                         padding: shared.UiConfig.defaultPadding,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(

@@ -49,7 +49,7 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
   Widget build(BuildContext context) {
     if (_hasError) {
       return Scaffold(
-        backgroundColor: shared.UiConfig.backgroundColorDark,
+        backgroundColor: Theme.of(context).colorScheme.background,
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -57,14 +57,14 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.error_outline,
-                    size: 64, color: shared.UiConfig.errorColor),
+                    size: 64, color: Theme.of(context).colorScheme.error),
                 const SizedBox(height: 16),
                 Text(
                   'Something went wrong',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: shared.UiConfig.fontWeightBold,
-                    color: shared.UiConfig.textColorDark,
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontFamily: shared.DesignTokens.fontFamily,
                   ),
                 ),
@@ -74,7 +74,7 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: shared.DesignTokens.bodyFontSize,
-                    color: shared.UiConfig.secondaryTextColor,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontFamily: shared.DesignTokens.fontFamily,
                   ),
                 ),

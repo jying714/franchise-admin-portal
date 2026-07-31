@@ -49,7 +49,7 @@ class DressingSelectorGroup extends StatelessWidget {
           Text(
             "$groupLabel ($freeDressings free, +${extraDressingUpcharge.toStringAsFixed(2)} each extra)",
             style: theme.textTheme.titleMedium?.copyWith(
-              color: shared.UiConfig.secondaryColor,
+              color: Theme.of(context).colorScheme.secondary,
               fontWeight: shared.UiConfig.bold,
               fontFamily: shared.DesignTokens.fontFamily,
             ),
@@ -74,7 +74,7 @@ class DressingSelectorGroup extends StatelessWidget {
                     child: Text(
                       meta?.name ?? ingId,
                       style: theme.textTheme.bodyLarge?.copyWith(
-                        color: shared.UiConfig.textColor,
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontFamily: shared.DesignTokens.fontFamily,
                       ),
                     ),
@@ -88,8 +88,8 @@ class DressingSelectorGroup extends StatelessWidget {
                       style: theme.textTheme.bodyLarge?.copyWith(
                         fontWeight: shared.UiConfig.bold,
                         color: count > 0
-                            ? shared.UiConfig.primaryColor
-                            : shared.UiConfig.secondaryTextColor,
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                         fontFamily: shared.DesignTokens.fontFamily,
                       ),
                     ),

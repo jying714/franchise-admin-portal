@@ -62,7 +62,7 @@ class _EditAddressDialogState extends State<EditAddressDialog> {
             Text(
               loc.editAddress,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: shared.UiConfig.primaryColor,
+                    color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.bold,
                   ),
             ),

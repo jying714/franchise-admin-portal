@@ -108,7 +108,7 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.account_circle,
-                      color: shared.UiConfig.primaryColor, size: 40),
+                      color: Theme.of(context).colorScheme.primary, size: 40),
                   const SizedBox(height: 12),
                   Text(
                     l10n.completeProfileTitle,
@@ -175,7 +175,8 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
                           onPressed: _loading ? null : _submit,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: shared.UiConfig.primaryColor,
-                            foregroundColor: shared.UiConfig.foregroundColor,
+                            foregroundColor:
+                                Theme.of(context).colorScheme.onPrimary,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(
                                   shared.DesignTokens.buttonRadius),

@@ -61,7 +61,7 @@ class SizeDropdown extends StatelessWidget {
               Text(
                 loc.sizeLabel,
                 style: theme.textTheme.titleMedium?.copyWith(
-                  color: shared.UiConfig.secondaryColor,
+                  color: Theme.of(context).colorScheme.secondary,
                   fontWeight: shared.UiConfig.fontWeightBold,
                   fontFamily: shared.DesignTokens.fontFamily,
                 ),
@@ -99,7 +99,7 @@ class SizeDropdown extends StatelessWidget {
                       child: Text(
                         shared.UiConfig.currencyFormat(price),
                         style: theme.textTheme.titleMedium?.copyWith(
-                          color: shared.UiConfig.primaryColor,
+                          color: Theme.of(context).colorScheme.primary,
                           fontWeight: shared.UiConfig.fontWeightBold,
                           fontFamily: shared.DesignTokens.fontFamily,
                         ),

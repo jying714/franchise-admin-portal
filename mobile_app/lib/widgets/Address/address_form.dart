@@ -79,14 +79,14 @@ class _AddressFormState extends State<AddressForm> {
                     BorderRadius.circular(shared.DesignTokens.formFieldRadius),
               ),
               hintStyle: TextStyle(
-                color: shared.UiConfig.hintTextColor,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             validator:
                 widget.fieldValidators?['label'] ?? defaultLabelValidator,
             onSaved: (value) => _label = value,
             style: TextStyle(
-              color: shared.UiConfig.textColor,
+              color: Theme.of(context).colorScheme.onSurface,
               fontFamily: shared.DesignTokens.fontFamily,
               fontWeight: shared.UiConfig.fontWeightNormal,
             ),
@@ -101,7 +101,7 @@ class _AddressFormState extends State<AddressForm> {
                     BorderRadius.circular(shared.DesignTokens.formFieldRadius),
               ),
               hintStyle: TextStyle(
-                color: shared.UiConfig.hintTextColor,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             validator:
@@ -123,7 +123,7 @@ class _AddressFormState extends State<AddressForm> {
                     BorderRadius.circular(shared.DesignTokens.formFieldRadius),
               ),
               hintStyle: TextStyle(
-                color: shared.UiConfig.hintTextColor,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             validator: widget.fieldValidators?['city'] ?? defaultCityValidator,
@@ -144,7 +144,7 @@ class _AddressFormState extends State<AddressForm> {
                     BorderRadius.circular(shared.DesignTokens.formFieldRadius),
               ),
               hintStyle: TextStyle(
-                color: shared.UiConfig.hintTextColor,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             validator:
@@ -166,7 +166,7 @@ class _AddressFormState extends State<AddressForm> {
                     BorderRadius.circular(shared.DesignTokens.formFieldRadius),
               ),
               hintStyle: TextStyle(
-                color: shared.UiConfig.hintTextColor,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             validator: widget.fieldValidators?['zip'] ?? defaultZipValidator,
@@ -180,8 +180,8 @@ class _AddressFormState extends State<AddressForm> {
           const SizedBox(height: shared.DesignTokens.gridSpacing * 2),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: shared.UiConfig.primaryColor,
-              foregroundColor: shared.UiConfig.foregroundColor,
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Theme.of(context).colorScheme.onPrimary,
               padding: shared.UiConfig.defaultPadding,
               shape: RoundedRectangleBorder(
                 borderRadius:

@@ -19,14 +19,14 @@ class TrackingScreen extends StatelessWidget {
         centerTitle: true,
         elevation: 0,
       ),
-      backgroundColor: shared.UiConfig.backgroundColor,
+      backgroundColor: Theme.of(context).colorScheme.background,
       body: Center(
         child: Text(
           '${localizations.orderNumber}: $orderId\n\nTracking info coming soon!',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: shared.DesignTokens.bodyFontSize,
-            color: shared.UiConfig.textColor,
+            color: Theme.of(context).colorScheme.onSurface,
             fontFamily: shared.DesignTokens.fontFamily,
             fontWeight: shared.UiConfig.normal,
           ),

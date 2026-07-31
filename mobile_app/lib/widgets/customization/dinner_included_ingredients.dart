@@ -52,7 +52,7 @@ class DinnerIncludedIngredients extends StatelessWidget {
           Text(
             loc.currentIngredientsLabel,
             style: theme.textTheme.titleMedium?.copyWith(
-              color: shared.UiConfig.primaryColor,
+              color: Theme.of(context).colorScheme.primary,
               fontWeight: shared.UiConfig.bold,
               fontFamily: shared.DesignTokens.fontFamily,
             ),
@@ -115,8 +115,10 @@ class DinnerIncludedIngredients extends StatelessWidget {
                               name,
                               style: theme.textTheme.bodyLarge?.copyWith(
                                 color: outOfStock
-                                    ? shared.UiConfig.secondaryTextColor
-                                    : shared.UiConfig.textColor,
+                                    ? Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant
+                                    : Theme.of(context).colorScheme.onSurface,
                                 fontWeight: outOfStock
                                     ? FontWeight.normal
                                     : FontWeight.w500,
@@ -157,7 +159,7 @@ class DinnerIncludedIngredients extends StatelessWidget {
                         child: Text(
                           loc.outOfStockLabel ?? "Out of Stock",
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: shared.UiConfig.errorTextColor,
+                            color: Theme.of(context).colorScheme.error,
                             fontStyle: FontStyle.italic,
                             fontWeight: FontWeight.bold,
                           ),
@@ -172,7 +174,7 @@ class DinnerIncludedIngredients extends StatelessWidget {
                         child: Text(
                           loc.ingredientRemovedLabel ?? "Removed",
                           style: TextStyle(
-                            color: shared.UiConfig.primaryColor,
+                            color: Theme.of(context).colorScheme.primary,
                             fontStyle: FontStyle.italic,
                             fontWeight: FontWeight.w600,
                           ),
@@ -185,7 +187,7 @@ class DinnerIncludedIngredients extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 6.0),
                     child: Divider(
                       thickness: 1.0,
-                      color: shared.UiConfig.dividerColor,
+                      color: Theme.of(context).colorScheme.outlineVariant,
                       height: 1,
                     ),
                   ),

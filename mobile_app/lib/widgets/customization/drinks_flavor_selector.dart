@@ -47,7 +47,7 @@ class DrinksFlavorSelector extends StatelessWidget {
               Text(
                 "Size",
                 style: theme.textTheme.titleMedium?.copyWith(
-                  color: shared.UiConfig.secondaryColor,
+                  color: Theme.of(context).colorScheme.secondary,
                   fontWeight: shared.UiConfig.bold,
                   fontFamily: shared.DesignTokens.fontFamily,
                 ),
@@ -61,7 +61,7 @@ class DrinksFlavorSelector extends StatelessWidget {
               Text(
                 shared.UiConfig.currencyFormat(price),
                 style: theme.textTheme.titleMedium?.copyWith(
-                  color: shared.UiConfig.primaryColor,
+                  color: Theme.of(context).colorScheme.primary,
                   fontWeight: shared.UiConfig.bold,
                   fontFamily: shared.DesignTokens.fontFamily,
                 ),
@@ -72,7 +72,7 @@ class DrinksFlavorSelector extends StatelessWidget {
           Text(
             "Choose Flavors",
             style: theme.textTheme.titleMedium?.copyWith(
-              color: shared.UiConfig.secondaryColor,
+              color: Theme.of(context).colorScheme.secondary,
               fontWeight: shared.UiConfig.bold,
               fontFamily: shared.DesignTokens.fontFamily,
             ),
@@ -99,7 +99,7 @@ class DrinksFlavorSelector extends StatelessWidget {
                     child: Text(
                       meta?.name ?? id,
                       style: theme.textTheme.bodyLarge?.copyWith(
-                        color: shared.UiConfig.textColor,
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontFamily: shared.DesignTokens.fontFamily,
                       ),
                     ),
