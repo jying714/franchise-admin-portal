@@ -175,7 +175,7 @@ class _AlertsCardState extends State<AlertsCard> {
                             child: Text(
                               '+${alerts.length - 3} more',
                               style: theme.textTheme.labelLarge?.copyWith(
-                                color: DesignTokens.secondaryTextColor,
+                                color: colorScheme.onSurfaceVariant,
                               ),
                             ),
                           ),
@@ -270,7 +270,7 @@ class _AlertEmpty extends StatelessWidget {
             Text(
               message,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: DesignTokens.secondaryTextColor,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
             ),
           ],

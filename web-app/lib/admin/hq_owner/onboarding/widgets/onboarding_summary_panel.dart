@@ -40,7 +40,7 @@ class OnboardingSummaryPanel extends StatelessWidget {
             Text(
               '$completed/4 steps complete',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: DesignTokens.secondaryTextColor,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
           ],

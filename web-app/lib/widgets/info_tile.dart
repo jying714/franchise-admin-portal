@@ -27,16 +27,16 @@ class InfoTile extends StatelessWidget {
         label,
         style: TextStyle(
           fontSize: DesignTokens.bodyFontSize,
-          color: DesignTokens.textColor,
+          color: Theme.of(context).colorScheme.onSurface,
           fontWeight: FontWeight.w500,
           fontFamily: DesignTokens.fontFamily,
         ),
       ),
       subtitle: Text(
-        (value == null || value!.trim().isEmpty) ? 'â€”' : value!,
+        (value == null || value!.trim().isEmpty) ? '—' : value!,
         style: TextStyle(
           fontSize: DesignTokens.captionFontSize,
-          color: DesignTokens.secondaryTextColor,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
           fontFamily: DesignTokens.fontFamily,
           fontWeight: FontWeight.w500,
         ),

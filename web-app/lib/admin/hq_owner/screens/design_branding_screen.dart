@@ -235,7 +235,7 @@ class _DesignBrandingScreenState extends State<DesignBrandingScreen> {
                     ? 'Franchise: ${DesignTokens.currentAppName} ($franchiseId)'
                     : 'Franchise: not selected',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: DesignTokens.secondaryTextColor,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
               ),
               SizedBox(height: DesignTokens.adminCardSpacing),
@@ -323,7 +323,9 @@ class _DesignBrandingScreenState extends State<DesignBrandingScreen> {
                         'Draft fields (Save writes franchise + config/ui_config)',
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: DesignTokens.secondaryTextColor,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
                             ),
                       ),
                       const SizedBox(height: 12),
@@ -432,12 +434,12 @@ class _DesignBrandingScreenState extends State<DesignBrandingScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.image_not_supported_outlined,
-              size: 22, color: DesignTokens.secondaryTextColor),
+              size: 22, color: Theme.of(context).colorScheme.onSurfaceVariant),
           const SizedBox(height: 4),
           Text(
             'No logo',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: DesignTokens.secondaryTextColor,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
           ),
         ],
@@ -467,13 +469,13 @@ class _DesignBrandingScreenState extends State<DesignBrandingScreen> {
         Text(
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: DesignTokens.secondaryTextColor,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
         ),
         Text(
           hex,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: DesignTokens.secondaryTextColor,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontFamily: 'monospace',
               ),
         ),
