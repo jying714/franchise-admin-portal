@@ -13,11 +13,13 @@ class FAQSection extends StatelessWidget {
             "Q: How do I reset my password?\nA: Go to settings > reset password."),
         Text("Q: How do I contact support?\nA: Use the contact section above."),
         const SizedBox(height: 8),
-        Text("More FAQs coming soon...",
-            style: Theme.of(context).textTheme.bodySmall),
+        Text(
+          "More FAQs coming soon...",
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+        ),
       ],
     );
   }
 }
-
-

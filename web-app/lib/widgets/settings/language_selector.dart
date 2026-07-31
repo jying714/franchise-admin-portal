@@ -4,12 +4,17 @@ class LanguageSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Replace with actual languages when available
-    final languages = const [
-      DropdownMenuItem(value: 'en', child: Text('English')),
+    final scheme = Theme.of(context).colorScheme;
+    final languages = [
+      const DropdownMenuItem(value: 'en', child: Text('English')),
       DropdownMenuItem(
-          value: 'es',
-          child: Text('EspaÃ±ol (coming soon)',
-              style: TextStyle(color: Colors.grey))),
+        value: 'es',
+        enabled: false,
+        child: Text(
+          'Español (coming soon)',
+          style: TextStyle(color: scheme.onSurfaceVariant),
+        ),
+      ),
     ];
 
     return Column(
@@ -17,24 +22,30 @@ class LanguageSelector extends StatelessWidget {
       children: [
         Text("Language", style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 10),
-        DropdownButtonFormField(
+        DropdownButtonFormField<String>(
           value: 'en',
           items: languages,
           onChanged: (val) {
-            // TODO: Handle language change and persist selection
+            if (val == null || val == 'en') return;
             ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Language change coming soon!')));
+              SnackBar(
+                content: const Text('Additional languages coming soon.'),
+                backgroundColor: scheme.inverseSurface,
+              ),
+            );
           },
           decoration: const InputDecoration(
             border: OutlineInputBorder(),
           ),
         ),
         const SizedBox(height: 4),
-        Text("More languages coming soon...",
-            style: Theme.of(context).textTheme.bodySmall),
+        Text(
+          "Only English is available in this build.",
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+        ),
       ],
     );
   }
 }
-
-

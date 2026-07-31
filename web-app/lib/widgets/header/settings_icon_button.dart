@@ -7,8 +7,6 @@ class SettingsIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return IconButton(
       tooltip: 'Settings',
       icon: Icon(

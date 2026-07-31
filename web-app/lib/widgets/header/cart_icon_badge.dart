@@ -38,7 +38,7 @@ class CartIconBadge extends StatelessWidget {
               Icon(
                 Icons.shopping_cart,
                 size: iconSize ?? DesignTokens.iconSizeMd,
-                color: iconColor ?? DesignTokens.foregroundColor,
+                color: iconColor ?? Theme.of(context).colorScheme.onPrimary,
                 semanticLabel: tooltip,
               ),
               if (cartItems > 0)
@@ -59,7 +59,7 @@ class CartIconBadge extends StatelessWidget {
                     child: Text(
                       '$cartItems',
                       style: TextStyle(
-                        color: DesignTokens.foregroundColor,
+                        color: Theme.of(context).colorScheme.onError,
                         fontSize: DesignTokens.captionFontSize,
                         fontWeight:
                             FontWeight.w500, // Fixed: Use proper FontWeight

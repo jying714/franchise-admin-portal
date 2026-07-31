@@ -13,7 +13,6 @@ class _NotificationsIconButtonState extends State<NotificationsIconButton> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final colorScheme = Theme.of(context).colorScheme;
 
     final int notificationCount = 0; // TODO: Replace with real data source
@@ -29,7 +28,7 @@ class _NotificationsIconButtonState extends State<NotificationsIconButton> {
               tooltip: "Notifications",
               icon: Icon(
                 Icons.notifications_none_outlined,
-                color: isDark ? Colors.white : Colors.black,
+                color: colorScheme.onSurface,
               ),
               onPressed: () async {
                 setState(() => _panelOpen = !_panelOpen);
@@ -41,10 +40,17 @@ class _NotificationsIconButtonState extends State<NotificationsIconButton> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const SizedBox(
+                      child: SizedBox(
                         width: 340,
                         height: 400,
-                        child: Center(child: Text("No notifications.")),
+                        child: Center(
+                          child: Text(
+                            "No notifications.",
+                            style: TextStyle(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
                         // TODO: Replace with NotificationsPanel(notifications: [])
                       ),
                     ),
@@ -72,5 +78,3 @@ class _NotificationsIconButtonState extends State<NotificationsIconButton> {
     );
   }
 }
-
-
