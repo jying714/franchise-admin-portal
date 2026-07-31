@@ -90,7 +90,7 @@ class OptionalAddOnsGroup extends StatelessWidget {
                       child: Text(
                         meta?.name ?? addOn['name'] ?? ingId,
                         style: theme.textTheme.bodyLarge?.copyWith(
-                          color: DesignTokens.textColor,
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontFamily: DesignTokens.fontFamily,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -106,7 +106,7 @@ class OptionalAddOnsGroup extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                           color: count > 0
                               ? DesignTokens.primaryColor
-                              : DesignTokens.secondaryTextColor,
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
                           fontFamily: DesignTokens.fontFamily,
                         ),
                       ),
@@ -137,7 +137,7 @@ class OptionalAddOnsGroup extends StatelessWidget {
                     child: Text(
                       meta?.name ?? addOn['name'] ?? ingId,
                       style: theme.textTheme.bodyLarge?.copyWith(
-                        color: DesignTokens.textColor,
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontFamily: DesignTokens.fontFamily,
                       ),
                       overflow: TextOverflow.ellipsis,
@@ -179,7 +179,7 @@ class OptionalAddOnsGroup extends StatelessWidget {
               child: Text(
                 "$maxFreeSauces free sauces, +\$${extraSauceUpcharge.toStringAsFixed(2)} each extra.",
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: DesignTokens.secondaryTextColor,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontStyle: FontStyle.italic,
                   fontFamily: DesignTokens.fontFamily,
                 ),

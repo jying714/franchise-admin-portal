@@ -72,7 +72,7 @@ class DressingSelectorGroup extends StatelessWidget {
                     child: Text(
                       meta?.name ?? ingId,
                       style: theme.textTheme.bodyLarge?.copyWith(
-                        color: DesignTokens.textColor,
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontFamily: DesignTokens.fontFamily,
                       ),
                     ),
@@ -87,7 +87,7 @@ class DressingSelectorGroup extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                         color: count > 0
                             ? DesignTokens.primaryColor
-                            : DesignTokens.secondaryTextColor,
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                         fontFamily: DesignTokens.fontFamily,
                       ),
                     ),

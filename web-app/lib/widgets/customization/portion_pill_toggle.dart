@@ -19,20 +19,23 @@ class PortionPillToggle extends StatelessWidget {
         duration: Duration(milliseconds: 160),
         padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color:
-              isDouble ? DesignTokens.primaryColor : DesignTokens.surfaceColor,
+          color: isDouble
+              ? DesignTokens.primaryColor
+              : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: isDouble
                 ? DesignTokens.primaryColor
-                : DesignTokens.secondaryTextColor.withOpacity(0.25),
+                : Theme.of(context).colorScheme.outlineVariant,
             width: 1.5,
           ),
         ),
         child: Text(
           isDouble ? "Double" : "Regular",
           style: TextStyle(
-            color: isDouble ? Colors.white : DesignTokens.textColor,
+            color: isDouble
+                ? Theme.of(context).colorScheme.onPrimary
+                : Theme.of(context).colorScheme.onSurface,
             fontWeight: FontWeight.bold,
             fontSize: 14,
             fontFamily: DesignTokens.fontFamily,
@@ -42,5 +45,3 @@ class PortionPillToggle extends StatelessWidget {
     );
   }
 }
-
-

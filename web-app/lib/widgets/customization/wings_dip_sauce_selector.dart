@@ -58,7 +58,7 @@ class WingsDipSauceSelector extends StatelessWidget {
           Text(
             "$freeDipCups free included. Additional cups +\$${upcharge.toStringAsFixed(2)} each.",
             style: theme.textTheme.bodySmall?.copyWith(
-              color: DesignTokens.secondaryTextColor,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontStyle: FontStyle.italic,
               fontFamily: DesignTokens.fontFamily,
             ),
@@ -70,7 +70,7 @@ class WingsDipSauceSelector extends StatelessWidget {
               child: Text(
                 "No dipping sauces configured for this item.",
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: DesignTokens.secondaryTextColor,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontFamily: DesignTokens.fontFamily,
                 ),
               ),
@@ -96,7 +96,7 @@ class WingsDipSauceSelector extends StatelessWidget {
                       child: Text(
                         meta?.name ?? dipId,
                         style: theme.textTheme.bodyLarge?.copyWith(
-                          color: DesignTokens.textColor,
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontFamily: DesignTokens.fontFamily,
                         ),
                       ),
