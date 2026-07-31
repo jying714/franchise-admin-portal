@@ -167,7 +167,7 @@ class MultiBrandOverviewPanel extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               'Single-franchise view for this HQ. Multi-brand rollup is planned.',
-              style: TextStyle(color: DesignTokens.secondaryTextColor),
+              style: TextStyle(color: colorScheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -284,7 +284,8 @@ class FutureFeaturePlaceholderPanel extends StatelessWidget {
             Icon(Icons.star, color: DesignTokens.primaryColor),
             SizedBox(width: 8),
             Text(loc.comingSoonFeatures ?? "Future Features - Coming Soon",
-                style: TextStyle(color: DesignTokens.secondaryTextColor)),
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant)),
           ],
         ),
       ),
@@ -448,7 +449,7 @@ class _PlatformBillingCardState extends State<PlatformBillingCard> {
                         'No platform invoices for this franchise.',
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: DesignTokens.secondaryTextColor,
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     );
@@ -510,7 +511,7 @@ class _PlatformBillingCardState extends State<PlatformBillingCard> {
                                 Text(
                                   _fmtDate(inv.dueDate),
                                   style: theme.textTheme.bodySmall?.copyWith(
-                                    color: DesignTokens.secondaryTextColor,
+                                    color: theme.colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                               ],
@@ -717,7 +718,7 @@ class _CustomerCardPaymentsStatusCardState
             Text(
               detail,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: DesignTokens.secondaryTextColor,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
             if (accountId != null && accountId.isNotEmpty) ...[
@@ -727,7 +728,7 @@ class _CustomerCardPaymentsStatusCardState
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: DesignTokens.secondaryTextColor,
+                  color: theme.colorScheme.onSurfaceVariant,
                   fontFamily: 'monospace',
                 ),
               ),
@@ -894,7 +895,7 @@ class OnboardingProgressCard extends StatelessWidget {
                 5.0;
 
         final pendingStyle = theme.textTheme.bodySmall?.copyWith(
-              color: DesignTokens.secondaryTextColor,
+              color: theme.colorScheme.onSurfaceVariant,
             ) ??
             const TextStyle();
         final doneStyle = theme.textTheme.bodySmall?.copyWith(
@@ -931,7 +932,7 @@ class OnboardingProgressCard extends StatelessWidget {
                 Text(
                   '${(overall * 100).round()}% · 5 steps',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: DesignTokens.secondaryTextColor,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 6),

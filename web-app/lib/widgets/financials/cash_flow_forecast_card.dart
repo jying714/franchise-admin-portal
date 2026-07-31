@@ -3,7 +3,6 @@ import 'package:provider/provider.dart' as provider;
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_section_card.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 
@@ -102,7 +101,7 @@ class _CashFlowForecastCardState extends State<CashFlowForecastCard> {
               );
             }
 
-            final brandColor = BrandingConfig.brandRed;
+            final brandColor = DesignTokens.primaryColor;
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -220,7 +219,8 @@ class _ErrorCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(
           children: [
-            const Icon(Icons.error_outline, color: Colors.redAccent),
+            Icon(Icons.error_outline,
+                color: Theme.of(context).colorScheme.error),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
