@@ -94,6 +94,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         toMin(t) <= toMin(_businessClose);
   }
 
+  bool get _storeOpenNow =>
+      _isTimeInBusinessHours(TimeOfDay.fromDateTime(DateTime.now()));
+
   Future<bool> _processPayment({String? orderId}) async {
     final franchiseProvider =
         Provider.of<shared.FranchiseProvider>(context, listen: false);
@@ -286,6 +289,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Future<void> _submitOrder(AppLocalizations localizations) async {
+    // MVP: no scheduled/after-hours queue. Refuse when store is closed.
+    if (!_storeOpenNow) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Store is closed. Open '
+            '${_businessOpen.format(context)}–${_businessClose.format(context)}.',
+          ),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+      return;
+    }
+
     if (_selectedTime == null) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -392,6 +410,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
 
     final now = DateTime.now();
+    // MVP: no scheduled hold. In store hours → straight to kitchen.
+    // Scheduled / after-hours queue = post-MVP.
+    final inStoreHours = _isTimeInBusinessHours(TimeOfDay.fromDateTime(now));
+    final kitchenStatus = shared.OrderStatus.sentToKitchen;
+    final status = inStoreHours ? kitchenStatus : 'placed';
+
     final order = cart.copyWith(
       id: orderId,
       storeId: franchiseId,
@@ -406,10 +430,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ? localizations.delivery
           : localizations.pickup,
       time: _selectedTime!.format(context),
-      status: 'Placed',
+      status: status,
       timestamp: now,
       estimatedTime: 30,
-      timestamps: {...cart.timestamps, 'placed': now.toIso8601String()},
+      source: 'mobile',
+      timestamps: {
+        ...cart.timestamps,
+        'placed': now.toIso8601String(),
+        if (inStoreHours) kitchenStatus: now.toIso8601String(),
+        if (isCardRail) 'paid': now.toIso8601String(),
+      },
     );
 
     try {
@@ -761,7 +791,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 ),
                                 elevation: shared.DesignTokens.buttonElevation,
                               ),
-                              onPressed: _isPaying
+                              onPressed: (_isPaying || !_storeOpenNow)
                                   ? null
                                   : () => _submitOrder(localizations),
                               child: _isPaying
@@ -778,6 +808,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   : Text(localizations.placeOrder),
                             ),
                           ),
+                          if (!_storeOpenNow)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Text(
+                                'Store closed · opens ${_businessOpen.format(context)}',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.error,
+                                  fontSize: shared.DesignTokens.captionFontSize,
+                                ),
+                              ),
+                            ),
                         ],
                       ),
                     ),

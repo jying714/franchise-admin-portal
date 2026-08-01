@@ -8,6 +8,7 @@ import '../../providers/pin_session_provider.dart';
 import '../payments/payment_screen.dart';
 import '../session/force_repin_dialog.dart';
 import '../dine_in/table_status.dart';
+import '../../services/print_service.dart';
 
 enum _OrderTypeFilter { all, dineIn, carryOut, delivery }
 
@@ -23,6 +24,9 @@ class OpenOrdersScreen extends StatefulWidget {
 class _OpenOrdersScreenState extends State<OpenOrdersScreen> {
   late _OrderTypeFilter _filter;
   late final bool _driverLocked;
+
+  /// Pilot: one mock kitchen ticket per order id per station session.
+  final Set<String> _kitchenTicketPrintedIds = <String>{};
 
   @override
   void initState() {
@@ -128,6 +132,43 @@ class _OpenOrdersScreenState extends State<OpenOrdersScreen> {
     return parts.join(' · ');
   }
 
+  bool _isOnlineSource(Order order) {
+    final s = order.source.trim().toLowerCase();
+    return s == 'mobile' || s == 'web';
+  }
+
+  Future<void> _maybeAutoKitchenTicket(List<Order> orders) async {
+    for (final order in orders) {
+      if (_kitchenTicketPrintedIds.contains(order.id)) continue;
+      if (!_isOnlineSource(order)) continue;
+      if (order.status.trim().toLowerCase() != OrderStatus.sentToKitchen) {
+        continue;
+      }
+
+      _kitchenTicketPrintedIds.add(order.id);
+      try {
+        final snap = await FirebaseFirestore.instance
+            .collection('franchises')
+            .doc(widget.franchiseId)
+            .collection('orders')
+            .doc(order.id)
+            .get();
+        final tableLabel = snap.data()?['tableLabel'] as String?;
+        await const PrintService().printKitchenTicket(
+          order: order,
+          tableLabel: tableLabel,
+          isAppend: false,
+        );
+        // ignore: avoid_print
+        print('[POS] auto kitchen ticket (online) ${order.id}');
+      } catch (e) {
+        // Allow retry on next snapshot if print failed before commit to set.
+        _kitchenTicketPrintedIds.remove(order.id);
+        debugPrint('[POS] auto kitchen ticket failed ${order.id}: $e');
+      }
+    }
+  }
+
   Future<void> _showOrderActions(BuildContext context, Order order) async {
     final session = Provider.of<PinSessionProvider>(context, listen: false);
     final scheme = Theme.of(context).colorScheme;
@@ -175,6 +216,24 @@ class _OpenOrdersScreenState extends State<OpenOrdersScreen> {
                     if (paid == true && context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('Order ${order.id} paid')),
+                      );
+                    }
+                  },
+                ),
+                _ActionRow(
+                  icon: Icons.soup_kitchen_outlined,
+                  label: 'Send to kitchen',
+                  enabled: session.hasPermission(PosPermissions.takeOrder),
+                  onTap: () async {
+                    Navigator.pop(dialogContext);
+                    await _sendToKitchen(order);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Order ${order.id} sent to kitchen · ticket (mock)',
+                          ),
+                        ),
                       );
                     }
                   },
@@ -467,6 +526,39 @@ class _OpenOrdersScreenState extends State<OpenOrdersScreen> {
     return false;
   }
 
+  Future<void> _sendToKitchen(Order order) async {
+    final session = Provider.of<PinSessionProvider>(context, listen: false);
+    if (!session.hasPermission(PosPermissions.takeOrder)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No take_order permission')));
+      return;
+    }
+
+    await _updateStatus(order.id, OrderStatus.sentToKitchen);
+
+    try {
+      // tableLabel is POS merge-only; read raw if present
+      final snap = await FirebaseFirestore.instance
+          .collection('franchises')
+          .doc(widget.franchiseId)
+          .collection('orders')
+          .doc(order.id)
+          .get();
+      final tableLabel = snap.data()?['tableLabel'] as String?;
+
+      await const PrintService().printKitchenTicket(
+        order: order,
+        tableLabel: tableLabel,
+        isAppend: false,
+      );
+    } catch (e) {
+      // Status already updated — print must not roll it back.
+      debugPrint('[POS] kitchen ticket on board send skipped: $e');
+    }
+  }
+
   Future<void> _updateStatus(String orderId, String status) async {
     await FirebaseFirestore.instance
         .collection('franchises')
@@ -680,6 +772,12 @@ class _OpenOrdersScreenState extends State<OpenOrdersScreen> {
                 final orders = snapshot.data!
                     .where(_matchesFilter)
                     .toList(growable: false);
+
+                // Online intake: mobile/web already sent_to_kitchen → ticket once.
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (!mounted) return;
+                  _maybeAutoKitchenTicket(snapshot.data ?? const <Order>[]);
+                });
 
                 if (orders.isEmpty) {
                   return Center(
