@@ -1,12 +1,12 @@
 # Thin POS (`pos_app`) — Development Plan (Phases 0–14 → polished MVP)
 
-**Status**: Active  
+**Status**: Active — pilot baseline complete; residual config/settings/offline/QA  
 **Branch**: `feat/pos-app-v1`  
 **Authority**: Decision **14** · `docs/slices/pos-app-v1.md` · STATUS · HANDOFF · this file  
-**Last Updated**: July 30, 2026 (~23:55 CDT)  
+**Last Updated**: August 1, 2026 (~09:40 CDT)  
 
-**Progress:** Phases **0–4 PASS** (Android smoke). Phase **5 partial** (cash Take payment on open orders).  
-**Next:** Phase 5 remainder (card / drawer / splits / discount / forced re-PIN) **or** Phase 6/7 by product priority.
+**Progress:** Phases **0–7 ops + 5 money pilot + 10 mock print + 11 online MVP** smoke PASS.  
+**Open:** Phase 8 staff UI, 9 large/86, 12 settings, 13 offline, 14 QA; Terminal/real print; HQ tax & hours config.
 
 Hard release gate (product-wide) still includes **customer website** after POS polished MVP.
 
@@ -22,153 +22,98 @@ Hard release gate (product-wide) still includes **customer website** after POS p
 6. **No second menu tree.** Reuse `MenuItem` / modifier profile from shared_core + mobile patterns.
 7. **No kitchen-only binary.** Everything lives in `pos_app` + shared open-order list for online orders.
 8. **Carry-out pays at pickup.** Send → kitchen open order; **Take payment** from board when customer arrives — do not force pay at send.
+9. **Online in-hours → kitchen.** Mobile (and later web) within store hours writes `sent_to_kitchen`; scheduled is post-MVP.
 
 ---
 
 ## Phase 0 — Repo + docs lock — **PASS**
 
-| Step | Work | Exit |
-|------|------|------|
-| 0.1 | `feat/pos-app-v1` branch; STATUS/HANDOFF/ROADMAP/slice updated | Docs say POS is active |
-| 0.2 | `flutter create pos_app` + user tree script | Empty tree + Flutter shell on disk |
-| 0.3 | `pubspec.yaml` → `shared_core` path dep; `flutter pub get` | Resolves without errors |
-
----
-
 ## Phase 1 — Shared domain foundation — **PASS**
 
-| Step | Work | Status |
-|------|------|--------|
-| 1.1 | Order `source` (`pos` \| `mobile` \| `web`) | **Done** |
-| 1.2 | `OrderStatus` constants + board helpers | **Done** |
-| 1.3 | Staff: `pinHash`, `hourlyPay`, `posEnabled`, `franchiseId` | **Done** |
-| 1.4 | Driver / Waitress models | **Done** |
-| 1.5 | PosSettings model | **Done** |
-| 1.6 | PosTableLayout / PosTableNode | **Done** |
-| 1.7 | PrintJob model | **Done** |
-| 1.8 | Firestore rules POS paths + `isPosStation` | **Done** (keep repo ↔ Console in sync) |
-| 1.9 | `PosFirestoreService` (thin; not mega FirestoreService bloat) | **Done** |
+## Phase 2 — PIN session shell — **PASS**
 
----
+## Phase 3 — Home + open-order board — **PASS**
 
-## Phase 2 — PIN session shell — **PASS (smoke)**
+Includes **Closed orders** board (terminal statuses, type filters, date range, refund entry).
 
-| Step | Work | Status |
-|------|------|--------|
-| 2.1 | Bootstrap Firebase + `firebase_options` | **Done** |
-| 2.2 | Franchise bind via `STATION_FRANCHISE_ID` dart-define (no silent default) | **Done** |
-| 2.3 | `PinSessionProvider` (unlock, idle timer, lock/repin) | **Done** |
-| 2.4 | `PosPermissions` + `PermissionGate` + `PinHash` | **Done** |
-| 2.5 | `PinUnlockScreen` | **Done** |
-| 2.6 | Unlock → home via `PosApp` Consumer | **Done** |
-| — | Station Auth email/password + custom claims + `getIdToken(true)` | **Done** |
+## Phase 4 — Carry-out order entry — **PASS**
 
----
-
-## Phase 3 — Home + open-order board — **PASS (smoke)**
-
-| Step | Work | Status |
-|------|------|--------|
-| 3.1 | Dine-in / Carry-out / Delivery tiles | **Done** (dine-in/delivery still stubs) |
-| 3.2 | Open-orders stream `franchises/{id}/orders` | **Done** |
-| 3.3 | Source badge + status; **centered action dialog** | **Done** |
-| 3.4 | Needs-approval queue | Open |
-
-Actions in dialog: Take payment, Mark ready, Void, Refund (stub).
-
----
-
-## Phase 4 — Carry-out order entry — **PASS (smoke)**
-
-| Step | Work | Status |
-|------|------|--------|
-| 4.1 | Menu grid from `menu_items` | **Done** (flat grid; category rail optional later) |
-| 4.2 | Ticket panel qty / remove / subtotal | **Done** |
-| 4.3 | `PosModifierDialog` using Decision 10 groups | **Done** |
-| 4.4 | Allergen line in modifier dialog | **Partial** |
-| 4.5 | Send → `sent_to_kitchen` | **Done** |
-| 4.6 | Persist `source: pos`, staff id/name | **Done** |
-
----
-
-## Phase 5 — Payments — **PARTIAL**
+## Phase 5 — Payments — **PASS (pilot software)**
 
 | Step | Work | Status |
 |------|------|--------|
 | 5.1 | Payment screen amount due + tender | **Done** |
-| 5.2 | Cash tender + change; drawer kick **mock print only** | **Partial** |
-| 5.3 | Card-present / Terminal | Open |
-| 5.4 | Split tenders | Open |
-| 5.5 | Discount sheet | Open |
-| 5.6 | Complete → `completed` on cash success | **Done** |
-| 5.7 | Void from board (permission); forced re-PIN | **Partial** (void works; re-PIN UI incomplete) |
+| 5.2 | Cash tender + change; drawer **mock** | **Done** |
+| 5.3 | Card — Connect PI + PaymentSheet | **Done** (Terminal hardware open) |
+| 5.4 | Split tenders | **Done** |
+| 5.5 | Discount sheet + pre-tax stack | **Done** |
+| 5.6 | Complete → paid/completed writes | **Done** |
+| 5.7 | Void + refund + forced re-PIN | **Done** (refund cash full; card reverse open) |
 
-**Product rule:** Carry-out payment is invoked from **Open orders → Take payment**, not from Send.
+**Tax note:** Provisional rate `0.0925` until HQ franchise tax config (STATUS residual R1).
 
----
+## Phase 6 — Dine-in — **PASS (ops)**
 
-## Phase 6 — Dine-in — **OPEN**
+Floor map + seat + ticket + pay at close in use. Chrome polish residual OK.
 
-Web table layout editor + POS consume/seat/open ticket/pay at close.
+## Phase 7 — Delivery — **PASS (ops)**
 
----
-
-## Phase 7 — Delivery — **OPEN**
-
-Customer + address first; driver required at completion.
-
----
+Customer/address, COD, till close, driver assign paths in use.
 
 ## Phase 8 — Staff ops UI — **OPEN**
 
 Models exist; manager PIN set/reset + lists UI open.
 
----
-
 ## Phase 9 — Large order + 86 — **OPEN**
 
----
+## Phase 10 — Printing — **PASS (mock)**
 
-## Phase 10 — Printing — **OPEN**
+| Step | Status |
+|------|--------|
+| Kitchen ticket on POS send | **Done** (mock) |
+| Kitchen ticket on board send | **Done** (mock) |
+| Auto ticket online `sent_to_kitchen` | **Done** (mock, once per session id) |
+| Customer receipt on pay | **Done** (mock) |
+| Real ESC-POS / multi-printer routing | **Open** |
 
----
+## Phase 11 — Incoming online — **PASS (MVP)**
 
-## Phase 11 — Incoming online — **OPEN**
-
-Board already streams franchise orders; auto-print + management parity open.
-
----
+| Step | Status |
+|------|--------|
+| Board lists mobile/web sources | **Done** |
+| Mobile in-hours → `sent_to_kitchen` | **Done** |
+| Outside-hours block place order | **Done** (hardcoded 11–21) |
+| Auto kitchen ticket on station | **Done** |
+| Config-driven store hours | **Open** (R2) |
+| Customer website same rules | **Open** (R7) |
 
 ## Phase 12 — Settings UI — **OPEN**
 
-`PosSettings` model exists; panel UI open.
-
----
-
 ## Phase 13 — Offline — **OPEN**
 
----
-
 ## Phase 14 — Pilot QA — **OPEN**
+
+Use STATUS residual R1–R9 as acceptance gate.
 
 ---
 
 ## Parallel tracks
 
-| Track | Can overlap with | Blocked until |
-|-------|------------------|---------------|
-| Web table layout editor | Phase 5+ | Phase 1 layout model (**done**) |
-| Stripe Terminal sandbox | Now | Phase 5 payment screen (**done**) |
-| Printer lab | Now | Phase 10 for production rules |
-| Staff seed | Ongoing | Phase 1 staff schema (**done**) |
+| Track | Notes |
+|-------|--------|
+| HQ tax config | Unblocks R1 |
+| HQ store hours | Unblocks R2 |
+| Stripe Terminal lab | Optional if PaymentSheet accepted for pilot |
+| Printer lab | Mock until hardware |
+| Customer website | Hard release partner |
 
 ---
 
 ## Explicitly after POS polished MVP
 
-1. **Customer website** (hard release gate partner)
-2. Guest cart, live delivery tracking, full time-clock, complex inventory, iOS primary pilot
-3. Post-order survey scheduled push (deferred from Stripe slice)
+1. **Customer website** (hard release gate partner)  
+2. Scheduled orders, guest cart, live delivery tracking, full time-clock, complex inventory, iOS primary pilot  
+3. Post-order survey scheduled push  
 
 ---
 
@@ -177,20 +122,19 @@ Board already streams franchise orders; auto-print + management parity open.
 | Tag | Meaning | Status |
 |-----|---------|--------|
 | `pos-m1-shell` | Phase 2 done | **Reached** |
-| `pos-m2-carryout-pay` | Phases 3–5 done | **Near** (cash only) |
-| `pos-m3-dine-in` | Phase 6 done | Open |
-| `pos-m4-delivery-staff` | Phases 7–8 done | Open |
-| `pos-m5-ops-print` | Phases 9–11 done | Open |
-| `pos-m6-mvp` | Phases 12–14 done | Open |
+| `pos-m2-carryout-pay` | Phases 3–5 pilot | **Reached** |
+| `pos-m3-dine-in` | Phase 6 ops | **Reached** |
+| `pos-m4-delivery-staff` | Phases 7–8 | **Partial** (7 yes, 8 open) |
+| `pos-m5-ops-print` | Phases 9–11 | **Partial** (10–11 yes, 9 open) |
+| `pos-m6-mvp` | Phases 12–14 + residual | **Open** |
 
 ---
 
 ## Next single step
 
-Human prioritizes one of:
+1. **HQ tax rate config** (R1) — shared rate for mobile + POS  
+2. **HQ store hours config** (R2) — replace checkout hardcode  
+3. Station settings UI (R6)  
+4. Offline honesty (R5)  
 
-1. **Phase 5.3+** — card-present adapter, drawer permission, splits, discount, forced re-PIN on void/refund  
-2. **Phase 7** — delivery customer capture + driver assign on complete  
-3. **Phase 6** — web table layout editor + POS map consume  
-
-Do not regress carry-out pickup payment timing.
+Do not regress carry-out pickup payment timing or online in-hours kitchen path.

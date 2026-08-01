@@ -1,6 +1,6 @@
 # HANDOFF.md — Agent Context & Project Status
 
-**Last Updated**: July 30, 2026 (~23:55 CDT — POS Phases 0–4 + cash close-out smoke PASS)  
+**Last Updated**: August 1, 2026 (~09:40 CDT — POS pilot path smoke PASS; docs residual listed)  
 **Hardware**: MINISFORUM AI X1 Pro-470  
 **Active branch**: `feat/pos-app-v1`  
 **Repo**: https://github.com/jying714/franchise-admin-portal  
@@ -16,24 +16,30 @@ Prefer **STATUS.md + this handoff + `docs/slices/*` + `docs/plans/*` + `docs/DEC
 
 **On `main` and done:** HQ onboarding, Design & Branding, Platform Owner, Admin ops, menu M1–M5 + wings/calzone, mobile design tokens, developer dashboard, customer franchise context (11), Stripe checkout (12), mobile+web residual polish.
 
-**Active branch `feat/pos-app-v1`:**
+**Active branch `feat/pos-app-v1` — pilot baseline (2026-08-01):**
 
 | Item | State |
 |------|--------|
 | Decision 14 product lock | Done |
-| Development plan Phases 0–14 | Documented |
-| Phase 0 scaffold | **PASS** |
-| Phase 1 shared_core domain + rules + PosFirestoreService | **PASS** |
-| Phase 2 PIN / bind / Auth claims | **PASS** (Android smoke) |
-| Phase 3 home + open board + action dialog | **PASS** |
-| Phase 4 carry-out + modifiers + send | **PASS** |
-| Phase 5 cash take-payment (pickup) | **PASS** partial |
-| Phase 5 card / drawer / splits / discount / re-PIN | Open |
-| Phases 6–14 | Open |
+| Phases 0–4 (shell, board, carry-out) | **PASS** |
+| Phase 5 tax + discount pre-tax stack | **PASS** |
+| Phase 5 cash / split / live amount due | **PASS** |
+| Phase 5 card (PaymentSheet + Connect PI) | **PASS** (software; Terminal open) |
+| Closed orders + date/type filters | **PASS** |
+| Refund skeleton (cash full, re-PIN) | **PASS** |
+| Print mocks (kitchen + customer receipt) | **PASS** |
+| Dine-in / delivery ops surfaces | **PASS** (ops-level) |
+| Online intake: mobile in-hours → kitchen + auto ticket | **PASS** |
+| Outside-hours mobile block | **PASS** (hardcoded hours) |
+| HQ tax / store hours config | **Open** |
+| Terminal / real printers / offline / settings UI | **Open** |
+| Customer website | **Not started** |
 
-**Superseded:** `kitchen-ops-v1` pure kitchen binary — do not implement.
+**Superseded:** pure kitchen-only binary — do not implement.
 
 **Hard release gate:** Thin POS + customer website + polished mobile + web.
+
+**Rough sense:** thin POS pilot ~75–80%; full hard-release gate (incl. website) ~50%.
 
 ---
 
@@ -43,88 +49,77 @@ Prefer **STATUS.md + this handoff + `docs/slices/*` + `docs/plans/*` + `docs/DEC
 
 | Artifact | Path |
 |----------|------|
-| Order.source | `packages/shared_core/lib/src/core/models/order.dart` (+ ScheduledOrder forward) |
+| Order.source | `packages/shared_core/lib/src/core/models/order.dart` |
 | OrderStatus | `packages/shared_core/lib/src/core/constants/order_status.dart` |
-| Staff PIN/pay | `staff.dart` — `pinHash`, `hourlyPay`, `posEnabled`, `franchiseId` |
+| Staff PIN/pay | `staff.dart` |
 | Driver / Waitress | `driver.dart`, `waitress.dart` |
-| PosSettings | `pos_settings.dart` |
-| PosTableLayout | `pos_table_layout.dart` |
-| PrintJob | `print_job.dart` |
-| PosFirestoreService | `packages/shared_core/lib/src/core/services/pos_firestore_service.dart` |
+| PosSettings / layout / PrintJob | models under shared_core |
+| PosFirestoreService | `pos_firestore_service.dart` |
 
-### pos_app
+### pos_app (high-signal)
 
 | Surface | Path |
 |---------|------|
-| Bootstrap / Auth / bind | `lib/app/bootstrap.dart`, `main.dart` |
-| Shell | `lib/app/pos_app.dart`, `theme.dart` |
-| PIN session | `lib/providers/pin_session_provider.dart` |
-| Permissions | `lib/core/constants/pos_permissions.dart`, `permission_gate.dart` |
-| PIN hash | `lib/core/utils/pin_hash.dart` (`v1:salt:sha256`) |
-| Unlock | `lib/features/session/pin_unlock_screen.dart` |
-| Home | `lib/features/home/station_home_screen.dart`, `order_type_tile.dart` |
-| Open orders + dialog | `lib/features/orders/open_orders_screen.dart` |
-| Carry-out entry | `lib/features/ordering/order_entry_screen.dart` |
-| Modifiers | `lib/features/ordering/pos_modifier_dialog.dart` (Decision 10 field names) |
-| Cash payment | `lib/features/payments/payment_screen.dart` |
-| Firebase options | `lib/firebase_options.dart` (FlutterFire; do not commit secrets/) |
+| Bootstrap + Stripe PK | `lib/app/bootstrap.dart` |
+| PIN session / permissions | `lib/providers/pin_session_provider.dart`, `pos_permissions.dart` |
+| Home + Closed tile | `lib/features/home/station_home_screen.dart` |
+| Open board + auto ticket + Send to kitchen | `lib/features/orders/open_orders_screen.dart` |
+| Closed board + refund | `lib/features/orders/closed_orders_screen.dart` |
+| Order entry + tax helpers + kitchen mock | `lib/features/ordering/order_entry_screen.dart` |
+| Payment (cash/split/card) | `lib/features/payments/payment_screen.dart` |
+| Card collect (PI + PaymentSheet / mock fallback) | `lib/services/card_present_service.dart` |
+| Print mocks | `lib/services/print_service.dart` |
+| Android Stripe shell | `MainActivity` = `FlutterFragmentActivity`; themes AppCompat/MaterialComponents (values + values-night) |
 
-### Rules
+### mobile_app
 
-Live rules in repo `firestore.rules` must stay aligned with Console. Key POS pieces:
+| Surface | Path |
+|---------|------|
+| Checkout in-hours → `sent_to_kitchen` | `lib/features/ordering/checkout_screen.dart` |
+| Outside-hours block | same file (`_storeOpenNow`, 11–21 provisional) |
+| Stripe PaymentSheet (existing) | checkout + `STRIPE_PK` |
 
-- `isPosStation(franchiseId)` → `request.auth.token.stationFranchise == franchiseId`
-- `franchises/{id}/orders/{orderId}` read/write for HQ / franchise owner / pos station
-- `franchises/{id}/staff/{staffId}` get for posEnabled + signed-in (lab) / owners
-- `config/{docId}`, drivers, waitresses, print_jobs — franchise owner (and related)
-
-**Do not deploy an outdated divergent `firestore.rules` over live Console without diffing.**
-
-### Station run (smoke)
+### Station run
 
 ```powershell
 cd C:\projects\franchise-admin-portal\pos_app
-flutter run -d R3GYC00Q3YN `
-  --dart-define=STATION_FRANCHISE_ID=doughboyspizzeria `
-  --dart-define=STATION_AUTH_EMAIL=... `
-  --dart-define=STATION_AUTH_PASSWORD=...
+flutter run -d <deviceId> --dart-define=STRIPE_PK=pk_test_... --dart-define=STATION_FRANCHISE_ID=doughboyspizzeria --dart-define=STATION_AUTH_EMAIL=... --dart-define=STATION_AUTH_PASSWORD=...
 ```
 
-Staff test doc example: `franchises/doughboyspizzeria/staff/test1` with `posEnabled: true`, `pinHash` from `PinHash.hashPin`, permissions list.
+Use a **single line** for dart-defines in PowerShell (or space before each line-continuation backtick). Wrong continuation glues flags and drops `STATION_FRANCHISE_ID`.
 
-Claims one-off: Admin `setCustomUserClaims` with `stationFranchise`, `defaultFranchise`, `franchiseIds`. Force new token (`getIdToken(true)` / clear app data) after setting claims.
+Card test: `4242 4242 4242 4242`. Franchise needs `paymentsEnabled: true` + Connect for real PI.
 
 ---
 
-## 3. POS development order (remaining)
+## 3. Residual list (do not invent “MVP complete” without this)
 
-Full plan: **`docs/plans/pos-app-v1-development-plan.md`**.
+| ID | Residual | Status |
+|----|----------|--------|
+| R1 | Franchise **tax rate** config (replace provisional 0.0925) | Open |
+| R2 | Franchise **store hours** config (replace mobile hardcode) | Open |
+| R3 | Stripe **Terminal** / physical reader | Open (PaymentSheet interim OK for software pilot) |
+| R4 | Real **printers** | Open (mock OK with setting) |
+| R5 | **Offline** honesty | Open |
+| R6 | Station **settings** UI | Open |
+| R7 | **Customer website** | Not started |
+| R8 | Staff bootstrap documented | Partial |
+| R9 | Phase 14 pilot smoke script sign-off | Open |
 
-| Phase | Status |
-|-------|--------|
-| 0–4 | **Done (smoke)** |
-| 5 | Cash close-out done; card, drawer, splits, discount, forced re-PIN **open** |
-| 6 | Dine-in table map |
-| 7 | Delivery + driver |
-| 8 | Staff/driver/waitress **UI** (models exist) |
-| 9–14 | Large order, 86, print, online intake, settings UI, offline, pilot |
-
-**Carry-out payment timing (product):** pay at **pickup** via open-order **Take payment**, not at send.
-
-**Next single step (suggested):** Phase 5.3 card-present interface **or** Phase 7 delivery customer capture — human chooses.
+**Post-MVP:** scheduled orders; card refund reverse; partial refunds; guest cart; live delivery map; full time-clock.
 
 ---
 
 ## 4. Locks (do not regress)
 
-- Station = **`pos_app` only** — not a kitchen-only app  
-- shared_core owns models; POS owns tablet UX + hardware adapters  
-- No second menu modifier schema (use `effectiveModifierGroups`)  
-- No silent default tenant; franchise must be bound  
-- Manager-only void/refund/86/approve/settings + forced re-PIN (re-PIN UI still partial)  
+- Station = **`pos_app` only**  
+- Carry-out **pays at pickup**  
+- shared_core models; no second modifier tree  
+- No silent default tenant  
+- Manager void/refund + re-PIN  
 - Order `source` on every order  
-- Offline = cash only (not implemented yet)  
-- Windows POS Firebase build may fail on CMake 4.x — prefer Android for smoke  
+- Mobile in-hours → kitchen; outside hours block (until scheduled exists)  
+- Prefer Android for station smoke  
 
 ---
 
@@ -133,11 +128,20 @@ Full plan: **`docs/plans/pos-app-v1-development-plan.md`**.
 - `STATUS.md`  
 - `docs/DECISIONS.md` (Decision **14**)  
 - `docs/slices/pos-app-v1.md`  
-- **`docs/plans/pos-app-v1-development-plan.md`**  
-- `docs/slices/stripe-checkout-v1.md` (COMPLETE)  
-- `docs/slices/customer-franchise-context-v1.md` (COMPLETE)  
+- `docs/plans/pos-app-v1-development-plan.md`  
+- `docs/slices/stripe-checkout-v1.md`  
+- `docs/slices/customer-franchise-context-v1.md`  
 - `docs/slices/kitchen-ops-v1.md` (superseded)
 
 ---
 
-**Bottom line:** Carry-out station loop works end-to-end on Android with PIN, modifiers, kitchen send, board actions, and cash close-out. Continue Phase 5 remainder or Phase 6/7 per product priority. Do not invent a kitchen-only app.
+## 6. Next product steps (suggested order)
+
+1. HQ **tax** + **store hours** config (kill hardcodes)  
+2. Station settings stub  
+3. Offline honesty  
+4. Customer website slice  
+5. Terminal / real print when hardware lands  
+6. Phase 14 acceptance checklist  
+
+**Bottom line:** Counter pilot loop works: PIN → order types → kitchen send → cash/split/card pay → closed board/refund; mobile in-hours hits kitchen with auto ticket. Remaining work is **config, packaging, offline, website, hardware** — not more order-type chrome.
