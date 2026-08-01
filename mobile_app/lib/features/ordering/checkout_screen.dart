@@ -37,8 +37,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   static const String validPromoCode = "PIZZA10";
   static const double promoDiscount = 10.0;
 
-  final TimeOfDay _businessOpen = const TimeOfDay(hour: 11, minute: 0);
-  final TimeOfDay _businessClose = const TimeOfDay(hour: 21, minute: 0);
+  /// Fallback until store_ops loads (matches prior hardcode).
+  TimeOfDay _businessOpen = const TimeOfDay(hour: 11, minute: 0);
+  TimeOfDay _businessClose = const TimeOfDay(hour: 21, minute: 0);
+  bool _dayClosed = false;
+
+  /// Decimal rate e.g. 0.0925. Loaded from config/store_ops.
+  double _taxRate = 0.0925;
+  bool _storeOpsLoadStarted = false;
 
   double _orderSubtotal = 0.0;
   double _orderTax = 0.0;
@@ -89,9 +95,85 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   bool _isTimeInBusinessHours(TimeOfDay t) {
+    if (_dayClosed) return false;
     int toMin(TimeOfDay x) => x.hour * 60 + x.minute;
     return toMin(t) >= toMin(_businessOpen) &&
         toMin(t) <= toMin(_businessClose);
+  }
+
+  static String _weekdayKey(DateTime dt) {
+    switch (dt.weekday) {
+      case DateTime.monday:
+        return 'mon';
+      case DateTime.tuesday:
+        return 'tue';
+      case DateTime.wednesday:
+        return 'wed';
+      case DateTime.thursday:
+        return 'thu';
+      case DateTime.friday:
+        return 'fri';
+      case DateTime.saturday:
+        return 'sat';
+      default:
+        return 'sun';
+    }
+  }
+
+  Future<void> _loadStoreOps(String franchiseId) async {
+    if (franchiseId.isEmpty || franchiseId == 'unknown') return;
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('config')
+          .doc('store_ops')
+          .get();
+      final data = snap.data();
+      if (data == null || !mounted) return;
+
+      final rate = (data['taxRate'] as num?)?.toDouble();
+      final now = DateTime.now();
+      final key = _weekdayKey(now);
+
+      TimeOfDay open = _businessOpen;
+      TimeOfDay close = _businessClose;
+      bool closed = false;
+
+      final hoursRaw = data['hours'];
+      if (hoursRaw is Map && hoursRaw[key] is Map) {
+        final day = Map<String, dynamic>.from(hoursRaw[key] as Map);
+        closed = day['closed'] == true;
+        open = TimeOfDay(
+          hour: day['openHour'] as int? ?? 11,
+          minute: day['openMinute'] as int? ?? 0,
+        );
+        close = TimeOfDay(
+          hour: day['closeHour'] as int? ?? 21,
+          minute: day['closeMinute'] as int? ?? 0,
+        );
+      } else {
+        // Legacy single daily pair
+        open = TimeOfDay(
+          hour: data['openHour'] as int? ?? 11,
+          minute: data['openMinute'] as int? ?? 0,
+        );
+        close = TimeOfDay(
+          hour: data['closeHour'] as int? ?? 21,
+          minute: data['closeMinute'] as int? ?? 0,
+        );
+      }
+
+      setState(() {
+        if (rate != null && rate >= 0) _taxRate = rate;
+        _businessOpen = open;
+        _businessClose = close;
+        _dayClosed = closed;
+      });
+      _updateOrderTotals();
+    } catch (e) {
+      debugPrint('[checkout] store_ops load failed: $e');
+    }
   }
 
   bool get _storeOpenNow =>
@@ -277,7 +359,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
       setState(() {
         _orderSubtotal = subtotal;
-        _orderTax = (_orderSubtotal * 0.0925);
+        _orderTax = (_orderSubtotal * _taxRate);
         _deliveryFee = _deliveryType == DeliveryType.delivery ? 5.0 : 0.0;
         _promoValue = _promoApplied ? promoDiscount : 0.0;
         _orderTotal = (_orderSubtotal + _orderTax + _deliveryFee - _promoValue)
@@ -530,6 +612,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           _paymentsRefreshStarted = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) _refreshPaymentsFromFranchiseDoc();
+          });
+        }
+
+        if (!_storeOpsLoadStarted) {
+          _storeOpsLoadStarted = true;
+          final fid = provider.currentFranchiseId;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _loadStoreOps(fid);
           });
         }
 

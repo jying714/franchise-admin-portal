@@ -10,6 +10,7 @@ import '../ordering/widgets/discount_sheet.dart';
 import 'split_tender_sheet.dart';
 import '../../services/card_present_service.dart';
 import '../../services/print_service.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class PaymentScreen extends StatefulWidget {
   final String franchiseId;
@@ -39,6 +40,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   bool _busy = false;
   String? _error;
+  bool _offline = false;
 
   double _discountAmount = 0;
   String? _discountLabel;
@@ -48,8 +50,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
   bool _orderLoading = true;
   String? _orderError;
 
-  /// Provisional rate — matches mobile checkout until franchise tax config exists.
-  static const double _provisionalTaxRate = 0.0925;
+  /// Loaded from franchises/{id}/config/store_ops.taxRate; fallback 9.25%.
+  double _taxRate = 0.0925;
+  bool _storeOpsLoadStarted = false;
 
   double _moneyRound(double v) => (v * 100).roundToDouble() / 100.0;
 
@@ -65,7 +68,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   double get _computedTax {
     if (_taxableAmount <= 0) return 0.0;
-    return _moneyRound(_taxableAmount * _provisionalTaxRate);
+    return _moneyRound(_taxableAmount * _taxRate);
   }
 
   /// Total due = taxable + tax + fees.
@@ -88,7 +91,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           ? 0.0
           : (_orderSubtotal - _orderDiscount),
     );
-    final tax = taxable <= 0 ? 0.0 : _moneyRound(taxable * _provisionalTaxRate);
+    final tax = taxable <= 0 ? 0.0 : _moneyRound(taxable * _taxRate);
     return _moneyRound(taxable + tax + _orderDeliveryFee);
   }
 
@@ -98,6 +101,55 @@ class _PaymentScreenState extends State<PaymentScreen> {
     _tenderController.text = _dueAfterDiscount.toStringAsFixed(2);
     _loadSettings();
     _loadOrder();
+    _loadStoreOpsTax();
+    _watchConnectivity();
+  }
+
+  Future<void> _watchConnectivity() async {
+    try {
+      final now = await Connectivity().checkConnectivity();
+      if (mounted) {
+        setState(() {
+          _offline =
+              now.isEmpty || now.every((r) => r == ConnectivityResult.none);
+        });
+      }
+      Connectivity().onConnectivityChanged.listen((results) {
+        if (!mounted) return;
+        setState(() {
+          _offline =
+              results.isEmpty ||
+              results.every((r) => r == ConnectivityResult.none);
+        });
+      });
+    } catch (_) {
+      // If plugin fails, stay optimistic (online).
+    }
+  }
+
+  Future<void> _loadStoreOpsTax() async {
+    if (_storeOpsLoadStarted) return;
+    _storeOpsLoadStarted = true;
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('franchises')
+          .doc(widget.franchiseId)
+          .collection('config')
+          .doc('store_ops')
+          .get();
+      final rate = (snap.data()?['taxRate'] as num?)?.toDouble();
+      if (rate != null && rate >= 0 && mounted) {
+        setState(() {
+          _taxRate = rate;
+          // Refresh tender field if order already loaded.
+          if (_order != null) {
+            _tenderController.text = _dueAfterDiscount.toStringAsFixed(2);
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('[POS] store_ops tax load failed: $e');
+    }
   }
 
   Future<void> _loadSettings() async {
@@ -659,6 +711,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
             context,
           ).textTheme.titleSmall?.copyWith(color: scheme.onSurfaceVariant),
         ),
+        if (_offline) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Offline — use cash or split only.',
+            style: TextStyle(color: scheme.error, fontWeight: FontWeight.w600),
+          ),
+        ],
         Text(
           '\$${_dueAfterDiscount.toStringAsFixed(2)}',
           style: Theme.of(
@@ -733,7 +792,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final canCash = _canTakeCash(session);
     final allowCash = canCash && widget.allowedMethods.contains('cash');
     final allowSplit = canCash && widget.allowedMethods.contains('split');
-    final allowCard = widget.allowedMethods.contains('card');
+    final allowCard = widget.allowedMethods.contains('card') && !_offline;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Payment')),

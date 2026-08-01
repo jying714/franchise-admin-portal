@@ -1,6 +1,8 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../orders/open_orders_screen.dart';
+import '../settings/station_settings_screen.dart';
 import '../orders/closed_orders_screen.dart';
 import '../../providers/pin_session_provider.dart';
 import 'widgets/order_type_tile.dart';
@@ -22,6 +24,18 @@ class StationHomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Station'),
         actions: [
+          IconButton(
+            tooltip: 'Station settings',
+            icon: Icon(Icons.settings_outlined, color: scheme.onPrimary),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) =>
+                      StationSettingsScreen(franchiseId: franchiseId),
+                ),
+              );
+            },
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Center(
@@ -39,102 +53,147 @@ class StationHomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (session.staff?.role.trim().toLowerCase() != 'driver') ...[
-            Text(
-              'New order',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(color: scheme.onSurfaceVariant),
-            ),
-            const SizedBox(height: 12),
-            OrderTypeTile(
-              title: 'Dine-in',
-              subtitle: 'Floor map → seat table → pay at close',
-              icon: Icons.table_restaurant,
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) =>
-                        DineInFloorMapScreen(franchiseId: franchiseId),
+          StreamBuilder<List<ConnectivityResult>>(
+            stream: Connectivity().onConnectivityChanged,
+            builder: (context, snapshot) {
+              final results = snapshot.data;
+              // null = first frame unknown — do not alarm yet
+              if (results == null) return const SizedBox.shrink();
+              final offline =
+                  results.isEmpty ||
+                  results.every((r) => r == ConnectivityResult.none);
+              if (!offline) return const SizedBox.shrink();
+              return Material(
+                color: scheme.errorContainer,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
                   ),
-                );
-              },
-            ),
-            const SizedBox(height: 8),
-            OrderTypeTile(
-              title: 'Carry-out',
-              subtitle: 'Full menu + modifiers → pay',
-              icon: Icons.takeout_dining,
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => OrderEntryScreen(
-                      franchiseId: franchiseId,
-                      orderType: 'carryout',
-                    ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.cloud_off, color: scheme.onErrorContainer),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Offline — card payments blocked. Cash only.',
+                          style: TextStyle(
+                            color: scheme.onErrorContainer,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                );
-              },
-            ),
-            const SizedBox(height: 8),
-            OrderTypeTile(
-              title: 'Delivery',
-              subtitle: 'Customer + address → order → driver at complete',
-              icon: Icons.delivery_dining,
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => OrderEntryScreen(
-                      franchiseId: franchiseId,
-                      orderType: 'delivery',
-                    ),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 24),
-          ],
-          Text(
-            'Board',
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(color: scheme.onSurfaceVariant),
-          ),
-          const SizedBox(height: 12),
-          OrderTypeTile(
-            title: 'Open orders',
-            subtitle: 'POS + mobile + web in one list',
-            icon: Icons.receipt_long,
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => OpenOrdersScreen(franchiseId: franchiseId),
                 ),
               );
             },
           ),
-          const SizedBox(height: 8),
-          OrderTypeTile(
-            title: 'Closed orders',
-            subtitle: 'Paid, completed, cancelled, refunded',
-            icon: Icons.history,
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => ClosedOrdersScreen(franchiseId: franchiseId),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                if (session.staff?.role.trim().toLowerCase() != 'driver') ...[
+                  Text(
+                    'New order',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  OrderTypeTile(
+                    title: 'Dine-in',
+                    subtitle: 'Floor map → seat table → pay at close',
+                    icon: Icons.table_restaurant,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) =>
+                              DineInFloorMapScreen(franchiseId: franchiseId),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  OrderTypeTile(
+                    title: 'Carry-out',
+                    subtitle: 'Full menu + modifiers → pay',
+                    icon: Icons.takeout_dining,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => OrderEntryScreen(
+                            franchiseId: franchiseId,
+                            orderType: 'carryout',
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  OrderTypeTile(
+                    title: 'Delivery',
+                    subtitle: 'Customer + address → order → driver at complete',
+                    icon: Icons.delivery_dining,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => OrderEntryScreen(
+                            franchiseId: franchiseId,
+                            orderType: 'delivery',
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                ],
+                Text(
+                  'Board',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
                 ),
-              );
-            },
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'Franchise: $franchiseId',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+                const SizedBox(height: 12),
+                OrderTypeTile(
+                  title: 'Open orders',
+                  subtitle: 'POS + mobile + web in one list',
+                  icon: Icons.receipt_long,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) =>
+                            OpenOrdersScreen(franchiseId: franchiseId),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                OrderTypeTile(
+                  title: 'Closed orders',
+                  subtitle: 'Paid, completed, cancelled, refunded',
+                  icon: Icons.history,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) =>
+                            ClosedOrdersScreen(franchiseId: franchiseId),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Franchise: $franchiseId',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

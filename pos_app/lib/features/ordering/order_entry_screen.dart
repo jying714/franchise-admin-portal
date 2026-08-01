@@ -61,6 +61,9 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadStoreOpsTax();
+    });
     if (_isDelivery) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _promptDeliveryCustomer();
@@ -154,7 +157,8 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
 
   /// Provisional rate — matches mobile checkout (`0.0925`) until franchise tax config exists.
   /// Do not invent a new config field here.
-  static const double _provisionalTaxRate = 0.0925;
+  double _taxRate = 0.0925;
+  bool _storeOpsLoadStarted = false;
 
   double _moneyRound(double v) => (v * 100).roundToDouble() / 100.0;
 
@@ -167,7 +171,7 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
   /// Tax = taxable amount × rate.
   double _taxFor(double taxableAmount) {
     if (taxableAmount <= 0) return 0.0;
-    return _moneyRound(taxableAmount * _provisionalTaxRate);
+    return _moneyRound(taxableAmount * _taxRate);
   }
 
   /// Total = taxable + tax + fees.
@@ -188,6 +192,25 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
       return 'Customer information required for delivery';
     }
     return null;
+  }
+
+  Future<void> _loadStoreOpsTax() async {
+    if (_storeOpsLoadStarted) return;
+    _storeOpsLoadStarted = true;
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('franchises')
+          .doc(widget.franchiseId)
+          .collection('config')
+          .doc('store_ops')
+          .get();
+      final rate = (snap.data()?['taxRate'] as num?)?.toDouble();
+      if (rate != null && rate >= 0 && mounted) {
+        setState(() => _taxRate = rate);
+      }
+    } catch (e) {
+      debugPrint('[POS] store_ops tax load failed: $e');
+    }
   }
 
   Future<void> _markTableSeated(String tableId) async {
