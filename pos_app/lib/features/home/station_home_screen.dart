@@ -9,13 +9,45 @@ import 'widgets/order_type_tile.dart';
 import '../ordering/order_entry_screen.dart';
 import '../dine_in/dine_in_floor_map_screen.dart';
 
-class StationHomeScreen extends StatelessWidget {
+class StationHomeScreen extends StatefulWidget {
   final String franchiseId;
 
   const StationHomeScreen({super.key, required this.franchiseId});
 
   @override
+  State<StationHomeScreen> createState() => _StationHomeScreenState();
+}
+
+class _StationHomeScreenState extends State<StationHomeScreen> {
+  bool _offline = false;
+
+  static bool _isOffline(List<ConnectivityResult> results) {
+    return results.isEmpty ||
+        results.every((r) => r == ConnectivityResult.none);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _initConnectivity();
+  }
+
+  Future<void> _initConnectivity() async {
+    try {
+      final now = await Connectivity().checkConnectivity();
+      if (mounted) setState(() => _offline = _isOffline(now));
+      Connectivity().onConnectivityChanged.listen((results) {
+        if (!mounted) return;
+        setState(() => _offline = _isOffline(results));
+      });
+    } catch (e) {
+      debugPrint('[POS] connectivity watch failed: $e');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final franchiseId = widget.franchiseId;
     final session = context.watch<PinSessionProvider>();
     final staff = session.staff;
     final scheme = Theme.of(context).colorScheme;
@@ -56,42 +88,31 @@ class StationHomeScreen extends StatelessWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          StreamBuilder<List<ConnectivityResult>>(
-            stream: Connectivity().onConnectivityChanged,
-            builder: (context, snapshot) {
-              final results = snapshot.data;
-              // null = first frame unknown — do not alarm yet
-              if (results == null) return const SizedBox.shrink();
-              final offline =
-                  results.isEmpty ||
-                  results.every((r) => r == ConnectivityResult.none);
-              if (!offline) return const SizedBox.shrink();
-              return Material(
-                color: scheme.errorContainer,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.cloud_off, color: scheme.onErrorContainer),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Offline — card payments blocked. Cash only.',
-                          style: TextStyle(
-                            color: scheme.onErrorContainer,
-                            fontWeight: FontWeight.w600,
-                          ),
+          if (_offline)
+            Material(
+              color: scheme.errorContainer,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.cloud_off, color: scheme.onErrorContainer),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Offline — card payments blocked. Cash only.',
+                        style: TextStyle(
+                          color: scheme.onErrorContainer,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              );
-            },
-          ),
+              ),
+            ),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.all(16),

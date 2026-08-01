@@ -295,6 +295,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   Future<void> _completeCard() async {
+    if (_offline) {
+      setState(() => _error = 'Offline — card unavailable. Use cash or split.');
+      return;
+    }
     final session = Provider.of<PinSessionProvider>(context, listen: false);
     if (!session.hasPermission(PosPermissions.takePayment)) {
       setState(() => _error = 'No take_payment permission');
