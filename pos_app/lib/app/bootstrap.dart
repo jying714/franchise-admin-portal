@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import '../firebase_options.dart';
 
 class PosBootstrap {
@@ -13,6 +14,11 @@ class PosBootstrap {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       );
+    }
+    // Same publishable key as mobile (never sk_). Empty → card falls back to mock.
+    const stripePk = String.fromEnvironment('STRIPE_PK', defaultValue: '');
+    if (stripePk.isNotEmpty) {
+      Stripe.publishableKey = stripePk;
     }
     await ensureStationAuth();
   }

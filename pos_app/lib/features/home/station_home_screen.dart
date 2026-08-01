@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../orders/open_orders_screen.dart';
+import '../orders/closed_orders_screen.dart';
 import '../../providers/pin_session_provider.dart';
 import 'widgets/order_type_tile.dart';
 import '../ordering/order_entry_screen.dart';
@@ -111,6 +112,19 @@ class StationHomeScreen extends StatelessWidget {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => OpenOrdersScreen(franchiseId: franchiseId),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 8),
+          OrderTypeTile(
+            title: 'Closed orders',
+            subtitle: 'Paid, completed, cancelled, refunded',
+            icon: Icons.history,
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => ClosedOrdersScreen(franchiseId: franchiseId),
                 ),
               );
             },

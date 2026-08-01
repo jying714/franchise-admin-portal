@@ -385,8 +385,21 @@ class _OpenOrdersScreenState extends State<OpenOrdersScreen> {
                   icon: Icons.replay,
                   label: 'Refund',
                   enabled: session.hasPermission(PosPermissions.refund),
+                  destructive: true,
                   onTap: () async {
                     Navigator.pop(dialogContext);
+
+                    if (!_isPaid(order)) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Order is not paid — use Void instead of Refund',
+                          ),
+                        ),
+                      );
+                      return;
+                    }
 
                     if (session.requiresFreshPinFor(PosPermissions.refund)) {
                       final pinned = await ForceRepinDialog.show(
@@ -398,10 +411,36 @@ class _OpenOrdersScreenState extends State<OpenOrdersScreen> {
                     }
 
                     if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
+                    final ok = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Refund order?'),
                         content: Text(
-                          'Refund — implement with payment records',
+                          'Refund \$${order.total.toStringAsFixed(2)} cash '
+                          'for ${order.id}?\n\n'
+                          'Skeleton: full cash refund only. '
+                          'Card reverse comes with Terminal.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text('Cancel'),
+                          ),
+                          FilledButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text('Refund cash'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (ok != true) return;
+
+                    await _refundCash(order);
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Refunded \$${order.total.toStringAsFixed(2)} cash · ${order.id}',
                         ),
                       ),
                     );
@@ -474,6 +513,75 @@ class _OpenOrdersScreenState extends State<OpenOrdersScreen> {
 
     // ignore: avoid_print
     print('[POS] cash drawer kick (mock) — delivery till close ${order.id}');
+  }
+
+  Future<void> _refundCash(Order order) async {
+    final session = Provider.of<PinSessionProvider>(context, listen: false);
+    if (!session.hasPermission(PosPermissions.refund)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No refund permission')));
+      return;
+    }
+    if (!session.hasPermission(PosPermissions.openDrawer)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Refund cash requires open_drawer permission'),
+        ),
+      );
+      return;
+    }
+
+    final now = DateTime.now();
+    final staffId = session.staff?.id;
+    final staffName = session.staff?.name;
+
+    await FirebaseFirestore.instance
+        .collection('franchises')
+        .doc(widget.franchiseId)
+        .collection('orders')
+        .doc(order.id)
+        .set({
+          // Terminal — leaves open board (same family as void).
+          'status': OrderStatus.cancelled,
+          'refunded': true,
+          'refundAmount': order.total,
+          'refundMethod': 'cash',
+          'refundedAt': now.toIso8601String(),
+          if (staffId != null) 'refundedByStaffId': staffId,
+          if (staffName != null) 'refundedByStaffName': staffName,
+          'timestamps.refunded': now.toIso8601String(),
+          'timestamps.cancelled': now.toIso8601String(),
+        }, SetOptions(merge: true));
+
+    // ignore: avoid_print
+    print(
+      '[POS] cash drawer kick (mock) — refund ${order.id} '
+      '\$${order.total.toStringAsFixed(2)}',
+    );
+
+    if (_normalizeType(order) == 'dine_in') {
+      try {
+        final snap = await FirebaseFirestore.instance
+            .collection('franchises')
+            .doc(widget.franchiseId)
+            .collection('orders')
+            .doc(order.id)
+            .get();
+        final tableId = snap.data()?['tableId'] as String?;
+        if (tableId != null && tableId.isNotEmpty) {
+          await setTableStatus(
+            franchiseId: widget.franchiseId,
+            tableId: tableId,
+            status: 'free',
+          );
+        }
+      } catch (_) {
+        // Refund already committed.
+      }
+    }
   }
 
   String _sourceLabel(Order order) {

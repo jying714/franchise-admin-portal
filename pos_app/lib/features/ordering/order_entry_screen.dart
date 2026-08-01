@@ -6,7 +6,9 @@ import '../dine_in/table_status.dart';
 import '../../core/constants/pos_permissions.dart';
 import '../../providers/pin_session_provider.dart';
 import '../payments/payment_screen.dart';
+import '../../services/print_service.dart';
 import 'pos_modifier_dialog.dart';
+import 'package:flutter/foundation.dart';
 
 class _DeliveryCustomer {
   final String name;
@@ -150,6 +152,36 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
   double get _subtotal =>
       _lines.fold(0.0, (sum, l) => sum + l.unitPrice * l.quantity);
 
+  /// Provisional rate — matches mobile checkout (`0.0925`) until franchise tax config exists.
+  /// Do not invent a new config field here.
+  static const double _provisionalTaxRate = 0.0925;
+
+  double _moneyRound(double v) => (v * 100).roundToDouble() / 100.0;
+
+  /// Taxable amount = subtotal − discount (never below 0).
+  double _taxableAmount({required double subtotal, required double discount}) {
+    final v = subtotal - discount;
+    return v <= 0 ? 0.0 : _moneyRound(v);
+  }
+
+  /// Tax = taxable amount × rate.
+  double _taxFor(double taxableAmount) {
+    if (taxableAmount <= 0) return 0.0;
+    return _moneyRound(taxableAmount * _provisionalTaxRate);
+  }
+
+  /// Total = taxable + tax + fees.
+  double _totalFor({
+    required double subtotal,
+    required double discount,
+    double deliveryFee = 0.0,
+  }) {
+    final taxable = _taxableAmount(subtotal: subtotal, discount: discount);
+    final tax = _taxFor(taxable);
+    final total = taxable + tax + deliveryFee;
+    return total <= 0 ? 0.0 : _moneyRound(total);
+  }
+
   String? _validateDelivery() {
     if (!_isDelivery) return null;
     if (_deliveryCustomer == null) {
@@ -204,9 +236,15 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
         .toList();
 
     final subtotal = _subtotal;
-    const tax = 0.0;
-    final total = subtotal + tax;
-
+    // Order-level discount at create is 0 today (payment-time discount is on PaymentScreen).
+    const discount = 0.0;
+    final taxable = _taxableAmount(subtotal: subtotal, discount: discount);
+    final tax = _taxFor(taxable);
+    final total = _totalFor(
+      subtotal: subtotal,
+      discount: discount,
+      deliveryFee: 0.0,
+    );
     final customer = _deliveryCustomer;
     final customerName = _isDelivery ? customer!.name : staff.name;
 
@@ -272,6 +310,14 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
         0,
         (s, i) => s + i.price * i.quantity,
       );
+      final discount = existing.discount;
+      final taxable = _taxableAmount(subtotal: subtotal, discount: discount);
+      final tax = _taxFor(taxable);
+      final total = _totalFor(
+        subtotal: subtotal,
+        discount: discount,
+        deliveryFee: existing.deliveryFee,
+      );
       await ref.set({
         'items': mergedItems
             .map(
@@ -285,8 +331,8 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
             )
             .toList(),
         'subtotal': subtotal,
-        'total':
-            subtotal + existing.tax + existing.deliveryFee - existing.discount,
+        'tax': tax,
+        'total': total,
         'timestamps.updated': DateTime.now().toIso8601String(),
       }, SetOptions(merge: true));
       // Do not change table status on append
@@ -318,6 +364,33 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
     return ref.id;
   }
 
+  Future<void> _mockKitchenTicketForOrder(
+    String orderId, {
+    required bool isAppend,
+  }) async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('franchises')
+          .doc(widget.franchiseId)
+          .collection('orders')
+          .doc(orderId)
+          .get();
+      if (!doc.exists || doc.data() == null) return;
+      final data = doc.data()!;
+      final order = Order.fromFirestore(data, doc.id);
+      // tableLabel is POS-only on the order doc; not a shared Order model field.
+      final tableLabelFromDoc = data['tableLabel'] as String?;
+      await const PrintService().printKitchenTicket(
+        order: order,
+        tableLabel: widget.tableLabel ?? tableLabelFromDoc,
+        isAppend: isAppend,
+      );
+    } catch (e) {
+      // Order already committed — print must not fail the send path.
+      debugPrint('[POS] mock kitchen ticket skipped: $e');
+    }
+  }
+
   Future<void> _sendUnpaid() async {
     if (_lines.isEmpty || _sending) return;
     setState(() => _sending = true);
@@ -327,14 +400,23 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
         if (mounted) setState(() => _sending = false);
         return;
       }
+      final isAppend =
+          widget.existingOrderId != null && widget.existingOrderId!.isNotEmpty;
+      await _mockKitchenTicketForOrder(id, isAppend: isAppend);
       if (!mounted) return;
       setState(() {
         _lines.clear();
         _sending = false;
       });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Order $id sent to kitchen')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isAppend
+                ? 'Order $id updated · kitchen ticket (mock)'
+                : 'Order $id sent to kitchen · ticket (mock)',
+          ),
+        ),
+      );
       Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
@@ -356,12 +438,13 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
       }
       if (!mounted) return;
 
+      final amountDue = _totalFor(subtotal: _subtotal, discount: 0.0);
       final paid = await Navigator.of(context).push<bool>(
         MaterialPageRoute<bool>(
           builder: (_) => PaymentScreen(
             franchiseId: widget.franchiseId,
             orderId: id,
-            amountDue: _subtotal,
+            amountDue: amountDue,
             closeOutOrder: false,
             statusWhenPaid: OrderStatus.sentToKitchen,
           ),
@@ -372,9 +455,13 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
       setState(() => _sending = false);
 
       if (paid == true) {
+        await _mockKitchenTicketForOrder(id, isAppend: false);
+        if (!mounted) return;
         setState(() => _lines.clear());
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Order $id paid and sent to kitchen')),
+          SnackBar(
+            content: Text('Order $id paid and sent to kitchen · ticket (mock)'),
+          ),
         );
         Navigator.of(context).pop();
       } else {

@@ -8,6 +8,8 @@ import '../../core/constants/pos_permissions.dart';
 import '../../providers/pin_session_provider.dart';
 import '../ordering/widgets/discount_sheet.dart';
 import 'split_tender_sheet.dart';
+import '../../services/card_present_service.dart';
+import '../../services/print_service.dart';
 
 class PaymentScreen extends StatefulWidget {
   final String franchiseId;
@@ -46,11 +48,48 @@ class _PaymentScreenState extends State<PaymentScreen> {
   bool _orderLoading = true;
   String? _orderError;
 
-  double get _baseDue => widget.amountDue;
+  /// Provisional rate — matches mobile checkout until franchise tax config exists.
+  static const double _provisionalTaxRate = 0.0925;
 
+  double _moneyRound(double v) => (v * 100).roundToDouble() / 100.0;
+
+  double get _orderSubtotal => _order?.subtotal ?? 0.0;
+  double get _orderDiscount => _order?.discount ?? 0.0;
+  double get _orderDeliveryFee => _order?.deliveryFee ?? 0.0;
+
+  /// Taxable = subtotal − order discount − payment discount.
+  double get _taxableAmount {
+    final v = _orderSubtotal - _orderDiscount - _discountAmount;
+    return v <= 0 ? 0.0 : _moneyRound(v);
+  }
+
+  double get _computedTax {
+    if (_taxableAmount <= 0) return 0.0;
+    return _moneyRound(_taxableAmount * _provisionalTaxRate);
+  }
+
+  /// Total due = taxable + tax + fees.
+  /// Total due = taxable + tax + fees.
   double get _dueAfterDiscount {
-    final v = _baseDue - _discountAmount;
-    return v < 0 ? 0 : (v * 100).roundToDouble() / 100.0;
+    if (_order == null) {
+      // Pre-load fallback only; live math starts after _loadOrder.
+      final v = widget.amountDue - _discountAmount;
+      return v <= 0 ? 0.0 : _moneyRound(v);
+    }
+    final total = _taxableAmount + _computedTax + _orderDeliveryFee;
+    return total <= 0 ? 0.0 : _moneyRound(total);
+  }
+
+  /// Due if payment-time discount were 0 (order discount still applied).
+  double get _dueBeforePaymentDiscount {
+    if (_order == null) return widget.amountDue;
+    final taxable = _moneyRound(
+      (_orderSubtotal - _orderDiscount) <= 0
+          ? 0.0
+          : (_orderSubtotal - _orderDiscount),
+    );
+    final tax = taxable <= 0 ? 0.0 : _moneyRound(taxable * _provisionalTaxRate);
+    return _moneyRound(taxable + tax + _orderDeliveryFee);
   }
 
   @override
@@ -98,6 +137,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
       setState(() {
         _order = order;
         _orderLoading = false;
+        // _order is set first so _dueAfterDiscount uses the pre-tax stack.
+        _tenderController.text = _dueAfterDiscount.toStringAsFixed(2);
       });
     } catch (e) {
       if (!mounted) return;
@@ -155,7 +196,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
       return;
     }
 
-    final result = await DiscountSheet.show(context, baseAmount: _baseDue);
+    final merchandise = _order == null
+        ? widget.amountDue
+        : _moneyRound(
+            (_orderSubtotal - _orderDiscount) <= 0
+                ? 0.0
+                : (_orderSubtotal - _orderDiscount),
+          );
+    final result = await DiscountSheet.show(context, baseAmount: merchandise);
     if (result == null || !mounted) return;
 
     setState(() {
@@ -192,6 +240,128 @@ class _PaymentScreenState extends State<PaymentScreen> {
     if (lines == null || lines.isEmpty || !mounted) return;
 
     await _completeWithTenders(lines);
+  }
+
+  Future<void> _completeCard() async {
+    final session = Provider.of<PinSessionProvider>(context, listen: false);
+    if (!session.hasPermission(PosPermissions.takePayment)) {
+      setState(() => _error = 'No take_payment permission');
+      return;
+    }
+    // Card does not open the cash drawer.
+
+    final due = _dueAfterDiscount;
+    if (due < 0.50) {
+      setState(() => _error = 'Amount too small for card (min \$0.50)');
+      return;
+    }
+
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+
+    final amountCents = (due * 100).round();
+    final result = await const CardPresentService().collectPayment(
+      franchiseId: widget.franchiseId,
+      orderId: widget.orderId,
+      amountCents: amountCents,
+    );
+
+    if (!mounted) return;
+
+    if (!result.success) {
+      setState(() {
+        _busy = false;
+        _error = result.errorMessage ?? 'Card payment failed';
+      });
+      return;
+    }
+
+    try {
+      final now = DateTime.now();
+      final ref = FirebaseFirestore.instance
+          .collection('franchises')
+          .doc(widget.franchiseId)
+          .collection('orders')
+          .doc(widget.orderId);
+
+      final nextStatus = widget.closeOutOrder
+          ? OrderStatus.completed
+          : widget.statusWhenPaid;
+
+      final orderDiscount = _order?.discount ?? 0.0;
+      final combinedDiscount = _moneyRound(orderDiscount + _discountAmount);
+      final tax = _computedTax;
+
+      await ref.set({
+        'status': nextStatus,
+        'paymentMethod': 'card',
+        'tenders': [
+          {'method': 'card', 'amount': due},
+        ],
+        'amountTendered': due,
+        'changeDue': 0,
+        'discount': combinedDiscount,
+        if (_discountLabel != null) 'discountLabel': _discountLabel,
+        'tax': tax,
+        'total': due,
+        'amountDueAtPay': due,
+        'paidAt': now.toIso8601String(),
+        if (result.paymentIntentId != null)
+          'paymentIntentId': result.paymentIntentId,
+        if (result.wasMock) 'cardPresentMock': true,
+        'timestamps.paid': now.toIso8601String(),
+        if (widget.closeOutOrder) 'timestamps.completed': now.toIso8601String(),
+        if (!widget.closeOutOrder)
+          'timestamps.${widget.statusWhenPaid}': now.toIso8601String(),
+      }, SetOptions(merge: true));
+
+      // Optional mock receipt — same as cash path if PrintService is wired.
+      try {
+        final receiptOrder = _order;
+        if (receiptOrder != null) {
+          await const PrintService().printCustomerReceipt(
+            order: receiptOrder,
+            amountTendered: due,
+            changeDue: 0,
+            paymentMethod: 'card',
+          );
+        }
+      } catch (e) {
+        debugPrint('[POS] card receipt mock skipped: $e');
+      }
+
+      if (widget.closeOutOrder) {
+        try {
+          final snap = await ref.get();
+          final data = snap.data();
+          final tableId = data?['tableId'] as String?;
+          final deliveryType =
+              (data?['deliveryType'] as String?)?.trim().toLowerCase() ?? '';
+          if (tableId != null &&
+              tableId.isNotEmpty &&
+              (deliveryType == 'dine_in' ||
+                  deliveryType == 'dine-in' ||
+                  deliveryType == 'dinein')) {
+            await setTableStatus(
+              franchiseId: widget.franchiseId,
+              tableId: tableId,
+              status: 'free',
+            );
+          }
+        } catch (_) {}
+      }
+
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = 'Card payment failed to save: $e';
+      });
+    }
   }
 
   Future<void> _completeCash() async {
@@ -254,14 +424,23 @@ class _PaymentScreenState extends State<PaymentScreen> {
           ? OrderStatus.completed
           : widget.statusWhenPaid;
 
+      final orderDiscount = _order?.discount ?? 0.0;
+      final combinedDiscount = _moneyRound(orderDiscount + _discountAmount);
+      final taxable = _taxableAmount;
+      final tax = _computedTax;
+      final due = _dueAfterDiscount;
+
       await ref.set({
         'status': nextStatus,
         'paymentMethod': isSplit ? 'split' : 'cash',
         'tenders': lines.map((l) => l.toMap()).toList(),
         'amountTendered': cashTotal,
         'changeDue': cashTotal - due,
-        'discount': _discountAmount,
+        // Pre-tax discount stack: persist combined sale-price reduction + recomputed tax/total.
+        'discount': combinedDiscount,
         if (_discountLabel != null) 'discountLabel': _discountLabel,
+        'tax': tax,
+        'total': due,
         'amountDueAtPay': due,
         'paidAt': now.toIso8601String(),
         if (widget.closeOutOrder) 'timestamps.completed': now.toIso8601String(),
@@ -272,6 +451,21 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
       // ignore: avoid_print
       print('[POS] cash drawer kick (mock)');
+
+      // Mock customer receipt — never fail the already-committed payment.
+      try {
+        final receiptOrder = _order;
+        if (receiptOrder != null) {
+          await const PrintService().printCustomerReceipt(
+            order: receiptOrder,
+            amountTendered: cashTotal,
+            changeDue: cashTotal - due,
+            paymentMethod: isSplit ? 'split' : 'cash',
+          );
+        }
+      } catch (e) {
+        debugPrint('[POS] customer receipt mock skipped: $e');
+      }
 
       if (widget.closeOutOrder) {
         try {
@@ -426,10 +620,20 @@ class _PaymentScreenState extends State<PaymentScreen> {
           }),
         const Divider(),
         _TotalsRow(label: 'Subtotal', value: order.subtotal),
-        _TotalsRow(label: 'Tax', value: order.tax),
         if (order.discount > 0)
           _TotalsRow(label: 'Discount (order)', value: -order.discount),
-        _TotalsRow(label: 'Total', value: order.total, emphasize: true),
+        if (_discountAmount > 0)
+          _TotalsRow(
+            label: (_discountLabel == null || _discountLabel!.isEmpty)
+                ? 'Discount (payment)'
+                : 'Discount (payment) · $_discountLabel',
+            value: -_discountAmount,
+          ),
+        _TotalsRow(label: 'Taxable', value: _taxableAmount),
+        _TotalsRow(label: 'Tax', value: _computedTax),
+        if (order.deliveryFee > 0)
+          _TotalsRow(label: 'Delivery fee', value: order.deliveryFee),
+        _TotalsRow(label: 'Total', value: _dueAfterDiscount, emphasize: true),
       ],
     );
   }
@@ -464,7 +668,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         if (_discountAmount > 0) ...[
           const SizedBox(height: 4),
           Text(
-            'Was \$${_baseDue.toStringAsFixed(2)}'
+            'Was \$${_dueBeforePaymentDiscount.toStringAsFixed(2)}'
             '${_discountLabel != null ? ' · $_discountLabel' : ''}',
             style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13),
           ),
@@ -588,11 +792,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 onPressed: (_busy || !allowCard)
                     ? null
                     : () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Card-present — later in Phase 5'),
-                          ),
+                        final session = Provider.of<PinSessionProvider>(
+                          context,
+                          listen: false,
                         );
+                        if (!session.hasPermission(
+                          PosPermissions.takePayment,
+                        )) {
+                          setState(() => _error = 'No take_payment permission');
+                          return;
+                        }
+                        _completeCard();
                       },
                 icon: const Icon(Icons.credit_card),
                 label: const Text('Card'),
