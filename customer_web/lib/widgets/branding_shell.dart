@@ -1,8 +1,13 @@
 // customer_web/lib/widgets/branding_shell.dart
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
+
+import '../features/auth/sign_in_screen.dart';
+import '../features/cart/cart_screen.dart';
+import '../features/orders/order_history_screen.dart';
 
 Color hexToColor(String hex, {Color fallback = const Color(0xFFE31837)}) {
   var h = hex.trim();
@@ -79,7 +84,74 @@ class BrandingShell extends StatelessWidget {
             Flexible(child: Text(name, overflow: TextOverflow.ellipsis)),
           ],
         ),
-        actions: actions,
+        actions: [
+          IconButton(
+            tooltip: 'Cart',
+            icon: const Icon(Icons.shopping_cart_outlined),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const CartScreen()),
+              );
+            },
+          ),
+          Consumer<User?>(
+            builder: (context, user, _) {
+              if (user == null) {
+                return IconButton(
+                  tooltip: 'Sign in',
+                  icon: const Icon(Icons.person_outline),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const SignInScreen(),
+                      ),
+                    );
+                  },
+                );
+              }
+              return PopupMenuButton<String>(
+                tooltip: 'Account',
+                onSelected: (value) async {
+                  if (value == 'orders') {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const OrderHistoryScreen(),
+                      ),
+                    );
+                  } else if (value == 'signOut') {
+                    await FirebaseAuth.instance.signOut();
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(const SnackBar(content: Text('Signed out')));
+                  }
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem<String>(
+                    enabled: false,
+                    child: Text(
+                      user.email ?? 'Signed in',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'orders',
+                    child: Text('My orders'),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'signOut',
+                    child: Text('Sign out'),
+                  ),
+                ],
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                  child: Icon(Icons.person),
+                ),
+              );
+            },
+          ),
+          ...?actions,
+        ],
       ),
       body: child,
     );

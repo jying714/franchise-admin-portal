@@ -5,7 +5,6 @@ import 'package:shared_core/shared_core.dart' as shared;
 import 'menu_item_detail_screen.dart';
 import '../../widgets/branding_shell.dart';
 import '../../widgets/menu_item_card.dart';
-import '../cart/cart_screen.dart';
 
 /// Signed-out menu browse for a bound franchise.
 /// Uses existing FirestoreService menu APIs only.
@@ -25,17 +24,6 @@ class MenuBrowseScreen extends StatelessWidget {
     }
 
     return BrandingShell(
-      actions: [
-        IconButton(
-          tooltip: 'Cart',
-          icon: const Icon(Icons.shopping_cart_outlined),
-          onPressed: () {
-            Navigator.of(
-              context,
-            ).push(MaterialPageRoute<void>(builder: (_) => const CartScreen()));
-          },
-        ),
-      ],
       child: StreamBuilder<List<shared.MenuItem>>(
         stream: fs.getMenuItems(franchiseId),
         builder: (context, snapshot) {

@@ -52,18 +52,120 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
     }
   }
 
-  double get _unitPrice {
-    if (_selectedSize != null) {
-      if (item.sizePrices != null &&
-          item.sizePrices!.containsKey(_selectedSize)) {
-        return item.sizePrices![_selectedSize]!;
+  /// Resolve upchargeBySize with exact, then case-insensitive key match.
+  shared.SizeData? get _selectedSizeData {
+    final sizes = item.sizes;
+    if (sizes == null || sizes.isEmpty || _selectedSize == null) return null;
+    for (final s in sizes) {
+      if (s.label == _selectedSize ||
+          s.label.toLowerCase() == _selectedSize!.toLowerCase()) {
+        return s;
       }
-      final match = item.sizes?.where((s) => s.label == _selectedSize);
-      if (match != null && match.isNotEmpty) {
-        return match.first.basePrice;
+    }
+    return null;
+  }
+
+  /// Per-option delta: explicit option upcharge first; else size.toppingPrice.
+  double _optionDelta(shared.ModifierOption opt) {
+    final bySize = opt.upchargeBySize;
+    if (bySize != null && bySize.isNotEmpty && _selectedSize != null) {
+      final exact = bySize[_selectedSize];
+      if (exact != null) return exact;
+      final lower = _selectedSize!.toLowerCase();
+      for (final e in bySize.entries) {
+        if (e.key.toLowerCase() == lower) return e.value;
+      }
+    }
+    if (opt.upcharge != null && opt.upcharge != 0) {
+      return opt.upcharge!;
+    }
+    // Doughboys pattern: add-ons priced via SizeData.toppingPrice
+    return _selectedSizeData?.toppingPrice ?? 0.0;
+  }
+
+  double get _baseSizePrice {
+    final sizeData = _selectedSizeData;
+    if (sizeData != null) return sizeData.basePrice;
+
+    if (_selectedSize != null) {
+      final sp = item.sizePrices;
+      if (sp != null && sp.isNotEmpty) {
+        if (sp.containsKey(_selectedSize)) return sp[_selectedSize]!;
+        final lower = _selectedSize!.toLowerCase();
+        for (final e in sp.entries) {
+          if (e.key.toLowerCase() == lower) return e.value;
+        }
       }
     }
     return item.price;
+  }
+
+  double get _unitPrice {
+    var total = _baseSizePrice;
+    for (final g in item.effectiveModifierGroups) {
+      final selectedIds = _selectedByGroup[g.id] ?? const <String>{};
+      if (selectedIds.isEmpty) continue;
+
+      final selectedOpts = g.options
+          .where((o) => selectedIds.contains(o.id))
+          .toList();
+
+      final freeCount = (g.maxFree != null && g.maxFree! > 0) ? g.maxFree! : 0;
+      selectedOpts.sort((a, b) => _optionDelta(b).compareTo(_optionDelta(a)));
+      for (var i = 0; i < selectedOpts.length; i++) {
+        if (i < freeCount) continue;
+        total += _optionDelta(selectedOpts[i]);
+      }
+    }
+    return total;
+  }
+
+  String? _validateSelections() {
+    for (final g in item.effectiveModifierGroups) {
+      final n = _selectedByGroup[g.id]?.length ?? 0;
+      if (g.min > 0 && n < g.min) {
+        return 'Select at least ${g.min} for ${g.label}';
+      }
+    }
+    return null;
+  }
+
+  List<shared.Customization> _buildCustomizations() {
+    final list = <shared.Customization>[];
+
+    if (_selectedSize != null && _selectedSize!.isNotEmpty) {
+      list.add(
+        shared.Customization(
+          id: 'size_$_selectedSize',
+          name: _selectedSize!,
+          isGroup: false,
+          price: 0,
+          group: 'Size',
+          selected: true,
+        ),
+      );
+    }
+
+    for (final g in item.effectiveModifierGroups) {
+      final selected = _selectedByGroup[g.id] ?? const <String>{};
+      for (final opt in g.options) {
+        if (!selected.contains(opt.id)) continue;
+        final delta = _optionDelta(opt);
+        list.add(
+          shared.Customization(
+            id: opt.id,
+            ingredientId: opt.ingredientId,
+            name: opt.label,
+            isGroup: false,
+            price: delta,
+            group: g.label,
+            selected: true,
+            isDefault: opt.defaultSelected,
+          ),
+        );
+      }
+    }
+    return list;
   }
 
   Future<void> _addToCart() async {
@@ -75,19 +177,26 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
     final franchiseId = fp.currentFranchiseId;
     if (!fp.hasValidFranchise) return;
 
-    // Build selected customizations as shared Customization list is Phase 4b;
-    // for now pass empty list + record size in specialInstructions if needed.
-    final sizeNote = _selectedSize != null ? 'Size: $_selectedSize' : null;
+    final validationError = _validateSelections();
+    if (validationError != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(validationError)));
+      return;
+    }
+
+    final customizations = _buildCustomizations();
+    final unit = _unitPrice;
 
     try {
       await fs.addToCart(
         userId: user.uid,
         franchiseId: franchiseId,
         menuItem: item,
-        customizations: const [],
+        customizations: customizations,
         quantity: _qty,
-        price: _unitPrice,
-        specialInstructions: sizeNote,
+        price: unit,
+        specialInstructions: null,
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -235,13 +344,8 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
                 for (final opt in group.options)
                   FilterChip(
                     label: Text(() {
-                      final delta =
-                          opt.upchargeBySize != null &&
-                              _selectedSize != null &&
-                              opt.upchargeBySize!.containsKey(_selectedSize)
-                          ? opt.upchargeBySize![_selectedSize]
-                          : opt.upcharge;
-                      if (delta != null && delta != 0) {
+                      final delta = _optionDelta(opt);
+                      if (delta != 0) {
                         return '${opt.label} (+\$${delta.toStringAsFixed(2)})';
                       }
                       return opt.label;
@@ -272,7 +376,7 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
           const SizedBox(height: 16),
           ListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Line total (base size × qty)'),
+            title: const Text('Line total'),
             trailing: Text(
               '\$${_linePreview.toStringAsFixed(2)}',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -280,7 +384,12 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            subtitle: const Text('Modifier upcharges refined in Phase 4b'),
+            subtitle: Text(
+              'Base \$${_baseSizePrice.toStringAsFixed(2)}'
+              ' + extras \$${(_unitPrice - _baseSizePrice).toStringAsFixed(2)}'
+              ' × $_qty'
+              '${_selectedSize != null ? ' · $_selectedSize' : ''}',
+            ),
           ),
           const SizedBox(height: 16),
           FilledButton(
@@ -295,11 +404,7 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
               );
               if (!mounted) return;
               if (ok == true && FirebaseAuth.instance.currentUser != null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Signed in — cart write lands in Phase 6'),
-                  ),
-                );
+                await _addToCart();
               }
             },
             child: Text(

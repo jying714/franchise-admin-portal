@@ -7,6 +7,39 @@ import '../checkout/checkout_screen.dart';
 import '../../widgets/branding_shell.dart';
 import '../auth/sign_in_screen.dart';
 
+String _lineCustomizationSummary(shared.OrderItem line) {
+  final raw = line.customizations;
+  if (raw == null || raw.isEmpty) {
+    final si = line.specialInstructions;
+    if (si != null && si.isNotEmpty) return si;
+    return '';
+  }
+
+  final groups = raw['groups'];
+  if (groups is! List || groups.isEmpty) {
+    final si = line.specialInstructions;
+    if (si != null && si.isNotEmpty) return si;
+    return '';
+  }
+
+  final parts = <String>[];
+  for (final e in groups) {
+    if (e is! Map) continue;
+    final m = Map<String, dynamic>.from(e);
+    final name = (m['name'] ?? '').toString();
+    if (name.isEmpty) continue;
+    final group = (m['group'] ?? '').toString();
+    final price = (m['price'] is num) ? (m['price'] as num).toDouble() : 0.0;
+    final label = group.isNotEmpty ? '$group: $name' : name;
+    if (price > 0) {
+      parts.add('$label (+\$${price.toStringAsFixed(2)})');
+    } else {
+      parts.add(label);
+    }
+  }
+  return parts.join(' · ');
+}
+
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
 
@@ -84,9 +117,12 @@ class CartScreen extends StatelessWidget {
                       contentPadding: EdgeInsets.zero,
                       title: Text(line.name),
                       subtitle: Text(
-                        '\$${line.price.toStringAsFixed(2)} each'
-                        '${line.specialInstructions != null && line.specialInstructions!.isNotEmpty ? ' · ${line.specialInstructions}' : ''}',
+                        [
+                          '\$${line.price.toStringAsFixed(2)} each',
+                          _lineCustomizationSummary(line),
+                        ].where((s) => s.isNotEmpty).join('\n'),
                       ),
+                      isThreeLine: true,
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
