@@ -16,9 +16,13 @@ class DesignBrandingScreen extends StatefulWidget {
   /// When true (HQ onboarding shell), no route back; Save marks progress and can continue.
   final bool embeddedInOnboarding;
 
+  /// When true (Restaurant settings → Brand tab), no AppBar; onboarding chrome hidden.
+  final bool embeddedInSettingsShell;
+
   const DesignBrandingScreen({
     super.key,
     this.embeddedInOnboarding = false,
+    this.embeddedInSettingsShell = false,
   });
 
   @override
@@ -200,7 +204,7 @@ class _DesignBrandingScreenState extends State<DesignBrandingScreen> {
     return Scaffold(
       backgroundColor: DesignTokens.backgroundColor,
       // HQ-only route keeps AppBar + Back. Onboarding embed: title in body only.
-      appBar: widget.embeddedInOnboarding
+      appBar: (widget.embeddedInOnboarding || widget.embeddedInSettingsShell)
           ? null
           : AppBar(
               elevation: DesignTokens.appBarElevation,

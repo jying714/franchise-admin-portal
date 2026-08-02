@@ -16,7 +16,7 @@ import 'package:franchise_admin_portal/widgets/header/help_icon_button.dart';
 import 'package:franchise_admin_portal/widgets/header/notifications_icon_button.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/screens/design_branding_screen.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/screens/table_layout_editor_screen.dart';
-import 'package:franchise_admin_portal/admin/hq_owner/screens/store_ops_screen.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/screens/restaurant_settings_shell_screen.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/hq_onboarding_shell_screen.dart';
 import 'package:franchise_admin_portal/core/providers/onboarding_progress_provider_impl.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -112,7 +112,7 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                 // Slightly taller so Onboarding step list fits without clipping.
                 childAspectRatio: isMobile ? 1.5 : 2.8,
                 children: [
-                  const StorefrontLinkCard(),
+                  const RestaurantSettingsCard(),
                   const QuickLinksPanel(),
                   AlertsCard(
                     key: ValueKey('hq-alerts-$franchiseId'),
@@ -123,7 +123,6 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                     key: ValueKey('hq-platform-billing-$franchiseId'),
                     franchiseId: franchiseId,
                   ),
-                  const LiveBrandingPreviewCard(),
                   const MultiBrandOverviewPanel(),
                   FranchiseFinancialKpiCard(
                     key: ValueKey('hq-kpi-$franchiseId'),
@@ -224,7 +223,9 @@ class QuickLinksPanel extends StatelessWidget {
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                        builder: (_) => const StoreOpsScreen(),
+                        builder: (_) => const RestaurantSettingsShellScreen(
+                          initialTabIndex: 2, // Store ops
+                        ),
                       ),
                     );
                   },
@@ -1147,6 +1148,114 @@ class StorefrontLinkCard extends StatelessWidget {
                 padding: const EdgeInsets.all(4),
               ),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// HQ entry for unified Restaurant settings (slice hq-restaurant-settings-v1).
+class RestaurantSettingsCard extends StatelessWidget {
+  const RestaurantSettingsCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final franchiseProvider =
+        Provider.of<shared.FranchiseProvider>(context, listen: true);
+    final franchiseId = franchiseProvider.franchiseId;
+    final theme = Theme.of(context);
+
+    return Card(
+      key: ValueKey(
+        'hq-restaurant-settings-$franchiseId-${franchiseProvider.currentConfigVersion}',
+      ),
+      elevation: DesignTokens.adminCardElevation,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.settings_suggest_outlined,
+                    color: DesignTokens.primaryColor, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Restaurant settings',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Branding, website, hours, ordering & station',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              DesignTokens.currentAppName,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: DesignTokens.primaryColor,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: DesignTokens.primaryColor,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: DesignTokens.cardBorderColor),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: DesignTokens.secondaryColor,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: DesignTokens.cardBorderColor),
+                  ),
+                ),
+              ],
+            ),
+            const Spacer(),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const RestaurantSettingsShellScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.open_in_new, size: 16),
+                label: const Text('Open settings'),
+                style: TextButton.styleFrom(
+                  foregroundColor: DesignTokens.primaryColor,
+                  padding: EdgeInsets.zero,
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+            ),
           ],
         ),
       ),

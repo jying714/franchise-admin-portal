@@ -10,7 +10,13 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 /// Path: franchises/{franchiseId}/config/store_ops
 /// Does not touch BrandingConfig / ui_config / DesignTokens.
 class StoreOpsScreen extends StatefulWidget {
-  const StoreOpsScreen({super.key});
+  /// When true (Restaurant settings → Store ops tab), no AppBar.
+  final bool embeddedInSettingsShell;
+
+  const StoreOpsScreen({
+    super.key,
+    this.embeddedInSettingsShell = false,
+  });
 
   @override
   State<StoreOpsScreen> createState() => _StoreOpsScreenState();
@@ -231,16 +237,18 @@ class _StoreOpsScreenState extends State<StoreOpsScreen> {
 
     return Scaffold(
       backgroundColor: DesignTokens.backgroundColor,
-      appBar: AppBar(
-        elevation: DesignTokens.appBarElevation,
-        backgroundColor: DesignTokens.appBarBackgroundColor,
-        foregroundColor: DesignTokens.appBarForegroundColor,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
-        title: const Text('Tax & hours'),
-      ),
+      appBar: widget.embeddedInSettingsShell
+          ? null
+          : AppBar(
+              elevation: DesignTokens.appBarElevation,
+              backgroundColor: DesignTokens.appBarBackgroundColor,
+              foregroundColor: DesignTokens.appBarForegroundColor,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
+              title: const Text('Tax & hours'),
+            ),
       body: SafeArea(
         child: _loading
             ? const Center(child: CircularProgressIndicator())
