@@ -1,6 +1,6 @@
 // customer_web/lib/features/checkout/checkout_screen.dart
 import 'dart:math';
-
+import '../orders/order_confirmation_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -279,10 +279,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       await fs.updateCart(order.copyWith(items: []));
 
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Order $orderId placed')));
-      Navigator.of(context).popUntil((r) => r.isFirst);
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute<void>(
+          builder: (_) => OrderConfirmationScreen(
+            orderId: orderId,
+            total: total,
+            pickupLabel: 'Pickup',
+          ),
+        ),
+        (route) => route.isFirst,
+      );
       // Optional: push a simple confirmation later
     } catch (e) {
       if (mounted) {

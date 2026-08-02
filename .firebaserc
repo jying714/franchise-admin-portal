@@ -1,0 +1,18 @@
+{
+  "projects": {
+    "default": "doughboyspizzeria-2b3d2"
+  },
+  "targets": {
+    "doughboyspizzeria-2b3d2": {
+      "hosting": {
+        "admin": [
+          "doughboyspizzeria-2b3d2"
+        ],
+        "storefront": [
+          "franchise-storefront"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

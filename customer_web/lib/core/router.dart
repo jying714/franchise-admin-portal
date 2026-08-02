@@ -12,8 +12,13 @@ import '../features/menu/menu_browse_screen.dart';
 GoRouter createCustomerRouter({
   required shared.FranchiseProvider franchiseProvider,
 }) {
+  // Hosting rewrite keeps the browser path; Flutter exposes it here.
+  // Requires usePathUrlStrategy() in main.dart so we don't get /path#/path.
+  var start = WidgetsBinding.instance.platformDispatcher.defaultRouteName;
+  if (start.isEmpty) start = '/';
+
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: start,
     routes: [
       GoRoute(
         path: '/',
