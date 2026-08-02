@@ -1,6 +1,6 @@
 # HANDOFF.md — Agent Context & Project Status
 
-**Last Updated**: August 1, 2026 (~12:40 CDT — POS software pilot on `main`; website next)  
+**Last Updated**: August 1, 2026 (~22:20 CDT — cleanup merged; POS order-detail workspace done; website next)  
 **Hardware**: MINISFORUM AI X1 Pro-470  
 **Active branch**: `main`  
 **Repo**: https://github.com/jying714/franchise-admin-portal  
@@ -14,15 +14,21 @@ Prefer **STATUS.md + this handoff + `docs/slices/*` + `docs/plans/*` + `docs/DEC
 
 ## 1. Where we are
 
-**On `main` and done:** HQ onboarding, Design & Branding, Platform Owner, Admin ops, menu M1–M5 + wings/calzone, mobile design tokens, developer dashboard, customer franchise context (11), Stripe checkout (12), mobile+web residual polish, **thin POS software pilot (14)**.
+**On `main` and done:** HQ onboarding, Design & Branding, Platform Owner, Admin ops, menu M1–M5 + wings/calzone, mobile design tokens, developer dashboard, customer franchise context (11), Stripe checkout (12), mobile+web residual polish, **thin POS software pilot (14)**, **2026-08-01 cleanup** (mobile reduced cards / sub cook / profile / history; HQ+Admin menu search/sort; POS order-detail workspace).
 
 **POS software pilot (merged 2026-08-01):** money truth, PaymentSheet card, closed board/refund, mock print, online intake, HQ `store_ops`, station settings, offline honesty — smoke **PASS**. Feature branch `feat/pos-app-v1` **deleted** after merge.
 
-**Next:** Customer **website** (hard release gate) and/or hardware (Terminal, printers). Staff UI / 86 / large-order remain open.
+**Cleanup (`fix/cleanup-web-mobile-pos` → `main`, same day):**
+- Mobile: reduced category/menu cards, dinner optional-addon pricing, `MenuProfile.sub` cook, order history desc, profile share QR dialog
+- Web: onboarding + Admin menu editor search/sort; dinner optional price in editor sheets
+- POS: live `OrderDetailDialog` — void/comp/partial qty, nested add-on void, add item (entry under dialog), print check/kitchen, closed line refund, source+payment chips
+
+**Next:** Customer **website** (hard release gate) and/or hardware (Terminal, printers). Optional open-ticket discounts. Staff UI / 86 / large-order remain open.
 
 | Item | State |
 |------|--------|
 | Thin POS software pilot | **COMPLETE on main** |
+| POS order-detail workspace | **COMPLETE on main** |
 | HQ Tax & hours (`config/store_ops`) | **Done** |
 | Mobile/POS consumers of store_ops | **Done** |
 | Offline banner + card block | **Done** |
@@ -42,11 +48,19 @@ Prefer **STATUS.md + this handoff + `docs/slices/*` + `docs/plans/*` + `docs/DEC
 | HQ Quick Link | `web-app/lib/admin/hq_owner/owner_hq_dashboard_screen.dart` |
 | store_ops doc | `franchises/{id}/config/store_ops` |
 | POS payment | `pos_app/lib/features/payments/payment_screen.dart` |
-| POS order entry | `pos_app/lib/features/ordering/order_entry_screen.dart` |
+| POS order entry (append via `existingOrderId`) | `pos_app/lib/features/ordering/order_entry_screen.dart` |
+| POS open / closed boards | `pos_app/lib/features/orders/open_orders_screen.dart`, `closed_orders_screen.dart` |
+| POS order detail dialog | `pos_app/lib/features/orders/widgets/order_detail_dialog.dart` |
+| POS line ops (reprice / nested strip / qty split) | `pos_app/lib/features/orders/order_line_ops.dart` |
 | POS home / offline / settings entry | `pos_app/lib/features/home/station_home_screen.dart` |
 | Station settings | `pos_app/lib/features/settings/station_settings_screen.dart` |
 | Card collect | `pos_app/lib/services/card_present_service.dart` |
 | Print mocks | `pos_app/lib/services/print_service.dart` |
+| Mobile category grid / reduced cards | `mobile_app/lib/widgets/categories/category_grid.dart`, `menu_item_card.dart` |
+| Mobile customization / sub cook | `mobile_app/lib/widgets/customization/customization_modal.dart` |
+| MenuProfile.sub | `packages/shared_core/lib/src/core/models/menu_profile_templates.dart` |
+| OrderItem lineStatus | `packages/shared_core/lib/src/core/models/order.dart` |
+| HQ onboarding menu items search/sort | `web-app/lib/admin/hq_owner/onboarding/screens/onboarding_menu_items_screen.dart` |
 | Mobile checkout | `mobile_app/lib/features/ordering/checkout_screen.dart` |
 
 ### Station run
@@ -71,6 +85,7 @@ Card test: `4242 4242 4242 4242`. Franchise needs `paymentsEnabled: true`.
 | R7 | **Customer website** | **Open — next epic** |
 | R8 | Staff bootstrap docs | Open |
 | R9 | Software smoke | **Done** |
+| R10 | Order-detail workspace | **Done** |
 
 ---
 
@@ -82,6 +97,8 @@ Card test: `4242 4242 4242 4242`. Franchise needs `paymentsEnabled: true`.
 - Mobile in-hours → kitchen; closed day blocks place  
 - Offline: no card; banner honesty  
 - No second menu modifier tree; no kitchen-only binary  
+- Line void/comp/refund use `OrderItem.lineStatus` + `OrderLineOps`; detail dialog **streams** order and stays open on line ops  
+- Append to existing order must write full `OrderItem.toMap()` (preserve voided/comped lines)  
 
 ---
 
@@ -96,4 +113,4 @@ Card test: `4242 4242 4242 4242`. Franchise needs `paymentsEnabled: true`.
 
 ---
 
-**Bottom line:** Thin POS **software pilot is on main**. Next build epic is **customer website** (or hardware when available). Do not reopen kitchen-only app scope.
+**Bottom line:** Thin POS **software pilot + order-detail workspace are on main**. Next build epic is **customer website** (or hardware when available). Do not reopen kitchen-only app scope.

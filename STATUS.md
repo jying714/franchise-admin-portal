@@ -1,9 +1,9 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: August 1, 2026 (~12:40 CDT — POS software pilot smoke PASS; `feat/pos-app-v1` merged to `main`)  
+**Last Updated**: August 1, 2026 (~22:20 CDT — cleanup branch merged: mobile UI polish, sub cook profile, HQ menu search/sort, POS order-detail workspace)  
 **Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
 **Branch (active)**: `main`  
-**Main**: All prior MVP slices + **thin POS software pilot** (Decision 14); Hosting deploy on push to `main`
+**Main**: All prior MVP slices + thin POS software pilot + **2026-08-01 cleanup** (mobile / web / POS order workspace); Hosting deploy on push to `main`
 
 > This file is **always loaded in full** by every agent.
 
@@ -12,11 +12,11 @@
 ## Current Phase
 
 **Thin POS software pilot: COMPLETE on `main` (2026-08-01).**  
-Ops + money + mock print + online intake + store_ops + station settings + offline honesty — **pilot smoke PASS** on Android.  
+**Post-pilot cleanup (merged same day):** mobile reduced category/menu cards, dinner optional-addon pricing + visibility, sub menu profile (cook Regular/Crispy), order history desc, profile share-QR dialog; HQ + Admin menu editor search/sort; **POS order-detail workspace** (live dialog, line void/comp/partial qty, nested add-on void, add item under dialog, print check/kitchen, closed line refund, source + payment chips).
 
 **Not product hard-release complete:** customer website, Stripe Terminal hardware, real printers, staff bootstrap polish, formal Phase 14 tablet sign-off packaging.  
 
-**Next product focus:** **Customer website** (hard release gate partner) **or** hardware (Terminal / ESC-POS) when available.  
+**Next product focus:** **Customer website** (hard release gate partner) **or** hardware (Terminal / ESC-POS) when available. Optional: check-level discounts on open POS tickets.  
 
 **Plan authority:** `docs/plans/pos-app-v1-development-plan.md` · `docs/slices/pos-app-v1.md`.  
 Pure kitchen-only app (Decision 13) remains **superseded**.
@@ -31,8 +31,9 @@ Pure kitchen-only app (Decision 13) remains **superseded**.
 | Developer Dashboard v1 | **Done** |
 | Customer franchise context v1 | **COMPLETE** |
 | Stripe checkout v1 (Connect) | **COMPLETE** |
-| Mobile + web residual polish | **COMPLETE** |
+| Mobile + web residual polish | **COMPLETE** + 2026-08-01 UI polish |
 | **Thin POS (`pos_app`) software pilot** | **COMPLETE on `main`** |
+| **POS order-detail workspace** | **COMPLETE on `main`** (void/comp/add/print/line refund) |
 | Kitchen-only app | **Superseded** |
 | Customer website | **Not started** (hard release gate) |
 
@@ -54,6 +55,35 @@ Pure kitchen-only app (Decision 13) remains **superseded**.
 - [x] Pilot smoke script (software) **PASS** 2026-08-01
 - [x] Branch `feat/pos-app-v1` merged to `main`; feature branch deleted
 
+### Completed (locked) — 2026-08-01 cleanup (`fix/cleanup-web-mobile-pos` → `main`)
+
+**Mobile**
+- [x] Category grid: reduced (no-image) cards merge into continuous 2-col slots (stacked pairs fill empty cells)
+- [x] Menu item reduced card: slim layout (qty right of title; actions below)
+- [x] Dinner included ingredients stay visible when empty; optional add-ons price via `_resolveExtraIngredientPrice`
+- [x] Order history descending (newest first)
+- [x] Profile: loyalty → contact → change restaurant → share franchise (QR dialog) → rest
+- [x] **Sub menu profile** (`MenuProfile.sub`) — Cook Regular (default) / Crispy; modal bridge; optional add-ons same pattern as dinners
+
+**Web**
+- [x] HQ onboarding step 4 menu items: local search + sort (name A–Z / sortOrder); reorder gated when filtered
+- [x] Admin menu editor parity (search + sort)
+- [x] Dinner optional-addon price wiring in HQ + Admin `MenuItemEditorSheet`
+
+**POS order-detail workspace**
+- [x] Large `OrderDetailDialog` streams order doc (stays open on line ops)
+- [x] Line void / comp; partial qty split; nested add-on void (POS group maps + mobile keys)
+- [x] Manager PIN for void/comp/refund
+- [x] Add item → `OrderEntryScreen(existingOrderId:)` under dialog; append preserves `lineStatus`
+- [x] Print guest check + reprint kitchen (open + closed)
+- [x] Closed line refund (cash skeleton) + whole-order refund
+- [x] Closed list: **source** + **payment method** chips (MOBILE + CASH/CARD/SPLIT)
+- [x] Paths: `pos_app/lib/features/orders/widgets/order_detail_dialog.dart`, `order_line_ops.dart`
+
+**Shared**
+- [x] `OrderItem.lineStatus` + void/comp audit fields; `effectiveLineTotal`
+- [x] `MenuProfile.sub` template seed
+
 ### Pilot smoke script (software) — PASS 2026-08-01
 
 - [x] PIN unlock → home
@@ -67,15 +97,16 @@ Pure kitchen-only app (Decision 13) remains **superseded**.
 - [x] Airplane mode → banner; Card disabled; cash still offered
 - [x] Refund paid cash order from Closed (re-PIN)
 
-### Active focus — after POS software pilot
+### Active focus — after POS software pilot + cleanup
 
 | Priority | Work | Notes |
 |----------|------|--------|
 | **1** | **Customer website** | Hard release gate; same pay + in-hours → kitchen rules |
 | **2** | Staff bootstrap docs (R8) | PIN seed, claims, dart-defines runbook |
 | **3** | Stripe Terminal / real printers (R3/R4) | When hardware available; mock stays fallback |
-| **4** | Staff/driver UI, 86, large-order (Phases 8–9) | Models exist |
-| **5** | Formal tablet pilot packaging (R9 residual) | Optional sign-off on production tablet |
+| **4** | Optional: open-ticket check/item discounts | Beyond payment-time discount |
+| **5** | Staff/driver UI, 86, large-order (Phases 8–9) | Models exist |
+| **6** | Formal tablet pilot packaging (R9 residual) | Optional sign-off on production tablet |
 
 **Hard release gate:** Thin POS (**software done**) + **customer website** + polished mobile + web management.
 
@@ -94,8 +125,9 @@ Pure kitchen-only app (Decision 13) remains **superseded**.
 | 12 | Settings | **PASS (read-only station)** |
 | 13 | Offline honesty | **PASS (banner + block card)** |
 | 14 | Pilot QA software | **PASS** 2026-08-01 |
+| — | Order-detail workspace (void/comp/add/print/line refund) | **PASS** 2026-08-01 |
 
-### Residual list (updated 2026-08-01)
+### Residual list (updated 2026-08-01 evening)
 
 | ID | Item | Status |
 |----|------|--------|
@@ -108,6 +140,7 @@ Pure kitchen-only app (Decision 13) remains **superseded**.
 | R7 | Customer website MVP | **Open** — **next product epic** |
 | R8 | Staff bootstrap documented | **Open** (partial) |
 | R9 | Phase 14 software smoke | **Done**; production-tablet packaging optional |
+| R10 | Order-detail workspace | **Done** |
 
 **Firestore path (locked):** `franchises/{franchiseId}/config/store_ops`  
 Fields: `taxRate` (decimal), `hours.{mon…sun}.{openHour,openMinute,closeHour,closeMinute,closed}`.
@@ -136,6 +169,8 @@ PowerShell: single-line dart-defines preferred (backtick glue breaks franchise b
 ### Decision locks (do not regress)
 
 Decision 11 / 12 / 14: franchise bind, dual Stripe, thin POS not kitchen-only, manager void/refund, order `source`, no second menu modifier tree, carry-out pays at pickup.
+
+**Order lines:** `OrderItem.lineStatus` (`active` / `voided` / `comped`); totals use `effectiveLineTotal`. Nested void strips POS group-key lists and mobile `selectedAddOns` / `currentIngredients`.
 
 **Windows desktop Firebase CMake:** prefer **Android** for station smoke.
 
