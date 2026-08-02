@@ -104,8 +104,20 @@ service cloud.firestore {
 
       // === POS station (Decision 14) ===
       // Nested config docs (one-level {collection}/{doc} does not cover these).
+            // Public read for storefront/customer/POS display config.
+      // Write remains HQ / franchise owner only.
       match /config/{configDocId} {
-        allow read, write: if isHqOwner() || isFranchiseOwner(franchiseId);
+        allow read: if configDocId in [
+              'store_ops',
+              'storefront',
+              'ui_config',
+              'features',
+              'pos'
+            ]
+            || isHqOwner()
+            || isFranchiseOwner(franchiseId)
+            || isPosStation(franchiseId);
+        allow write: if isHqOwner() || isFranchiseOwner(franchiseId);
       }
 
       // Explicit POS collections (same gate as generic one-level match;

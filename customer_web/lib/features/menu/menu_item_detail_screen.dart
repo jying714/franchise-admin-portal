@@ -1,5 +1,6 @@
 // customer_web/lib/features/menu/menu_item_detail_screen.dart
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:firebase_auth/firebase_auth.dart';
@@ -27,7 +28,146 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
   /// groupId → selected option ids (multi where maxSelectable > 1).
   final Map<String, Set<String>> _selectedByGroup = {};
 
+  /// ingredientId → typeId (from ingredient_metadata)
+  Map<String, String> _ingredientTypeId = {};
+
+  /// typeId → display name (from ingredient_types)
+  Map<String, String> _typeLabels = {};
+
+  bool _typesLoaded = false;
+  String? _typesForFranchiseId;
+
   shared.MenuItem get item => widget.item;
+
+  Future<void> _loadTypeMaps(String franchiseId) async {
+    if (franchiseId.isEmpty || franchiseId == 'unknown') return;
+    try {
+      final metaSnap = await FirebaseFirestore.instance
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('ingredient_metadata')
+          .get();
+      final typeSnap = await FirebaseFirestore.instance
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('ingredient_types')
+          .get();
+
+      final ingredientTypeId = <String, String>{};
+      for (final doc in metaSnap.docs) {
+        final d = doc.data();
+        final typeId = (d['typeId'] ?? d['type'] ?? '').toString().trim();
+        if (typeId.isEmpty) continue;
+        ingredientTypeId[doc.id] = typeId;
+        final altId = (d['ingredientId'] ?? d['id'] ?? '').toString().trim();
+        if (altId.isNotEmpty) ingredientTypeId[altId] = typeId;
+      }
+
+      final typeLabels = <String, String>{};
+      for (final doc in typeSnap.docs) {
+        final d = doc.data();
+        final name = (d['name'] ?? d['label'] ?? doc.id).toString().trim();
+        typeLabels[doc.id] = name.isEmpty ? doc.id : name;
+        final tid = (d['typeId'] ?? d['id'] ?? '').toString().trim();
+        if (tid.isNotEmpty) typeLabels[tid] = name.isEmpty ? tid : name;
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _ingredientTypeId = {..._ingredientTypeId, ...ingredientTypeId};
+        _typeLabels = {..._typeLabels, ...typeLabels};
+        _typesLoaded = true;
+      });
+    } catch (e) {
+      debugPrint('[menu] type maps: $e');
+      if (mounted) setState(() => _typesLoaded = true);
+    }
+  }
+
+  void _seedTypesFromItem() {
+    void ingest(List<Map<String, dynamic>>? list) {
+      if (list == null) return;
+      for (final e in list) {
+        final typeId = (e['typeId'] ?? e['type'] ?? '').toString().trim();
+        if (typeId.isEmpty) continue;
+        final id = (e['ingredientId'] ?? e['id'] ?? '').toString().trim();
+        if (id.isEmpty) continue;
+        _ingredientTypeId[id] = typeId;
+        _ingredientTypeId[id.toLowerCase()] = typeId;
+        // addon_pepperoni style ids used on modifier options
+        _ingredientTypeId['addon_$id'] = typeId;
+      }
+    }
+
+    ingest(item.optionalAddOns);
+    ingest(item.includedIngredients);
+
+    for (final typeId in _ingredientTypeId.values.toSet()) {
+      _typeLabels.putIfAbsent(typeId, () => _displayTypeName(typeId));
+    }
+  }
+
+  /// Item groups + missing structural groups from menu profile templates.
+  List<shared.ModifierGroup> get _groupsForUi {
+    final existing = item.effectiveModifierGroups;
+    final profile = item.effectiveMenuProfile.toLowerCase();
+
+    final needStructural =
+        profile == shared.MenuProfile.pizza ||
+        profile == shared.MenuProfile.calzone ||
+        profile == shared.MenuProfile.sub;
+    if (!needStructural) return existing;
+
+    final seeded = shared.MenuProfileTemplates.seedGroups(profile);
+    final have = existing.map((g) => g.id.toLowerCase()).toSet();
+    const structuralIds = {'crust', 'cook', 'cut'};
+
+    final missing = <shared.ModifierGroup>[];
+    for (final g in seeded) {
+      if (!structuralIds.contains(g.id.toLowerCase())) continue;
+      if (have.contains(g.id.toLowerCase())) continue;
+      if (g.options.isEmpty) continue;
+      missing.add(g);
+    }
+    if (missing.isEmpty) return existing;
+
+    final merged = [...missing, ...existing];
+    merged.sort((a, b) => (a.sortOrder ?? 999).compareTo(b.sortOrder ?? 999));
+    return merged;
+  }
+
+  String _displayTypeName(String typeId) {
+    switch (typeId.toLowerCase()) {
+      case 'meats':
+      case 'meat':
+        return 'Meats';
+      case 'veggies':
+      case 'veggie':
+      case 'vegetables':
+        return 'Veggies';
+      case 'cheeses':
+      case 'cheese':
+        return 'Cheeses';
+      case 'sauces':
+      case 'sauce':
+        return 'Sauces';
+      case 'toppings':
+      case 'topping':
+        return 'Toppings';
+      case 'proteins':
+      case 'protein':
+        return 'Proteins';
+      default:
+        return typeId
+            .split(RegExp(r'[-_]'))
+            .map(
+              (w) => w.isEmpty
+                  ? w
+                  : '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}',
+            )
+            .join(' ');
+    }
+  }
 
   @override
   void initState() {
@@ -41,7 +181,9 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
       _selectedSize = null;
     }
 
-    for (final g in item.effectiveModifierGroups) {
+    _seedTypesFromItem();
+
+    for (final g in _groupsForUi) {
       final defaults = <String>{};
       for (final o in g.options) {
         if (o.defaultSelected) defaults.add(o.id);
@@ -102,7 +244,7 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
 
   double get _unitPrice {
     var total = _baseSizePrice;
-    for (final g in item.effectiveModifierGroups) {
+    for (final g in _groupsForUi) {
       final selectedIds = _selectedByGroup[g.id] ?? const <String>{};
       if (selectedIds.isEmpty) continue;
 
@@ -120,8 +262,184 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
     return total;
   }
 
+  String _typeSectionLabel(shared.ModifierOption opt) {
+    final ing = (opt.ingredientId ?? '').trim();
+    final key = ing.isNotEmpty ? ing : opt.id.trim();
+
+    final typeId =
+        _ingredientTypeId[key] ?? _ingredientTypeId[key.toLowerCase()] ?? '';
+
+    if (typeId.isNotEmpty) {
+      final label =
+          _typeLabels[typeId] ?? _typeLabels[typeId.toLowerCase()] ?? typeId;
+      // Title-case slug if needed
+      if (label == typeId && typeId.contains('-')) {
+        return typeId
+            .split(RegExp(r'[-_]'))
+            .map(
+              (w) => w.isEmpty
+                  ? w
+                  : '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}',
+            )
+            .join(' ');
+      }
+      // Normalize common ids to display names if type doc missing name
+      switch (typeId.toLowerCase()) {
+        case 'meats':
+        case 'meat':
+          return 'Meats';
+        case 'veggies':
+        case 'veggie':
+        case 'vegetables':
+          return 'Veggies';
+        case 'cheeses':
+        case 'cheese':
+          return 'Cheeses';
+        case 'toppings':
+        case 'topping':
+          return 'Toppings';
+        case 'proteins':
+        case 'protein':
+          return 'Proteins';
+        default:
+          return label;
+      }
+    }
+
+    // Label-only structural options (cook/crust) — no section spam
+    if (opt.isLabelOnly) return 'Options';
+    return 'Other';
+  }
+
+  bool _isStructuralGroup(shared.ModifierGroup group) {
+    final id = group.id.toLowerCase().trim();
+    final label = group.label.toLowerCase().trim();
+    const keys = <String>[
+      'cook',
+      'cut',
+      'crust',
+      'temp',
+      'temperature',
+      'doneness',
+      'size',
+      'sauce', // single sauce pick often structural for pizza
+    ];
+    for (final k in keys) {
+      if (id == k ||
+          id.startsWith('${k}_') ||
+          id.endsWith('_$k') ||
+          label == k ||
+          label.startsWith('$k ') ||
+          label.endsWith(' $k')) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Section only when multi-select AND ≥2 options map to real ingredient types.
+  bool _shouldSectionGroup(shared.ModifierGroup group) {
+    if (_isStructuralGroup(group)) return false;
+    if (group.selectMode == shared.ModifierSelectMode.single) return false;
+    if (group.max <= 1) return false;
+
+    final resolvedTypeLabels = <String>{};
+    for (final o in group.options) {
+      final ing = (o.ingredientId ?? '').trim();
+      final key = ing.isNotEmpty ? ing : o.id.trim();
+      if (key.isEmpty) continue;
+
+      final typeId =
+          _ingredientTypeId[key] ?? _ingredientTypeId[key.toLowerCase()];
+      if (typeId == null || typeId.isEmpty) continue;
+
+      resolvedTypeLabels.add(_typeSectionLabel(o));
+    }
+    return resolvedTypeLabels.length >= 2;
+  }
+
+  Widget _buildGroupOptions(BuildContext context, shared.ModifierGroup group) {
+    final useSections = _shouldSectionGroup(group);
+
+    FilterChip chipFor(shared.ModifierOption opt) {
+      final delta = _optionDelta(opt);
+      return FilterChip(
+        label: Text(
+          delta != 0
+              ? '${opt.label} (+\$${delta.toStringAsFixed(2)})'
+              : opt.label,
+        ),
+        selected: _selectedByGroup[group.id]?.contains(opt.id) ?? false,
+        onSelected: (_) => _toggleOption(group, opt.id),
+      );
+    }
+
+    if (!useSections) {
+      return Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [for (final opt in group.options) chipFor(opt)],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final section in _optionsByType(group.options)) ...[
+          Padding(
+            padding: const EdgeInsets.only(top: 12, bottom: 6),
+            child: Text(
+              section.key,
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+            ),
+          ),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [for (final opt in section.value) chipFor(opt)],
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// Stable display order for known sections; unknown labels sort after.
+  int _sectionSortKey(String label) {
+    const order = [
+      'Meats',
+      'Veggies',
+      'Cheeses',
+      'Proteins',
+      'Sauces',
+      'Toppings',
+      'Options',
+      'Other',
+    ];
+    final i = order.indexWhere((o) => o.toLowerCase() == label.toLowerCase());
+    return i < 0 ? 100 : i;
+  }
+
+  List<MapEntry<String, List<shared.ModifierOption>>> _optionsByType(
+    List<shared.ModifierOption> options,
+  ) {
+    final map = <String, List<shared.ModifierOption>>{};
+    for (final o in options) {
+      final label = _typeSectionLabel(o);
+      map.putIfAbsent(label, () => []).add(o);
+    }
+    final entries = map.entries.toList()
+      ..sort((a, b) {
+        final c = _sectionSortKey(a.key).compareTo(_sectionSortKey(b.key));
+        if (c != 0) return c;
+        return a.key.compareTo(b.key);
+      });
+    return entries;
+  }
+
   String? _validateSelections() {
-    for (final g in item.effectiveModifierGroups) {
+    for (final g in _groupsForUi) {
       final n = _selectedByGroup[g.id]?.length ?? 0;
       if (g.min > 0 && n < g.min) {
         return 'Select at least ${g.min} for ${g.label}';
@@ -146,7 +464,7 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
       );
     }
 
-    for (final g in item.effectiveModifierGroups) {
+    for (final g in _groupsForUi) {
       final selected = _selectedByGroup[g.id] ?? const <String>{};
       for (final opt in g.options) {
         if (!selected.contains(opt.id)) continue;
@@ -260,8 +578,18 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final groups = item.effectiveModifierGroups;
+    final groups = _groupsForUi;
     final sizes = _sizeLabels;
+
+    final fp = Provider.of<shared.FranchiseProvider>(context, listen: false);
+    final franchiseId = fp.currentFranchiseId;
+    if (_typesForFranchiseId != franchiseId) {
+      _typesForFranchiseId = franchiseId;
+      _typesLoaded = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadTypeMaps(franchiseId);
+      });
+    }
 
     return BrandingShell(
       actions: [
@@ -337,25 +665,7 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final opt in group.options)
-                  FilterChip(
-                    label: Text(() {
-                      final delta = _optionDelta(opt);
-                      if (delta != 0) {
-                        return '${opt.label} (+\$${delta.toStringAsFixed(2)})';
-                      }
-                      return opt.label;
-                    }()),
-                    selected:
-                        _selectedByGroup[group.id]?.contains(opt.id) ?? false,
-                    onSelected: (_) => _toggleOption(group, opt.id),
-                  ),
-              ],
-            ),
+            _buildGroupOptions(context, group),
           ],
           const SizedBox(height: 24),
           Row(
