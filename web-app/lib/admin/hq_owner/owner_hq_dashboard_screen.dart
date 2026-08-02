@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
@@ -1041,89 +1042,111 @@ class StorefrontLinkCard extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(Icons.storefront_outlined,
-                    color: DesignTokens.primaryColor, size: 20),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Customer website',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.storefront_outlined,
+                          color: DesignTokens.primaryColor, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Customer website',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    canLink
+                        ? 'Share this link or QR for online ordering.'
+                        : 'Select a franchise to get the storefront link.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              canLink
-                  ? 'Share this link or QR for online ordering.'
-                  : 'Select a franchise to get the storefront link.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+                  const SizedBox(height: 8),
+                  if (url != null)
+                    SelectableText(
+                      url,
+                      maxLines: 2,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontFamily: 'monospace',
+                        color: DesignTokens.primaryColor,
+                      ),
+                    ),
+                  const Spacer(),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      TextButton.icon(
+                        onPressed: url == null
+                            ? null
+                            : () async {
+                                await Clipboard.setData(
+                                    ClipboardData(text: url));
+                                if (!context.mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text('Storefront link copied')),
+                                );
+                              },
+                        icon: const Icon(Icons.copy, size: 16),
+                        label: const Text('Copy link'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: DesignTokens.primaryColor,
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: url == null
+                            ? null
+                            : () async {
+                                final uri = Uri.parse(url);
+                                final ok = await launchUrl(
+                                  uri,
+                                  webOnlyWindowName: '_blank',
+                                );
+                                if (!ok && context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content:
+                                            Text('Could not open storefront')),
+                                  );
+                                }
+                              },
+                        icon: const Icon(Icons.open_in_new, size: 16),
+                        label: const Text('Open'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: DesignTokens.primaryColor,
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 8),
-            if (url != null)
-              SelectableText(
-                url,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontFamily: 'monospace',
-                  color: DesignTokens.primaryColor,
-                ),
+            if (url != null) ...[
+              const SizedBox(width: 12),
+              QrImageView(
+                data: url,
+                version: QrVersions.auto,
+                size: 88,
+                backgroundColor: Colors.white,
+                padding: const EdgeInsets.all(4),
               ),
-            const Spacer(),
-            Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              children: [
-                TextButton.icon(
-                  onPressed: url == null
-                      ? null
-                      : () async {
-                          await Clipboard.setData(ClipboardData(text: url));
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Storefront link copied')),
-                          );
-                        },
-                  icon: const Icon(Icons.copy, size: 16),
-                  label: const Text('Copy link'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: DesignTokens.primaryColor,
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ),
-                TextButton.icon(
-                  onPressed: url == null
-                      ? null
-                      : () async {
-                          final uri = Uri.parse(url);
-                          final ok =
-                              await launchUrl(uri, webOnlyWindowName: '_blank');
-                          if (!ok && context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text('Could not open storefront')),
-                            );
-                          }
-                        },
-                  icon: const Icon(Icons.open_in_new, size: 16),
-                  label: const Text('Open'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: DesignTokens.primaryColor,
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ),
-              ],
-            ),
+            ],
           ],
         ),
       ),

@@ -57,8 +57,39 @@ GoRouter createCustomerRouter({
   );
 }
 
-class _LandingScreen extends StatelessWidget {
+class _LandingScreen extends StatefulWidget {
   const _LandingScreen();
+
+  @override
+  State<_LandingScreen> createState() => _LandingScreenState();
+}
+
+class _LandingScreenState extends State<_LandingScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _tryBindFromBrowser());
+  }
+
+  void _tryBindFromBrowser() {
+    if (!mounted) return;
+
+    // Prefer hash: /#/f/{id}
+    final frag = Uri.base.fragment.trim();
+    if (frag.isNotEmpty) {
+      final route = frag.startsWith('/') ? frag : '/$frag';
+      if (route.startsWith('/f/')) {
+        context.go(route);
+        return;
+      }
+    }
+
+    // Path-only QR / paste: /f/{id}
+    final path = Uri.base.path;
+    if (path.startsWith('/f/')) {
+      context.go(path);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,15 +109,8 @@ class _LandingScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Open a restaurant link or scan a QR code.\n'
-                'Example: /f/{franchiseId}',
+                'Open a restaurant link or scan a QR code from your franchise HQ.',
                 textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              // Dev-only convenience — remove or gate before production polish.
-              FilledButton(
-                onPressed: () => context.go('/f/doughboyspizzeria'),
-                child: const Text('Dev: open Doughboys'),
               ),
             ],
           ),
