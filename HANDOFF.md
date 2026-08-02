@@ -1,12 +1,13 @@
 # HANDOFF.md — Agent Context & Project Status
 
-**Last Updated**: August 1, 2026 (~22:20 CDT — cleanup merged; POS order-detail workspace done; website next)  
+**Last Updated**: August 1, 2026 (~22:40 CDT — customer_web scaffold; website epic next)  
 **Hardware**: MINISFORUM AI X1 Pro-470  
 **Active branch**: `main`  
 **Repo**: https://github.com/jying714/franchise-admin-portal  
 **Local path**: `C:\\projects\\franchise-admin-portal`  
 **Firebase**: `doughboyspizzeria-2b3d2`  
-**Live web**: franchisehq.io (Deploy Web on push to `main` only)
+**Live web (Admin/HQ)**: franchisehq.io (Deploy Web on push to `main` only)  
+**Customer site host**: TBD (intent: separate from Admin shell, e.g. `order.franchisehq.io`)
 
 Prefer **STATUS.md + this handoff + `docs/slices/*` + `docs/plans/*` + `docs/DECISIONS.md`** over agent memory.
 
@@ -14,29 +15,22 @@ Prefer **STATUS.md + this handoff + `docs/slices/*` + `docs/plans/*` + `docs/DEC
 
 ## 1. Where we are
 
-**On `main` and done:** HQ onboarding, Design & Branding, Platform Owner, Admin ops, menu M1–M5 + wings/calzone, mobile design tokens, developer dashboard, customer franchise context (11), Stripe checkout (12), mobile+web residual polish, **thin POS software pilot (14)**, **2026-08-01 cleanup** (mobile reduced cards / sub cook / profile / history; HQ+Admin menu search/sort; POS order-detail workspace).
+**On `main` and done:** HQ onboarding, Design & Branding, Platform Owner, Admin ops, menu M1–M5, mobile tokens, developer dashboard, customer franchise context (11), Stripe Connect (12), POS software pilot + order-detail workspace (14), 2026-08-01 mobile/web/POS cleanup.
 
-**POS software pilot (merged 2026-08-01):** money truth, PaymentSheet card, closed board/refund, mock print, online intake, HQ `store_ops`, station settings, offline honesty — smoke **PASS**. Feature branch `feat/pos-app-v1` **deleted** after merge.
-
-**Cleanup (`fix/cleanup-web-mobile-pos` → `main`, same day):**
-- Mobile: reduced category/menu cards, dinner optional-addon pricing, `MenuProfile.sub` cook, order history desc, profile share QR dialog
-- Web: onboarding + Admin menu editor search/sort; dinner optional price in editor sheets
-- POS: live `OrderDetailDialog` — void/comp/partial qty, nested add-on void, add item (entry under dialog), print check/kitchen, closed line refund, source+payment chips
-
-**Next:** Customer **website** (hard release gate) and/or hardware (Terminal, printers). Optional open-ticket discounts. Staff UI / 86 / large-order remain open.
+**Next epic: Customer website**
+- Path: **`customer_web/`** — top-level Flutter **web** app (sibling to `mobile_app` / `pos_app` / `web-app`)
+- Slice: **`docs/slices/customer-website-v1.md`**
+- Scaffold script: **`scripts/scaffold_customer_web.ps1`** (empty feature files only)
+- **Implementation not started** — wire `shared_core`, `/f/{slug}` bind, menu, auth, checkout, Hosting target still open
 
 | Item | State |
 |------|--------|
 | Thin POS software pilot | **COMPLETE on main** |
 | POS order-detail workspace | **COMPLETE on main** |
-| HQ Tax & hours (`config/store_ops`) | **Done** |
-| Mobile/POS consumers of store_ops | **Done** |
-| Offline banner + card block | **Done** |
-| Station settings (AppBar) | **Done** |
+| Customer website | **Scaffold only** — next build |
 | Stripe Terminal / real print | **Open** |
-| Customer website | **Not started** |
 
-**Hard release gate:** Thin POS (software **done**) + customer website + polished mobile + web.
+**Hard release gate:** Thin POS (software **done**) + **customer website** + polished mobile + web.
 
 ---
 
@@ -44,47 +38,42 @@ Prefer **STATUS.md + this handoff + `docs/slices/*` + `docs/plans/*` + `docs/DEC
 
 | Surface | Path |
 |---------|------|
+| **Customer website app** | `customer_web/` |
+| **Customer website slice** | `docs/slices/customer-website-v1.md` |
+| Scaffold script | `scripts/scaffold_customer_web.ps1` |
 | HQ Tax & hours | `web-app/lib/admin/hq_owner/screens/store_ops_screen.dart` |
-| HQ Quick Link | `web-app/lib/admin/hq_owner/owner_hq_dashboard_screen.dart` |
-| store_ops doc | `franchises/{id}/config/store_ops` |
-| POS payment | `pos_app/lib/features/payments/payment_screen.dart` |
-| POS order entry (append via `existingOrderId`) | `pos_app/lib/features/ordering/order_entry_screen.dart` |
-| POS open / closed boards | `pos_app/lib/features/orders/open_orders_screen.dart`, `closed_orders_screen.dart` |
-| POS order detail dialog | `pos_app/lib/features/orders/widgets/order_detail_dialog.dart` |
-| POS line ops (reprice / nested strip / qty split) | `pos_app/lib/features/orders/order_line_ops.dart` |
-| POS home / offline / settings entry | `pos_app/lib/features/home/station_home_screen.dart` |
-| Station settings | `pos_app/lib/features/settings/station_settings_screen.dart` |
-| Card collect | `pos_app/lib/services/card_present_service.dart` |
-| Print mocks | `pos_app/lib/services/print_service.dart` |
-| Mobile category grid / reduced cards | `mobile_app/lib/widgets/categories/category_grid.dart`, `menu_item_card.dart` |
-| Mobile customization / sub cook | `mobile_app/lib/widgets/customization/customization_modal.dart` |
+| POS order detail | `pos_app/lib/features/orders/widgets/order_detail_dialog.dart` |
+| POS line ops | `pos_app/lib/features/orders/order_line_ops.dart` |
+| shared_core orders / lineStatus | `packages/shared_core/lib/src/core/models/order.dart` |
 | MenuProfile.sub | `packages/shared_core/lib/src/core/models/menu_profile_templates.dart` |
-| OrderItem lineStatus | `packages/shared_core/lib/src/core/models/order.dart` |
-| HQ onboarding menu items search/sort | `web-app/lib/admin/hq_owner/onboarding/screens/onboarding_menu_items_screen.dart` |
-| Mobile checkout | `mobile_app/lib/features/ordering/checkout_screen.dart` |
+| Mobile checkout (parity reference) | `mobile_app/lib/features/ordering/checkout_screen.dart` |
 
-### Station run
+### Customer website local (when implementing)
+
+```powershell
+cd C:\projects\franchise-admin-portal\customer_web
+flutter create --platforms=web --project-name customer_web .   # if not already
+powershell -ExecutionPolicy Bypass -File ..\scripts\scaffold_customer_web.ps1
+# then: path dependency on packages/shared_core in pubspec.yaml
+flutter run -d chrome
+```
+
+### Station run (POS)
 
 ```powershell
 cd C:\projects\franchise-admin-portal\pos_app
 flutter run -d <deviceId> --dart-define=STRIPE_PK=pk_test_... --dart-define=STATION_FRANCHISE_ID=doughboyspizzeria --dart-define=STATION_AUTH_EMAIL=... --dart-define=STATION_AUTH_PASSWORD=...
 ```
 
-Card test: `4242 4242 4242 4242`. Franchise needs `paymentsEnabled: true`.
-
 ---
 
-## 3. Residual (post software pilot)
+## 3. Residual
 
 | ID | Residual | Status |
 |----|----------|--------|
-| R1–R2 | Tax + hours config | **Done** |
-| R3 | Terminal | Open |
-| R4 | Real printers | Open |
-| R5–R6 | Offline + settings | **Done** |
-| R7 | **Customer website** | **Open — next epic** |
+| R7 | **Customer website** | Scaffold started; product build **next** |
+| R3–R4 | Terminal / printers | Open |
 | R8 | Staff bootstrap docs | Open |
-| R9 | Software smoke | **Done** |
 | R10 | Order-detail workspace | **Done** |
 
 ---
@@ -92,25 +81,24 @@ Card test: `4242 4242 4242 4242`. Franchise needs `paymentsEnabled: true`.
 ## 4. Locks (do not regress)
 
 - Station = `pos_app` only  
-- Carry-out pays at pickup  
-- store_ops path for tax/hours  
-- Mobile in-hours → kitchen; closed day blocks place  
-- Offline: no card; banner honesty  
-- No second menu modifier tree; no kitchen-only binary  
-- Line void/comp/refund use `OrderItem.lineStatus` + `OrderLineOps`; detail dialog **streams** order and stays open on line ops  
-- Append to existing order must write full `OrderItem.toMap()` (preserve voided/comped lines)  
+- Customer storefront = **`customer_web`**, not Admin `web-app` routes  
+- One website app; franchise bind via URL slug/path; no per-franchise Hosting project for MVP  
+- Decision 11 rules: browse signed-out; cart/checkout authed; clear cart on franchise switch  
+- Orders from site: `source: 'web'`  
+- No second menu modifier tree  
+- POS line void/comp via `lineStatus` + stream detail dialog  
 
 ---
 
 ## 5. Key references
 
 - `STATUS.md`  
-- `docs/DECISIONS.md` (Decision **14**)  
+- `docs/DECISIONS.md` (11, 12, **14**)  
+- `docs/slices/customer-website-v1.md`  
 - `docs/slices/pos-app-v1.md`  
-- `docs/plans/pos-app-v1-development-plan.md`  
+- `docs/slices/customer-franchise-context-v1.md`  
 - `docs/slices/stripe-checkout-v1.md`  
-- `docs/architecture/firestore-per-franchise-config.md`
 
 ---
 
-**Bottom line:** Thin POS **software pilot + order-detail workspace are on main**. Next build epic is **customer website** (or hardware when available). Do not reopen kitchen-only app scope.
+**Bottom line:** POS pilot + order workspace are on **main**. **Build `customer_web` next** (hard release). Do not put customer ordering inside the Admin shell.
