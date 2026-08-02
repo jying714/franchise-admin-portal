@@ -1,10 +1,10 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: August 2, 2026 (~12:30 CDT — HQ Restaurant settings slice locked; customer_web on main)  
-**Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
-**Branch (active)**: **`main`**  
+**Last Updated**: August 2, 2026 (~14:00 CDT — HQ Restaurant settings v1 nearly complete on feature branch)  
+**Hardware**: MINISFORUM AI X1 Pro-470  
+**Branch (active work)**: **`feat/hq-restaurant-settings-v1`**  
+**Main**: customer_web MVP path + prior HQ/Admin/POS; merge Restaurant settings when human gates  
 **Firebase**: `doughboyspizzeria-2b3d2`  
-**Admin/HQ**: franchisehq.io  
 **Storefront**: https://franchise-storefront.web.app
 
 > This file is **always loaded in full** by every agent.
@@ -16,37 +16,44 @@
 | Area | State |
 |------|--------|
 | HQ / Admin / menu / mobile / POS pilot | **On main** |
-| **Customer website MVP path** | **On main** (bind → menu → auth → cart → Connect → POS `source: web`) |
-| **Customer web parity + brand storefront** | Plan locked: `docs/plans/customer-web-parity-brand-storefront-v1.md` |
-| **HQ Restaurant settings** | **Slice locked — not started:** `docs/slices/hq-restaurant-settings-v1.md` |
+| Customer website MVP path | **On main** |
+| **HQ Restaurant settings v1** | **S0–S9 done** on `feat/hq-restaurant-settings-v1` — merge residual |
+| customer_web parity + brand storefront | Plan locked; **not started** |
 
-### HQ Restaurant settings (next HQ work)
+### HQ Restaurant settings (feat/hq-restaurant-settings-v1)
 
-- **One card:** Restaurant settings (absorbs Design & Branding + Customer website entry + Tax & hours).  
-- **Shell:** top tabs — Brand · Website · Store ops · Channels · Payments · Station · Contact.  
-- Feature Setup onboarding **unchanged** until shell complete.  
-- POS tab **now** (stub unimplemented fields).
+**One card:** Restaurant settings → shell with top tabs:
 
-### Customer website (baseline on main)
+| Tab | Status |
+|-----|--------|
+| Brand | DesignBrandingScreen embedded |
+| Website | URL/QR + Save → `config/storefront` |
+| Store ops | Tax, hours, delivery, pickup, online intake, **timezone dropdown** |
+| Channels | `config/features` toggles |
+| Payments | Stripe Connect setup/refresh |
+| Station | `config/pos` + printer/tip stubs |
+| Contact | public address/phone/email/map |
 
-| Capability | State |
-|------------|--------|
-| `/f/{franchiseId}` + Hosting storefront | **Done** |
-| Menu + Phase 4b pricing + cart/checkout | **Done** |
-| HQ StorefrontLinkCard (URL/QR) | **Done** (to move under Restaurant settings → Website) |
+**HQ cleanup:** Customer website card removed from grid; Quick Links Tax & hours → Store ops tab.
 
-**Parity wave (not started):** category-first menu, full customize, delivery, promos, loyalty, marketing home — see parity plan.
+**Authority:** `docs/slices/hq-restaurant-settings-v1.md`
 
-### Active focus (priority)
+### Remaining (this branch)
+
+- [ ] Human merge → `main`  
+- [ ] Optional: FAQ/gallery/careers fields on Website panel  
+- [ ] Optional: delete dead `StorefrontLinkCard` / `LiveBrandingPreviewCard` code if still in dashboard file  
+- [ ] Feature Setup onboarding deep-link (**deferred**)  
+
+### Next product (after merge)
 
 | Priority | Work |
 |----------|------|
-| **1** | **HQ Restaurant settings v1** (shell → Brand → Store ops → Website → …) |
-| **2** | customer_web parity / brand storefront (after or parallel once Website fields exist) |
-| **3** | POS residuals (Terminal / printers / staff bootstrap) |
+| **1** | Merge HQ Restaurant settings  
+| **2** | customer_web parity D0+ (`docs/plans/customer-web-parity-brand-storefront-v1.md`) reading `config/storefront`  
+| **3** | POS residual: read `config/pos`  
 
-**Decision locks:** 11 / 12 / 14.  
-**Docs:** `docs/slices/hq-restaurant-settings-v1.md` · `docs/plans/customer-web-parity-brand-storefront-v1.md`
+**Decision locks:** 11 / 12 / 14.
 
 ---
 
