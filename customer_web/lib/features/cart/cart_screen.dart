@@ -126,8 +126,64 @@ class CartScreen extends StatelessWidget {
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text('×${line.quantity}'),
-                          const SizedBox(width: 8),
+                          IconButton(
+                            tooltip: 'Decrease',
+                            icon: const Icon(Icons.remove_circle_outline),
+                            onPressed: line.quantity <= 1
+                                ? null
+                                : () async {
+                                    final next = List<shared.OrderItem>.from(
+                                      items,
+                                    );
+                                    final q = line.quantity - 1;
+                                    next[index] = line.copyWith(quantity: q);
+                                    final sub = next.fold<double>(
+                                      0,
+                                      (s, i) => s + i.price * i.quantity,
+                                    );
+                                    await fs.updateCart(
+                                      cart!.copyWith(
+                                        items: next,
+                                        subtotal: sub,
+                                        total:
+                                            sub +
+                                            (cart.tax) +
+                                            (cart.deliveryFee) -
+                                            (cart.discount),
+                                      ),
+                                    );
+                                  },
+                          ),
+                          Text(
+                            '${line.quantity}',
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                          IconButton(
+                            tooltip: 'Increase',
+                            icon: const Icon(Icons.add_circle_outline),
+                            onPressed: () async {
+                              final next = List<shared.OrderItem>.from(items);
+                              next[index] = line.copyWith(
+                                quantity: line.quantity + 1,
+                              );
+                              final sub = next.fold<double>(
+                                0,
+                                (s, i) => s + i.price * i.quantity,
+                              );
+                              await fs.updateCart(
+                                cart!.copyWith(
+                                  items: next,
+                                  subtotal: sub,
+                                  total:
+                                      sub +
+                                      (cart.tax) +
+                                      (cart.deliveryFee) -
+                                      (cart.discount),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 4),
                           Text(
                             '\$${(line.price * line.quantity).toStringAsFixed(2)}',
                             style: Theme.of(context).textTheme.titleSmall,
@@ -138,11 +194,22 @@ class CartScreen extends StatelessWidget {
                             onPressed: () async {
                               final key = line.cartItemKey;
                               if (key == null || key.isEmpty) {
-                                // Fallback: clear line via updateCart
                                 final next = List<shared.OrderItem>.from(items)
                                   ..removeAt(index);
+                                final sub = next.fold<double>(
+                                  0,
+                                  (s, i) => s + i.price * i.quantity,
+                                );
                                 await fs.updateCart(
-                                  cart!.copyWith(items: next),
+                                  cart!.copyWith(
+                                    items: next,
+                                    subtotal: sub,
+                                    total:
+                                        sub +
+                                        (cart.tax) +
+                                        (cart.deliveryFee) -
+                                        (cart.discount),
+                                  ),
                                 );
                                 return;
                               }
