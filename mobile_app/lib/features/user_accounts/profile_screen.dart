@@ -211,6 +211,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                       return ListView(
                         children: [
+                          // 1. Loyalty card at top
+                          const LoyaltyPointsWidget(),
+                          const Divider(),
+
+                          // 2. Name / phone / email
                           InfoTile(
                             label: l10n.name,
                             value: fullUser.name,
@@ -261,9 +266,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           InfoTile(label: l10n.email, value: fullUser.email),
                           const Divider(),
 
-                          // Loyalty points display (foundational, franchise-aware)
-                          const LoyaltyPointsWidget(),
-
+                          // 3. Change restaurant
                           ListTile(
                             leading: Icon(
                               Icons.storefront_outlined,
@@ -278,13 +281,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             trailing: const Icon(Icons.chevron_right),
                             onTap: () => ChangeRestaurantSheet.show(context),
                           ),
-                          const Divider(),
-                          // P2 dev-only: simple live theme switcher for white-label testing.
-                          // Toggles shared.UiConfig + app-wide ThemeData via FranchiseProvider branding.
-                          // In real use this would come from FranchiseSelector + full reload.
-                          // P2: Franchise QR display (shareable deep link) - foundations
-                          _buildFranchiseQRSection(context, franchiseProvider),
 
+                          // 4. Share franchise → QR dialog (no always-on card)
+                          _buildShareFranchiseTile(context, franchiseProvider),
+                          const Divider(),
+
+                          // 5. Remaining tiles
                           ProfileNavTile(
                             label: l10n.deliveryAddresses,
                             destination: const DeliveryAddressesScreen(),
@@ -346,8 +348,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // P2 foundations: display current franchise as scannable QR (deep link payload)
-  Widget _buildFranchiseQRSection(
+  /// Share franchise row: opens QR in a dialog (no always-on card in the list).
+  Widget _buildShareFranchiseTile(
     BuildContext context,
     shared.FranchiseProvider fp,
   ) {
@@ -356,53 +358,98 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return const SizedBox.shrink();
     }
 
+    return ListTile(
+      leading: Icon(
+        Icons.qr_code_2,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+      title: const Text('Share franchise'),
+      subtitle: Text(fp.currentAppName),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => _showShareFranchiseDialog(context, fp),
+    );
+  }
+
+  void _showShareFranchiseDialog(
+    BuildContext context,
+    shared.FranchiseProvider fp,
+  ) {
+    final fid = fp.currentFranchiseId;
+    if (!fp.hasValidFranchise || fid == 'unknown') return;
+
     final qrData = shared.generateFranchiseQR(fid, name: fp.currentAppName);
     final displayName = fp.currentAppName;
-
     final scheme = Theme.of(context).colorScheme;
-    return Card(
-      color: scheme.surface,
-      margin: const EdgeInsets.symmetric(vertical: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
-        side: BorderSide(color: scheme.outline),
-      ),
-      child: Padding(
-        padding: shared.UiConfig.cardPadding,
-        child: Column(
-          children: [
-            Text(
-              'Share this Franchise',
-              style:
-                  shared.UiConfig.bodyBoldStyle.copyWith(color: scheme.primary),
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        // Use Dialog + fixed width. AlertDialog measures content with
+        // IntrinsicWidth; QrImageView uses LayoutBuilder and cannot
+        // report intrinsic dimensions (fatal layout error).
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
+            child: SizedBox(
+              width: 280,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Share this Franchise',
+                    style: shared.UiConfig.bodyBoldStyle
+                        .copyWith(color: scheme.primary),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    displayName,
+                    style: shared.UiConfig.captionStyle,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  QrImageView(
+                    data: qrData,
+                    version: QrVersions.auto,
+                    size: 200,
+                    backgroundColor: scheme.surface,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Scan to switch to this location',
+                    style: shared.UiConfig.captionStyle.copyWith(fontSize: 11),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(ctx).pop();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const QrScanScreen(),
+                            ),
+                          );
+                        },
+                        child: const Text('Open Scanner'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        child: const Text('Close'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 8),
-            Text(displayName, style: shared.UiConfig.captionStyle),
-            const SizedBox(height: 12),
-            QrImageView(
-              data: qrData,
-              version: QrVersions.auto,
-              size: 160,
-              backgroundColor: scheme.surface,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Scan to switch to this location',
-              style: shared.UiConfig.captionStyle.copyWith(fontSize: 11),
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              icon: const Icon(Icons.qr_code_scanner),
-              label: const Text('Open Scanner'),
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const QrScanScreen()),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

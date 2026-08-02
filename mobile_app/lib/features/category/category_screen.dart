@@ -272,26 +272,49 @@ class _CategoryScreenState extends State<CategoryScreen> {
                       ),
                     ),
                     Expanded(
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: items.length,
-                        itemBuilder: (context, index) {
-                          final item = items[index];
-                          return MenuItemCard(
-                            menuItem: item,
-                            showDescription: true,
-                            expanded: true,
-                            // Pass isFavorited from parent stream when available (see diagnostic)
-                            isFavorited:
-                                null, // TODO: wire real-time favorites IDs stream here for full reactivity
-                            onAddToCart: (
-                              menuItem,
-                              selectedCustomizations,
-                              quantity,
-                              totalPrice,
-                            ) {
-                              _handleAddToCart(menuItem, selectedCustomizations,
-                                  quantity, totalPrice);
+                      child: Builder(
+                        builder: (context) {
+                          bool hasImage(shared.MenuItem item) =>
+                              item.image != null &&
+                              item.image!.trim().isNotEmpty;
+
+                          // Preserve stream order (popularity / price / name) within each band.
+                          final withImage =
+                              items.where(hasImage).toList(growable: false);
+                          final reduced = items
+                              .where((item) => !hasImage(item))
+                              .toList(growable: false);
+                          final ordered = <shared.MenuItem>[
+                            ...withImage,
+                            ...reduced,
+                          ];
+
+                          return ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: ordered.length,
+                            itemBuilder: (context, index) {
+                              final item = ordered[index];
+                              final isReduced = !hasImage(item);
+                              return MenuItemCard(
+                                menuItem: item,
+                                showDescription: true,
+                                expanded: true,
+                                reduced: isReduced,
+                                isFavorited: null,
+                                onAddToCart: (
+                                  menuItem,
+                                  selectedCustomizations,
+                                  quantity,
+                                  totalPrice,
+                                ) {
+                                  _handleAddToCart(
+                                    menuItem,
+                                    selectedCustomizations,
+                                    quantity,
+                                    totalPrice,
+                                  );
+                                },
+                              );
                             },
                           );
                         },

@@ -94,10 +94,18 @@ List<shared.IngredientReference> _refsFromMaps(
         final id = (m['ingredientId'] ?? m['id'] ?? '').toString();
         final name = (m['name'] ?? id).toString();
         final typeId = (m['typeId'] ?? m['type'] ?? 'unknown').toString();
+        double? upcharge;
+        final raw = m['price'] ?? m['upcharge'];
+        if (raw is num) {
+          upcharge = raw.toDouble();
+        } else if (raw is String) {
+          upcharge = double.tryParse(raw);
+        }
         return shared.IngredientReference(
           id: id,
           name: name,
           typeId: typeId,
+          upcharge: upcharge,
         );
       })
       .where((r) => r.id.isNotEmpty)
@@ -106,14 +114,21 @@ List<shared.IngredientReference> _refsFromMaps(
 
 List<Map<String, dynamic>> _mapsFromRefs(
     List<shared.IngredientReference> refs) {
-  return refs
-      .map((r) => <String, dynamic>{
-            'ingredientId': r.id,
-            'id': r.id,
-            'name': r.name,
-            'typeId': r.typeId,
-          })
-      .toList();
+  return refs.map((r) {
+    final map = <String, dynamic>{
+      'ingredientId': r.id,
+      'id': r.id,
+      'name': r.name,
+      'typeId': r.typeId,
+    };
+    // Mobile pricing reads optionalAddOns[].price first, then meta.upcharge.
+    // Persist both so either path works.
+    if (r.upcharge != null) {
+      map['price'] = r.upcharge;
+      map['upcharge'] = r.upcharge;
+    }
+    return map;
+  }).toList();
 }
 
 class MenuItemEditorSheet extends StatefulWidget {
@@ -1080,7 +1095,8 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                                 style: Theme.of(context).textTheme.titleMedium),
                             const SizedBox(height: 4),
                             Text(
-                              'Extra ingredients not in modifier groups. '
+                              'Extra ingredients not in modifier groups (e.g. meatballs on spaghetti). '
+                              'Set a per-item price so mobile charges the upcharge. '
                               'Pizza meats/veggies/cheeses still use Modifier groups above.',
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
@@ -1090,11 +1106,148 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                               selected:
                                   _refsFromMaps(session.draft.optionalAddOns),
                               allowEmpty: true,
-                              onChanged: (refs) => session.updateDraft(
-                                session.draft.copyWith(
-                                  optionalAddOns: _mapsFromRefs(refs),
-                                ),
-                              ),
+                              onChanged: (refs) {
+                                // Preserve existing prices when toggling selection; seed new ones from
+                                // ingredient metadata upcharge when available.
+                                final prevById = <String, double?>{};
+                                for (final m in session.draft.optionalAddOns ??
+                                    const []) {
+                                  final id =
+                                      (m['ingredientId'] ?? m['id'] ?? '')
+                                          .toString();
+                                  if (id.isEmpty) continue;
+                                  final raw = m['price'] ?? m['upcharge'];
+                                  if (raw is num) {
+                                    prevById[id] = raw.toDouble();
+                                  } else if (raw is String) {
+                                    prevById[id] = double.tryParse(raw);
+                                  }
+                                }
+                                final metaList = Provider.of<
+                                    shared.IngredientMetadataProvider>(
+                                  context,
+                                  listen: false,
+                                ).allIngredients;
+                                final next = refs.map((r) {
+                                  double? price = prevById[r.id] ?? r.upcharge;
+                                  if (price == null) {
+                                    // IngredientMetadata.upcharge is Map<String, double>?
+                                    shared.IngredientMetadata? meta;
+                                    for (final i in metaList) {
+                                      if (i.id == r.id) {
+                                        meta = i;
+                                        break;
+                                      }
+                                    }
+                                    final u = meta?.upcharge;
+                                    if (u != null && u.isNotEmpty) {
+                                      // Prefer Large, else first size value in the map.
+                                      price = u['Large'] ??
+                                          u['large'] ??
+                                          u.values.first;
+                                    }
+                                  }
+                                  return r.copyWith(upcharge: price);
+                                }).toList();
+                                session.updateDraft(
+                                  session.draft.copyWith(
+                                      optionalAddOns: _mapsFromRefs(next)),
+                                );
+                              },
+                            ),
+// Per-addon price editor (only when at least one is selected)
+                            Builder(
+                              builder: (context) {
+                                final selected =
+                                    _refsFromMaps(session.draft.optionalAddOns);
+                                if (selected.isEmpty)
+                                  return const SizedBox.shrink();
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 12),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      Text(
+                                        'Price per optional add-on',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleSmall,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Charged when the customer adds this ingredient. '
+                                        'Leave 0 for free extras.',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      ...selected.map((ref) {
+                                        final current = ref.upcharge ?? 0.0;
+                                        return Padding(
+                                          padding:
+                                              const EdgeInsets.only(bottom: 8),
+                                          child: Row(
+                                            children: [
+                                              Expanded(
+                                                flex: 3,
+                                                child: Text(
+                                                  ref.name,
+                                                  style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w500),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              SizedBox(
+                                                width: 120,
+                                                child: TextFormField(
+                                                  key: ValueKey(
+                                                      'opt_price_${ref.id}_$current'),
+                                                  initialValue: current
+                                                      .toStringAsFixed(2),
+                                                  decoration:
+                                                      const InputDecoration(
+                                                    labelText: 'Price',
+                                                    prefixText: '\$',
+                                                    isDense: true,
+                                                  ),
+                                                  keyboardType:
+                                                      const TextInputType
+                                                          .numberWithOptions(
+                                                          decimal: true),
+                                                  onChanged: (v) {
+                                                    final n = double.tryParse(
+                                                            v.trim()) ??
+                                                        0.0;
+                                                    final price =
+                                                        n < 0 ? 0.0 : n;
+                                                    final updated = selected
+                                                        .map((r) => r.id ==
+                                                                ref.id
+                                                            ? r.copyWith(
+                                                                upcharge: price)
+                                                            : r)
+                                                        .toList();
+                                                    session.updateDraft(
+                                                      session.draft.copyWith(
+                                                        optionalAddOns:
+                                                            _mapsFromRefs(
+                                                                updated),
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }),
+                                    ],
+                                  ),
+                                );
+                              },
                             ),
                             const Divider(height: 32),
                           ],

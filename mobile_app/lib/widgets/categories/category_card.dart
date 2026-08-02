@@ -11,10 +11,15 @@ class CategoryCard extends StatelessWidget {
   final shared.Category category;
   final CategoryTapCallback? onTap;
 
+  /// When true, render a compact text tile (no image). Used for categories
+  /// with empty/missing [Category.image], placed under image cards.
+  final bool reduced;
+
   const CategoryCard({
     super.key,
     required this.category,
     this.onTap,
+    this.reduced = false,
   });
 
   @override
@@ -24,6 +29,52 @@ class CategoryCard extends StatelessWidget {
 
     final loc = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
+
+    if (reduced) {
+      return Semantics(
+        label: loc.menuCategoryLabel(category.name),
+        button: true,
+        child: Material(
+          type: MaterialType.transparency,
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
+            onTap: () => onTap?.call(category),
+            child: Ink(
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: scheme.primary,
+                  width: shared.DesignTokens.categoryCardBorderWidth,
+                ),
+                borderRadius:
+                    BorderRadius.circular(shared.DesignTokens.cardRadius),
+                color: scheme.surface,
+              ),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                child: Center(
+                  child: Text(
+                    category.name,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: shared.DesignTokens.titleFontSize,
+                      fontWeight: shared.UiConfig.fontWeightBold,
+                      color: scheme.onSurface,
+                      fontFamily: shared.DesignTokens.fontFamily,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     final String imagePath =
         (category.image != null && category.image!.isNotEmpty)
             ? category.image!

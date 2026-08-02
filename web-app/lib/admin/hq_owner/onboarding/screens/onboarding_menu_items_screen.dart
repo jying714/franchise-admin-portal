@@ -41,9 +41,58 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
   /// Preview navigation: null = category list; non-null = items under that category.
   String? _previewCategoryId;
 
+  // W1: local search + sort (in-memory only)
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  /// 'sortOrder' | 'nameAsc' | 'nameDesc'
+  String _sortMode = 'sortOrder';
+
   // GlobalKey for direct access to sheet repair method
   final GlobalKey<MenuItemEditorSheetState> _editorKey =
       GlobalKey<MenuItemEditorSheetState>();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  /// Filter by name / category, then apply sort. Does not touch provider order.
+  List<shared.MenuItem> _visibleMenuItems(List<shared.MenuItem> source) {
+    var list = List<shared.MenuItem>.from(source);
+    final q = (_searchQuery).trim().toLowerCase();
+    if (q.isNotEmpty) {
+      list = list.where((item) {
+        final name = (item.name).toLowerCase();
+        final cat = (item.category).toLowerCase();
+        final catId = (item.categoryId).toLowerCase();
+        return name.contains(q) || cat.contains(q) || catId.contains(q);
+      }).toList();
+    }
+    switch (_sortMode) {
+      case 'nameAsc':
+        list.sort(
+          (a, b) => (a.name).toLowerCase().compareTo((b.name).toLowerCase()),
+        );
+        break;
+      case 'nameDesc':
+        list.sort(
+          (a, b) => (b.name).toLowerCase().compareTo((a.name).toLowerCase()),
+        );
+        break;
+      case 'sortOrder':
+      default:
+        list.sort((a, b) {
+          final ao = a.sortOrder ?? 999999;
+          final bo = b.sortOrder ?? 999999;
+          if (ao != bo) return ao.compareTo(bo);
+          return (a.name).toLowerCase().compareTo((b.name).toLowerCase());
+        });
+        break;
+    }
+    return list;
+  }
 
   @override
   void didChangeDependencies() {
@@ -69,6 +118,9 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
         _inlineSchemaIssues = [];
         _previewCategoryId = null;
         _selectedIds.clear();
+        _searchController.clear();
+        _searchQuery = '';
+        _sortMode = 'sortOrder';
       });
     });
   }
@@ -679,6 +731,82 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                                       ],
                                     ),
                                   ),
+                                // W1: search + sort (local only)
+                                if (provider.menuItems.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: TextField(
+                                            controller: _searchController,
+                                            decoration: InputDecoration(
+                                              hintText:
+                                                  'Search by name or category',
+                                              prefixIcon:
+                                                  const Icon(Icons.search),
+                                              suffixIcon: _searchQuery.isEmpty
+                                                  ? null
+                                                  : IconButton(
+                                                      icon: const Icon(
+                                                          Icons.clear),
+                                                      onPressed: () {
+                                                        _searchController
+                                                            .clear();
+                                                        setState(() =>
+                                                            _searchQuery = '');
+                                                      },
+                                                    ),
+                                              isDense: true,
+                                              border:
+                                                  const OutlineInputBorder(),
+                                            ),
+                                            onChanged: (v) => setState(
+                                                () => _searchQuery = v),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Container(
+                                          width: 180,
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 12),
+                                          decoration: BoxDecoration(
+                                            border: Border.all(
+                                              color: theme.dividerColor,
+                                            ),
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                          ),
+                                          child: DropdownButtonHideUnderline(
+                                            child: DropdownButton<String>(
+                                              value: _sortMode,
+                                              isExpanded: true,
+                                              isDense: true,
+                                              hint: const Text('Sort'),
+                                              items: const [
+                                                DropdownMenuItem(
+                                                  value: 'sortOrder',
+                                                  child: Text('Menu order'),
+                                                ),
+                                                DropdownMenuItem(
+                                                  value: 'nameAsc',
+                                                  child: Text('Name A–Z'),
+                                                ),
+                                                DropdownMenuItem(
+                                                  value: 'nameDesc',
+                                                  child: Text('Name Z–A'),
+                                                ),
+                                              ],
+                                              onChanged: (v) {
+                                                if (v == null) return;
+                                                setState(() => _sortMode = v);
+                                              },
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 Expanded(
                                   child: provider.menuItems.isEmpty
                                       ? Column(
@@ -823,8 +951,27 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                                               }
                                             }
 
+                                            final visibleItems =
+                                                _visibleMenuItems(uniqueItems);
+                                            final canReorder =
+                                                _searchQuery.trim().isEmpty &&
+                                                    _sortMode == 'sortOrder';
+
+                                            if (visibleItems.isEmpty) {
+                                              return Center(
+                                                child: Text(
+                                                  'No items match “$_searchQuery”',
+                                                  style: theme
+                                                      .textTheme.bodyMedium,
+                                                ),
+                                              );
+                                            }
+
                                             return ReorderableListView(
                                               onReorder: (oldIndex, newIndex) {
+                                                if (!canReorder) return;
+                                                // Reorder against full unique list
+                                                // (visible == unique when canReorder).
                                                 final items =
                                                     List.of(uniqueItems);
                                                 if (newIndex > oldIndex) {
@@ -838,18 +985,18 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                                               },
                                               children: [
                                                 for (var index = 0;
-                                                    index < uniqueItems.length;
+                                                    index < visibleItems.length;
                                                     index++)
                                                   MenuItemListTile(
                                                     key: ValueKey(
-                                                      'menu_item_${uniqueItems[index].id}_$index',
+                                                      'menu_item_${visibleItems[index].id}_$index',
                                                     ),
-                                                    item: uniqueItems[index],
+                                                    item: visibleItems[index],
                                                     hasSchemaErrors: shared
                                                             .MenuItemSchemaIssue
                                                         .detectAllIssues(
                                                       menuItem:
-                                                          uniqueItems[index],
+                                                          visibleItems[index],
                                                       categories:
                                                           categoryProvider
                                                               .categories,
@@ -863,11 +1010,12 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                                                         i.severity == 'error'),
                                                     isSelected:
                                                         _selectedIds.contains(
-                                                            uniqueItems[index]
+                                                            visibleItems[index]
                                                                 .id),
                                                     onSelect: (checked) {
                                                       final id =
-                                                          uniqueItems[index].id;
+                                                          visibleItems[index]
+                                                              .id;
                                                       setState(() {
                                                         if (checked == true) {
                                                           _selectedIds.add(id);
@@ -878,10 +1026,10 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                                                       });
                                                     },
                                                     onEdit: () => openEditor(
-                                                        uniqueItems[index]),
+                                                        visibleItems[index]),
                                                     onDelete: () async {
                                                       final item =
-                                                          uniqueItems[index];
+                                                          visibleItems[index];
                                                       final confirmed =
                                                           await showDialog<
                                                               bool>(

@@ -190,6 +190,14 @@ class OrderItem {
   final Address? deliveryAddress;
   final String? specialInstructions;
 
+  /// active | voided | comped — missing on legacy lines → active
+  final String lineStatus;
+  final String? voidedAt;
+  final String? voidedByStaffId;
+  final String? voidReason;
+  final String? compedAt;
+  final String? compReason;
+
   OrderItem({
     required this.menuItemId,
     required this.name,
@@ -207,9 +215,31 @@ class OrderItem {
     this.estimatedTime,
     this.deliveryAddress,
     this.specialInstructions,
+    this.lineStatus = 'active',
+    this.voidedAt,
+    this.voidedByStaffId,
+    this.voidReason,
+    this.compedAt,
+    this.compReason,
   });
 
+  bool get isActive =>
+      lineStatus.trim().isEmpty || lineStatus.trim().toLowerCase() == 'active';
+
+  bool get isVoided => lineStatus.trim().toLowerCase() == 'voided';
+
+  bool get isComped => lineStatus.trim().toLowerCase() == 'comped';
+
+  /// Price contribution toward order subtotal (voided/comped → 0).
+  double get effectiveLineTotal {
+    if (!isActive) return 0.0;
+    return totalPrice;
+  }
+
   factory OrderItem.fromMap(Map<String, dynamic> data) {
+    final rawStatus = (data['lineStatus'] as String?)?.trim().toLowerCase();
+    final status =
+        (rawStatus == null || rawStatus.isEmpty) ? 'active' : rawStatus;
     return OrderItem(
       menuItemId: data['menuItemId'] ?? '',
       name: data['name'] ?? '',
@@ -233,6 +263,12 @@ class OrderItem {
           ? Address.fromMap(Map<String, dynamic>.from(data['deliveryAddress']))
           : null,
       specialInstructions: data['specialInstructions'],
+      lineStatus: status,
+      voidedAt: data['voidedAt']?.toString(),
+      voidedByStaffId: data['voidedByStaffId']?.toString(),
+      voidReason: data['voidReason']?.toString(),
+      compedAt: data['compedAt']?.toString(),
+      compReason: data['compReason']?.toString(),
     );
   }
 
@@ -255,6 +291,12 @@ class OrderItem {
       if (deliveryAddress != null) 'deliveryAddress': deliveryAddress!.toMap(),
       if (specialInstructions != null)
         'specialInstructions': specialInstructions,
+      'lineStatus': lineStatus,
+      if (voidedAt != null) 'voidedAt': voidedAt,
+      if (voidedByStaffId != null) 'voidedByStaffId': voidedByStaffId,
+      if (voidReason != null) 'voidReason': voidReason,
+      if (compedAt != null) 'compedAt': compedAt,
+      if (compReason != null) 'compReason': compReason,
     };
   }
 
@@ -275,6 +317,12 @@ class OrderItem {
     int? estimatedTime,
     Address? deliveryAddress,
     String? specialInstructions,
+    String? lineStatus,
+    String? voidedAt,
+    String? voidedByStaffId,
+    String? voidReason,
+    String? compedAt,
+    String? compReason,
   }) {
     return OrderItem(
       menuItemId: menuItemId ?? this.menuItemId,
@@ -293,6 +341,12 @@ class OrderItem {
       estimatedTime: estimatedTime ?? this.estimatedTime,
       deliveryAddress: deliveryAddress ?? this.deliveryAddress,
       specialInstructions: specialInstructions ?? this.specialInstructions,
+      lineStatus: lineStatus ?? this.lineStatus,
+      voidedAt: voidedAt ?? this.voidedAt,
+      voidedByStaffId: voidedByStaffId ?? this.voidedByStaffId,
+      voidReason: voidReason ?? this.voidReason,
+      compedAt: compedAt ?? this.compedAt,
+      compReason: compReason ?? this.compReason,
     );
   }
 

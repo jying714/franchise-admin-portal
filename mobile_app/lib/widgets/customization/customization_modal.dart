@@ -277,7 +277,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
     if (_isWings()) return false;
     final profile = widget.menuItem.effectiveMenuProfile.toLowerCase();
     if (profile == shared.MenuProfile.pizza ||
-        profile == shared.MenuProfile.calzone) {
+        profile == shared.MenuProfile.calzone ||
+        profile == shared.MenuProfile.sub) {
       return true;
     }
     final cat = widget.menuItem.category.toLowerCase();
@@ -321,6 +322,11 @@ class _CustomizationModalState extends State<CustomizationModal> {
     final cat = widget.menuItem.category.toLowerCase();
     final catId = (widget.menuItem.categoryId ?? '').toLowerCase();
     return cat.contains('dinner') || catId.contains('dinner');
+  }
+
+  bool _isSub() {
+    final profile = widget.menuItem.effectiveMenuProfile.toLowerCase();
+    return profile == shared.MenuProfile.sub;
   }
 
   List<String> _effectiveWingSauceIds() {
@@ -787,9 +793,10 @@ class _CustomizationModalState extends State<CustomizationModal> {
             .map((e) => e.toString())
             .toList();
 
-        // --- Default Cook to Regular for Calzones ---
+        // --- Default Cook to Regular for Calzones / Subs ---
         if (groupLabel.toLowerCase() == 'cook' &&
-            widget.menuItem.category.toLowerCase().contains('calzone')) {
+            (widget.menuItem.category.toLowerCase().contains('calzone') ||
+                _isSub())) {
           _radioSelections[groupLabel] =
               ids.contains('cook_regular') ? 'cook_regular' : ids.first;
           _currentIngredients.add(_radioSelections[groupLabel]!);
@@ -1121,6 +1128,27 @@ class _CustomizationModalState extends State<CustomizationModal> {
     return 0.0;
   }
 
+  /// Price for an optional extra (not part of base included set).
+  /// Order matches OptionalAddOnsGroup: dynamic size → meta.upcharge → optionalAddOns.price.
+  double _resolveExtraIngredientPrice(String ingId) {
+    final usesDynamicToppingPricing = _selectedSize != null &&
+        (widget.menuItem.additionalToppingPrices != null ||
+            (widget.menuItem.sizes?.isNotEmpty ?? false));
+    if (usesDynamicToppingPricing) {
+      return _getToppingUpcharge();
+    }
+    final meta = _ingredientMetadata[ingId];
+    final fromMeta = _getIngredientUpcharge(meta);
+    if (fromMeta > 0) return fromMeta;
+    for (final addOn in widget.menuItem.optionalAddOns ?? const []) {
+      final id = (addOn['ingredientId'] ?? addOn['id'] ?? '').toString();
+      if (id == ingId) {
+        return (addOn['price'] as num?)?.toDouble() ?? 0.0;
+      }
+    }
+    return 0.0;
+  }
+
   int _getFreeSauceCount() {
     final fromGroup = _maxFreeForGroupLabel('sauces');
     if (fromGroup != null) return fromGroup;
@@ -1178,8 +1206,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
     if (widget.menuItem.optionalAddOns != null) {
       for (final addOn in widget.menuItem.optionalAddOns!) {
         final ingId = addOn['ingredientId'] ?? addOn['id'];
-        // Salad/dinner: priced via _currentIngredients path below
-        if ((_isSalad() || _isDinner()) &&
+        // Salad/dinner/sub: priced via _currentIngredients path below
+        if ((_isSalad() || _isDinner() || _isSub()) &&
             _currentIngredients.contains(ingId)) {
           continue;
         }
@@ -1264,6 +1292,11 @@ class _CustomizationModalState extends State<CustomizationModal> {
       double upcharge = usesDynamicToppingPricing
           ? _getToppingUpcharge()
           : _getIngredientUpcharge(meta);
+
+      // Dinner/salad extras: fall back to optionalAddOns[].price when meta has no upcharge
+      if (!wasIncluded && (_isDinner() || isSalad) && upcharge <= 0) {
+        upcharge = _resolveExtraIngredientPrice(ingId);
+      }
 
       final isDouble = _doubleToppings[ingId] == true;
 
@@ -2666,8 +2699,16 @@ class _CustomizationModalState extends State<CustomizationModal> {
                           // (salads e.g. garbanzo; dinners e.g. meatballs). Not pizza/calzone/wings.
                           if (!_isWings() &&
                               !_isPizzaOrCalzone() &&
-                              widget.menuItem.optionalAddOns != null &&
-                              widget.menuItem.optionalAddOns!.isNotEmpty)
+                              ((widget.menuItem.optionalAddOns != null &&
+                                      widget.menuItem.optionalAddOns!
+                                          .isNotEmpty) ||
+                                  // Dinner/salad: keep Optional Add-ons mounted so
+                                  // removable included ingredients can be re-added
+                                  // after Remove from Current Toppings.
+                                  ((_isDinner() || _isSalad()) &&
+                                      (widget.menuItem.includedIngredients
+                                              ?.isNotEmpty ??
+                                          false))))
                             OptionalAddOnsGroup(
                               menuItem: widget.menuItem,
                               theme: theme,
@@ -2688,15 +2729,15 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                   if (val == true) {
                                     _selectedAddOns.add(ingId);
                                     _doubleAddOns[ingId] = false;
-                                    // Salad/dinner: show under Current Toppings
-                                    if (_isSalad() || _isDinner()) {
+                                    // Salad/dinner/sub: show under Current Toppings
+                                    if (_isSalad() || _isDinner() || _isSub()) {
                                       _currentIngredients.add(ingId);
                                       _doubleToppings[ingId] = false;
                                     }
                                   } else {
                                     _selectedAddOns.remove(ingId);
                                     _doubleAddOns.remove(ingId);
-                                    if (_isSalad() || _isDinner()) {
+                                    if (_isSalad() || _isDinner() || _isSub()) {
                                       _currentIngredients.remove(ingId);
                                       _doubleToppings.remove(ingId);
                                     }
@@ -2720,14 +2761,10 @@ class _CustomizationModalState extends State<CustomizationModal> {
                               extraSauceUpcharge: _getExtraSauceUpcharge(),
                             ),
 
-                          // --- ORDER DETAILS: crust/cook/cut — pizza only ---
-                          if (!_isWings() &&
-                              !_isCalzone() &&
-                              !_isSalad() &&
-                              !_isDinner())
+                          // --- ORDER DETAILS: pizza (crust/cook/cut) or sub (cook only) ---
+                          if (_isPizza() || _isSub())
                             Builder(
                               builder: (context) {
-                                // Get crust / cook / cut for pizza Order Details
                                 var orderDetailGroups =
                                     _radioGroups.where((group) {
                                   final label = (group['label'] as String?)
@@ -2735,6 +2772,10 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                   final id =
                                       (group['id'] as String?)?.toLowerCase() ??
                                           '';
+                                  if (_isSub()) {
+                                    // Sub: cook only — never crust/cut
+                                    return label == 'cook' || id == 'cook';
+                                  }
                                   return label == 'crust' ||
                                       label == 'cook' ||
                                       label == 'cut' ||
@@ -2743,7 +2784,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                       id == 'cut';
                                 }).toList();
 
-                                // Fallback: template structural groups when stored groups omit them
+                                // Pizza: seed structural groups when stored groups omit them
                                 if (_isPizza() && orderDetailGroups.isEmpty) {
                                   orderDetailGroups =
                                       shared.MenuProfileTemplates.seedGroups(
@@ -2785,7 +2826,115 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                   }
                                 }
 
-                                // Compose summary for collapsed state
+                                // Sub: seed cook from sub template when group missing;
+                                // if HQ cleared options → hide entire section.
+                                if (_isSub()) {
+                                  final hasCookOptions = orderDetailGroups.any(
+                                    (g) => ((g['ingredientIds'] as List?)
+                                            ?.isNotEmpty ??
+                                        false),
+                                  );
+                                  if (!hasCookOptions) {
+                                    final seed =
+                                        shared.MenuProfileTemplates.seedGroups(
+                                                shared.MenuProfile.sub)
+                                            .where((g) =>
+                                                g.id.toLowerCase() == 'cook' &&
+                                                g.options.isNotEmpty)
+                                            .toList();
+                                    // Prefer stored empty (HQ off) over always re-seeding:
+                                    // only seed when no cook group exists at all.
+                                    final hasCookGroup = _radioGroups.any((g) {
+                                      final label = (g['label'] as String?)
+                                          ?.toLowerCase();
+                                      final id =
+                                          (g['id'] as String?)?.toLowerCase() ??
+                                              '';
+                                      return label == 'cook' || id == 'cook';
+                                    });
+                                    if (!hasCookGroup && seed.isNotEmpty) {
+                                      orderDetailGroups = seed
+                                          .map((g) => <String, dynamic>{
+                                                'id': g.id,
+                                                'label': g.label,
+                                                'ingredientIds': g.options
+                                                    .map((o) => o.id)
+                                                    .toList(),
+                                                'optionLabels': {
+                                                  for (final o in g.options)
+                                                    o.id: o.label,
+                                                },
+                                                'min': g.min,
+                                                'max': g.max,
+                                              })
+                                          .toList();
+                                      for (final g in orderDetailGroups) {
+                                        final label =
+                                            (g['label'] as String?) ?? '';
+                                        if (label.isEmpty) continue;
+                                        if ((_radioSelections[label] ?? '')
+                                            .isNotEmpty) {
+                                          continue;
+                                        }
+                                        final ids =
+                                            (g['ingredientIds'] as List? ?? [])
+                                                .map((e) => e.toString())
+                                                .toList();
+                                        // Prefer Regular
+                                        final regular = ids.firstWhere(
+                                          (id) =>
+                                              id.toLowerCase() ==
+                                              'cook_regular',
+                                          orElse: () =>
+                                              ids.isNotEmpty ? ids.first : '',
+                                        );
+                                        if (regular.isNotEmpty) {
+                                          _radioSelections[label] = regular;
+                                        }
+                                      }
+                                    } else if (!hasCookOptions) {
+                                      // HQ cleared options → do not show section
+                                      return const SizedBox.shrink();
+                                    }
+                                  } else {
+                                    // Ensure Regular default when nothing selected yet
+                                    for (final g in orderDetailGroups) {
+                                      final label =
+                                          (g['label'] as String?) ?? '';
+                                      if (label.isEmpty) continue;
+                                      if ((_radioSelections[label] ?? '')
+                                          .isNotEmpty) {
+                                        continue;
+                                      }
+                                      final ids =
+                                          (g['ingredientIds'] as List? ?? [])
+                                              .map((e) => e.toString())
+                                              .toList();
+                                      final regular = ids.firstWhere(
+                                        (id) =>
+                                            id.toLowerCase() == 'cook_regular',
+                                        orElse: () =>
+                                            ids.isNotEmpty ? ids.first : '',
+                                      );
+                                      if (regular.isNotEmpty) {
+                                        _radioSelections[label] = regular;
+                                      }
+                                    }
+                                  }
+                                }
+
+                                if (orderDetailGroups.isEmpty) {
+                                  return const SizedBox.shrink();
+                                }
+
+                                final isSub = _isSub();
+                                final emptyTitle = isSub
+                                    ? 'Choose how your sub is cooked — Regular or Crispy.'
+                                    : 'Customize crust, cook, and cut.';
+                                final subtitle = isSub
+                                    ? 'Choose how your sub is cooked — Regular or Crispy.'
+                                    : 'Tap to customize crust, cook, or cut.';
+
                                 String detailsSummary = orderDetailGroups
                                     .map((group) {
                                       final label =
@@ -2800,10 +2949,10 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                                       k.toString(),
                                                       v.toString())) ??
                                               const <String, String>{};
-                                      return "${label.capitalize()}: ${meta?.name ?? labels[selected] ?? selected}";
+                                      return '${label.capitalize()}: ${meta?.name ?? labels[selected] ?? selected}';
                                     })
                                     .where((str) => str.isNotEmpty)
-                                    .join(" | ");
+                                    .join(' | ');
 
                                 return Padding(
                                   padding: const EdgeInsets.only(
@@ -2827,7 +2976,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                           padding: const EdgeInsets.symmetric(
                                               vertical: 8, horizontal: 14),
                                           child: Text(
-                                            "Order Details",
+                                            'Order Details',
                                             style: theme.textTheme.titleMedium
                                                 ?.copyWith(
                                               color: Theme.of(context)
@@ -2843,7 +2992,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                             EdgeInsets.symmetric(horizontal: 0),
                                         title: Text(
                                           detailsSummary.isEmpty
-                                              ? "Customize crust, cook, and cut."
+                                              ? emptyTitle
                                               : detailsSummary,
                                           style: theme.textTheme.bodySmall
                                               ?.copyWith(
@@ -2856,7 +3005,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                           padding:
                                               const EdgeInsets.only(top: 2.0),
                                           child: Text(
-                                            "Tap to customize crust, cook, or cut.",
+                                            subtitle,
                                             style: theme.textTheme.bodySmall
                                                 ?.copyWith(
                                               color:

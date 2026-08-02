@@ -88,7 +88,8 @@ class OrderHistoryScreen extends StatelessWidget {
                           ),
                         );
                       }
-                      final orders = snapshot.data!;
+                      final orders = List<shared.Order>.from(snapshot.data!)
+                        ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
                       return ListView.builder(
                         padding: shared.UiConfig.defaultScreenPadding,
                         itemCount: orders.length,

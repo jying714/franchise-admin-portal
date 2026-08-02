@@ -6,6 +6,8 @@ import '../../core/constants/pos_permissions.dart';
 import '../../providers/pin_session_provider.dart';
 import '../session/force_repin_dialog.dart';
 import '../dine_in/table_status.dart';
+import 'widgets/order_detail_dialog.dart';
+import '../../services/print_service.dart';
 
 enum _OrderTypeFilter { all, dineIn, carryOut, delivery }
 
@@ -81,6 +83,57 @@ class _ClosedOrdersScreenState extends State<ClosedOrdersScreen> {
         return 'Carry-out';
       default:
         return normalized;
+    }
+  }
+
+  String _paymentMethodLabel(Map<String, dynamic> raw) {
+    final m = (raw['paymentMethod'] as String?)?.trim().toLowerCase() ?? '';
+    if (m.isEmpty) {
+      // Fallback: tenders array from PaymentScreen
+      final tenders = raw['tenders'];
+      if (tenders is List && tenders.isNotEmpty) {
+        final methods = <String>{};
+        for (final t in tenders) {
+          if (t is Map && t['method'] != null) {
+            methods.add(t['method'].toString().trim().toLowerCase());
+          }
+        }
+        if (methods.length > 1) return 'Split';
+        if (methods.contains('card')) return 'Card';
+        if (methods.contains('cash')) return 'Cash';
+      }
+      return '—';
+    }
+    if (m == 'card') return 'Card';
+    if (m == 'cash') return 'Cash';
+    if (m == 'split') return 'Split';
+    return m[0].toUpperCase() + m.substring(1);
+  }
+
+  Color _paymentMethodColor(BuildContext context, String label) {
+    final scheme = Theme.of(context).colorScheme;
+    switch (label.toLowerCase()) {
+      case 'card':
+        return scheme.primary;
+      case 'cash':
+        return scheme.tertiary;
+      case 'split':
+        return scheme.secondary;
+      default:
+        return scheme.outline;
+    }
+  }
+
+  Color _sourceColor(BuildContext context, String source) {
+    final scheme = Theme.of(context).colorScheme;
+    switch (source.trim().toLowerCase()) {
+      case 'pos':
+        return scheme.primary;
+      case 'web':
+        return scheme.tertiary;
+      case 'mobile':
+      default:
+        return scheme.secondary;
     }
   }
 
@@ -309,101 +362,117 @@ class _ClosedOrdersScreenState extends State<ClosedOrdersScreen> {
     final canRefundPerm = session.hasPermission(PosPermissions.refund);
     final canRefund = paid && !refunded && canRefundPerm;
 
-    await showDialog<void>(
+    await OrderDetailDialog.show(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: Text(order.userNameDisplay),
-          content: SizedBox(
-            width: 320,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  '${order.status} · \$${order.total.toStringAsFixed(2)} · '
-                  '${_typeLabel(_normalizeType(order))} · ${_sourceLabel(order)}'
-                  '${refunded ? ' · REFUNDED' : ''}'
-                  '${paid ? ' · PAID' : ''}',
-                  style: TextStyle(
-                    color: scheme.onSurfaceVariant,
-                    fontSize: 13,
+      franchiseId: widget.franchiseId,
+      order: order,
+      typeLabel: _typeLabel(_normalizeType(order)),
+      sourceLabel: _sourceLabel(order),
+      isClosed: true,
+      paymentMethodLabel: _paymentMethodLabel(raw),
+      actionsBuilder: (ctx, liveOrder) {
+        final scheme = Theme.of(ctx).colorScheme;
+        final paid = _isPaid(liveOrder, raw);
+        final refunded = _isRefunded(liveOrder, raw);
+        final canRefundPerm = session.hasPermission(PosPermissions.refund);
+        final canRefund = paid && !refunded && canRefundPerm;
+
+        return <Widget>[
+          _ClosedActionRow(
+            icon: Icons.receipt_long_outlined,
+            label: 'Print guest check',
+            color: scheme.onSurface,
+            onTap: () async {
+              final ok = await const PrintService().printCustomerReceipt(
+                order: liveOrder,
+                amountTendered: liveOrder.total,
+                changeDue: 0,
+                paymentMethod: refunded ? 'REFUNDED' : 'CLOSED',
+              );
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    ok
+                        ? 'Guest check printed (mock) · ${liveOrder.id}'
+                        : 'Guest check print failed',
                   ),
                 ),
-                const SizedBox(height: 12),
-                // Always tappable so a disabled state can explain itself.
-                InkWell(
-                  onTap: () async {
-                    Navigator.pop(dialogContext);
-                    if (!paid) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Order is not paid — cannot refund'),
-                          ),
-                        );
-                      }
-                      return;
-                    }
-                    if (refunded) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Order already refunded'),
-                          ),
-                        );
-                      }
-                      return;
-                    }
-                    if (!canRefundPerm) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('No refund permission on this PIN'),
-                          ),
-                        );
-                      }
-                      return;
-                    }
-                    await _runRefund(context, order);
-                  },
-                  borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.replay,
-                          color: canRefund
-                              ? scheme.error
-                              : scheme.onSurface.withValues(alpha: 0.38),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'Refund',
-                            style: TextStyle(
-                              color: canRefund
-                                  ? scheme.error
-                                  : scheme.onSurface.withValues(alpha: 0.38),
-                              fontSize: 15,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              );
+            },
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Close'),
-            ),
-          ],
-        );
+          _ClosedActionRow(
+            icon: Icons.print_outlined,
+            label: 'Reprint kitchen ticket',
+            color: scheme.onSurface,
+            onTap: () async {
+              String? tableLabel;
+              try {
+                final snap = await FirebaseFirestore.instance
+                    .collection('franchises')
+                    .doc(widget.franchiseId)
+                    .collection('orders')
+                    .doc(liveOrder.id)
+                    .get();
+                tableLabel = snap.data()?['tableLabel'] as String?;
+              } catch (_) {}
+              final ok = await const PrintService().printKitchenTicket(
+                order: liveOrder,
+                tableLabel: tableLabel,
+                isAppend: false,
+              );
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    ok
+                        ? 'Kitchen ticket reprinted (mock) · ${liveOrder.id}'
+                        : 'Kitchen ticket print failed',
+                  ),
+                ),
+              );
+            },
+          ),
+          _ClosedActionRow(
+            icon: Icons.replay,
+            label: 'Refund',
+            color: canRefund
+                ? scheme.error
+                : scheme.onSurface.withValues(alpha: 0.38),
+            onTap: () async {
+              Navigator.pop(ctx);
+              if (!paid) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Order is not paid — cannot refund'),
+                    ),
+                  );
+                }
+                return;
+              }
+              if (refunded) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Order already refunded')),
+                  );
+                }
+                return;
+              }
+              if (!canRefundPerm) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('No refund permission on this PIN'),
+                    ),
+                  );
+                }
+                return;
+              }
+              await _runRefund(context, liveOrder);
+            },
+          ),
+        ];
       },
     );
   }
@@ -653,17 +722,55 @@ class _ClosedOrdersScreenState extends State<ClosedOrdersScreen> {
                     final row = rows[index];
                     final order = row.order;
                     final refunded = _isRefunded(order, row.raw);
+                    final payLabel = _paymentMethodLabel(row.raw);
+                    final sourceLabel = _sourceLabel(order);
                     return Card(
                       child: ListTile(
                         title: Text(order.userNameDisplay),
                         subtitle: Text(
                           '${order.status} · ${_typeLabel(_normalizeType(order))} · '
-                          '\$${order.total.toStringAsFixed(2)} · '
-                          '${_sourceLabel(order).toUpperCase()}'
+                          '\$${order.total.toStringAsFixed(2)}'
                           '${refunded ? ' · REFUNDED' : ''}',
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(color: scheme.onSurfaceVariant),
+                        ),
+                        trailing: Wrap(
+                          spacing: 6,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Chip(
+                              label: Text(
+                                sourceLabel.toUpperCase(),
+                                style: TextStyle(
+                                  color: scheme.onPrimary,
+                                  fontSize: 11,
+                                ),
+                              ),
+                              backgroundColor: _sourceColor(
+                                context,
+                                sourceLabel,
+                              ),
+                              padding: EdgeInsets.zero,
+                              visualDensity: VisualDensity.compact,
+                            ),
+                            if (payLabel != '—')
+                              Chip(
+                                label: Text(
+                                  payLabel.toUpperCase(),
+                                  style: TextStyle(
+                                    color: scheme.onPrimary,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                                backgroundColor: _paymentMethodColor(
+                                  context,
+                                  payLabel,
+                                ),
+                                padding: EdgeInsets.zero,
+                                visualDensity: VisualDensity.compact,
+                              ),
+                          ],
                         ),
                         onTap: () => _showActions(context, order, row.raw),
                       ),
@@ -715,6 +822,40 @@ class _FilterButton extends StatelessWidget {
               fontSize: 13,
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ClosedActionRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _ClosedActionRow({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+        child: Row(
+          children: [
+            Icon(icon, size: 22, color: color),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(label, style: TextStyle(color: color, fontSize: 15)),
+            ),
+          ],
         ),
       ),
     );

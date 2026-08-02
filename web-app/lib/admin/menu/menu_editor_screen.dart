@@ -57,8 +57,9 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
       ValueNotifier<List<String>>([]);
 
   String _search = '';
-  String? _sortKey;
-  bool _sortAsc = true;
+
+  /// 'sortOrder' | 'nameAsc' | 'nameDesc' — same modes as HQ onboarding W1
+  String _sortMode = 'sortOrder';
   String? _categoryFilter;
   bool _showDeleted = false;
   shared.MenuItem? _lastDeletedItem;
@@ -103,10 +104,6 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
   }
 
   void _onSearchChanged(String value) => setState(() => _search = value);
-  void _onSortChanged(String sortKey, bool asc) => setState(() {
-        _sortKey = sortKey;
-        _sortAsc = asc;
-      });
   void _clearSelection() {
     _selectedIds.value = [];
   }
@@ -593,40 +590,50 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
                                         _categoryFilter!.isNotEmpty) {
                                       items = items
                                           .where((i) =>
+                                              i.categoryId == _categoryFilter ||
                                               i.category == _categoryFilter)
                                           .toList();
                                     }
 
                                     if (_search.isNotEmpty) {
-                                      items = items
-                                          .where((i) =>
-                                              i.name.toLowerCase().contains(
-                                                  _search.toLowerCase()) ||
-                                              (i.sku?.toLowerCase().contains(
-                                                      _search.toLowerCase()) ??
-                                                  false))
-                                          .toList();
+                                      final q = _search.toLowerCase();
+                                      items = items.where((i) {
+                                        final name = i.name.toLowerCase();
+                                        final cat = i.category.toLowerCase();
+                                        final catId =
+                                            i.categoryId.toLowerCase();
+                                        final sku = (i.sku ?? '').toLowerCase();
+                                        return name.contains(q) ||
+                                            cat.contains(q) ||
+                                            catId.contains(q) ||
+                                            sku.contains(q);
+                                      }).toList();
                                     }
 
-                                    if (_sortKey != null) {
-                                      items.sort((a, b) {
-                                        int cmp = 0;
-                                        switch (_sortKey) {
-                                          case 'name':
-                                            cmp = a.name.compareTo(b.name);
-                                            break;
-                                          case 'category':
-                                            cmp = a.category
-                                                .compareTo(b.category);
-                                            break;
-                                          case 'price':
-                                            cmp = a.price.compareTo(b.price);
-                                            break;
-                                          default:
-                                            cmp = 0;
-                                        }
-                                        return _sortAsc ? cmp : -cmp;
-                                      });
+                                    switch (_sortMode) {
+                                      case 'nameAsc':
+                                        items.sort((a, b) => a.name
+                                            .toLowerCase()
+                                            .compareTo(b.name.toLowerCase()));
+                                        break;
+                                      case 'nameDesc':
+                                        items.sort((a, b) => b.name
+                                            .toLowerCase()
+                                            .compareTo(a.name.toLowerCase()));
+                                        break;
+                                      case 'sortOrder':
+                                      default:
+                                        items.sort((a, b) {
+                                          final ao = a.sortOrder ?? 999999;
+                                          final bo = b.sortOrder ?? 999999;
+                                          if (ao != bo) {
+                                            return ao.compareTo(bo);
+                                          }
+                                          return a.name
+                                              .toLowerCase()
+                                              .compareTo(b.name.toLowerCase());
+                                        });
+                                        break;
                                     }
 
                                     return Column(
@@ -697,11 +704,21 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
                                                   controller: _searchController,
                                                   decoration: InputDecoration(
                                                     hintText:
-                                                        AppLocalizations.of(
-                                                                context)!
-                                                            .adminSearchHint,
+                                                        'Search by name, category, or SKU',
                                                     prefixIcon: const Icon(
                                                         Icons.search),
+                                                    suffixIcon: _search.isEmpty
+                                                        ? null
+                                                        : IconButton(
+                                                            icon: const Icon(
+                                                                Icons.clear),
+                                                            onPressed: () {
+                                                              _searchController
+                                                                  .clear();
+                                                              setState(() =>
+                                                                  _search = '');
+                                                            },
+                                                          ),
                                                     border: OutlineInputBorder(
                                                       borderRadius:
                                                           BorderRadius.circular(
@@ -759,6 +776,51 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
                                                       ? match.first.name
                                                       : catId;
                                                 },
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Container(
+                                                width: 160,
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 12),
+                                                decoration: BoxDecoration(
+                                                  color: colorScheme.surface,
+                                                  borderRadius:
+                                                      BorderRadius.circular(24),
+                                                  border: Border.all(
+                                                    color: colorScheme
+                                                        .outlineVariant,
+                                                  ),
+                                                ),
+                                                child:
+                                                    DropdownButtonHideUnderline(
+                                                  child: DropdownButton<String>(
+                                                    value: _sortMode,
+                                                    isExpanded: true,
+                                                    isDense: true,
+                                                    hint: const Text('Sort'),
+                                                    items: const [
+                                                      DropdownMenuItem(
+                                                        value: 'sortOrder',
+                                                        child:
+                                                            Text('Menu order'),
+                                                      ),
+                                                      DropdownMenuItem(
+                                                        value: 'nameAsc',
+                                                        child: Text('Name A–Z'),
+                                                      ),
+                                                      DropdownMenuItem(
+                                                        value: 'nameDesc',
+                                                        child: Text('Name Z–A'),
+                                                      ),
+                                                    ],
+                                                    onChanged: (v) {
+                                                      if (v == null) return;
+                                                      setState(
+                                                          () => _sortMode = v);
+                                                    },
+                                                  ),
+                                                ),
                                               ),
                                             ],
                                           ),

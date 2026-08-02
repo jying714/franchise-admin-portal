@@ -206,12 +206,23 @@ class OptionalAddOnsGroup extends StatelessWidget {
               );
             }
           }),
-          if (menuItem.optionalAddOns!.any((a) =>
-              (ingredientMetadata[a['ingredientId'] ?? a['id']]
-                      ?.type
-                      ?.toLowerCase() ==
-                  "sauces") ||
-              (a['type']?.toString()?.toLowerCase() == "sauces")))
+          if (() {
+            final fromOptional = (menuItem.optionalAddOns ?? const []).any(
+                (a) =>
+                    (ingredientMetadata[a['ingredientId'] ?? a['id']]
+                            ?.type
+                            ?.toLowerCase() ==
+                        "sauces") ||
+                    (a['type']?.toString().toLowerCase() == "sauces"));
+            final fromIncluded = (menuItem.includedIngredients ?? const []).any(
+                (a) =>
+                    (ingredientMetadata[a['ingredientId'] ?? a['id']]
+                            ?.type
+                            ?.toLowerCase() ==
+                        "sauces") ||
+                    (a['type']?.toString().toLowerCase() == "sauces"));
+            return fromOptional || fromIncluded;
+          }())
             Padding(
               padding: const EdgeInsets.only(top: 6.0),
               child: Text(

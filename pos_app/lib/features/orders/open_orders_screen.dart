@@ -9,6 +9,8 @@ import '../payments/payment_screen.dart';
 import '../session/force_repin_dialog.dart';
 import '../dine_in/table_status.dart';
 import '../../services/print_service.dart';
+import 'widgets/order_detail_dialog.dart';
+import '../ordering/order_entry_screen.dart';
 
 enum _OrderTypeFilter { all, dineIn, carryOut, delivery }
 
@@ -170,351 +172,398 @@ class _OpenOrdersScreenState extends State<OpenOrdersScreen> {
   }
 
   Future<void> _showOrderActions(BuildContext context, Order order) async {
-    final session = Provider.of<PinSessionProvider>(context, listen: false);
-    final scheme = Theme.of(context).colorScheme;
     final isDelivery = _normalizeType(order) == 'delivery';
-    await showDialog<void>(
+
+    await OrderDetailDialog.show(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: Text(order.userNameDisplay),
-          content: SizedBox(
-            width: 320,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  '${order.status} · \$${order.total.toStringAsFixed(2)} · '
-                  '${_typeLabel(_normalizeType(order))} · ${_sourceLabel(order)}',
-                  style: TextStyle(
-                    color: scheme.onSurfaceVariant,
-                    fontSize: 13,
+      franchiseId: widget.franchiseId,
+      order: order,
+      typeLabel: _typeLabel(_normalizeType(order)),
+      sourceLabel: _sourceLabel(order),
+      isClosed: false,
+      actionsBuilder: (ctx, liveOrder) {
+        final session = Provider.of<PinSessionProvider>(ctx, listen: false);
+        return <Widget>[
+          _ActionRow(
+            icon: Icons.add_circle_outline,
+            label: 'Add item',
+            enabled: session.hasPermission(PosPermissions.takeOrder),
+            onTap: () async {
+              // Keep order detail open underneath; stream will refresh lines.
+              final type = _normalizeType(liveOrder);
+              await Navigator.of(context, rootNavigator: true).push<void>(
+                MaterialPageRoute<void>(
+                  builder: (_) => OrderEntryScreen(
+                    franchiseId: widget.franchiseId,
+                    orderType: type,
+                    existingOrderId: liveOrder.id,
                   ),
                 ),
-                const SizedBox(height: 12),
-                _ActionRow(
-                  icon: Icons.payments_outlined,
-                  label: 'Take payment',
-                  enabled: session.hasPermission(PosPermissions.takePayment),
-                  onTap: () async {
-                    Navigator.pop(dialogContext);
-                    final paid = await Navigator.of(context).push<bool>(
-                      MaterialPageRoute<bool>(
-                        builder: (_) => PaymentScreen(
-                          franchiseId: widget.franchiseId,
-                          orderId: order.id,
-                          amountDue: order.total,
-                          closeOutOrder: !isDelivery,
-                          statusWhenPaid: OrderStatus.sentToKitchen,
-                          allowedMethods: isDelivery
-                              ? const {'card'}
-                              : const {'cash', 'split', 'card'},
-                        ),
-                      ),
-                    );
-                    if (paid == true && context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Order ${order.id} paid')),
+              );
+            },
+          ),
+          _ActionRow(
+            icon: Icons.receipt_long_outlined,
+            label: 'Print guest check',
+            enabled: true,
+            onTap: () async {
+              // Detail stays open
+              final ok = await const PrintService().printCustomerReceipt(
+                order: liveOrder,
+                amountTendered: 0,
+                changeDue: 0,
+                paymentMethod: 'CHECK',
+              );
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    ok
+                        ? 'Guest check printed (mock) · ${liveOrder.id}'
+                        : 'Guest check print failed',
+                  ),
+                ),
+              );
+            },
+          ),
+          _ActionRow(
+            icon: Icons.print_outlined,
+            label: 'Reprint kitchen ticket',
+            enabled: session.hasPermission(PosPermissions.takeOrder),
+            onTap: () async {
+              String? tableLabel;
+              try {
+                final snap = await FirebaseFirestore.instance
+                    .collection('franchises')
+                    .doc(widget.franchiseId)
+                    .collection('orders')
+                    .doc(liveOrder.id)
+                    .get();
+                tableLabel = snap.data()?['tableLabel'] as String?;
+              } catch (_) {}
+              final ok = await const PrintService().printKitchenTicket(
+                order: liveOrder,
+                tableLabel: tableLabel,
+                isAppend: false,
+              );
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    ok
+                        ? 'Kitchen ticket reprinted (mock) · ${liveOrder.id}'
+                        : 'Kitchen ticket print failed',
+                  ),
+                ),
+              );
+            },
+          ),
+          _ActionRow(
+            icon: Icons.payments_outlined,
+            label: 'Take payment',
+            enabled: session.hasPermission(PosPermissions.takePayment),
+            onTap: () async {
+              Navigator.pop(ctx);
+              final paid = await Navigator.of(context).push<bool>(
+                MaterialPageRoute<bool>(
+                  builder: (_) => PaymentScreen(
+                    franchiseId: widget.franchiseId,
+                    orderId: liveOrder.id,
+                    amountDue: liveOrder.total,
+                    closeOutOrder: !isDelivery,
+                    statusWhenPaid: OrderStatus.sentToKitchen,
+                    allowedMethods: isDelivery
+                        ? const {'card'}
+                        : const {'cash', 'split', 'card'},
+                  ),
+                ),
+              );
+              if (paid == true && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Order ${liveOrder.id} paid')),
+                );
+              }
+            },
+          ),
+          _ActionRow(
+            icon: Icons.soup_kitchen_outlined,
+            label: 'Send to kitchen',
+            enabled: session.hasPermission(PosPermissions.takeOrder),
+            onTap: () async {
+              Navigator.pop(ctx);
+              await _sendToKitchen(liveOrder);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Order ${liveOrder.id} sent to kitchen · ticket (mock)',
+                    ),
+                  ),
+                );
+              }
+            },
+          ),
+          _ActionRow(
+            icon: Icons.check_circle_outline,
+            label: 'Mark ready',
+            enabled: session.hasPermission(PosPermissions.takeOrder),
+            onTap: () async {
+              Navigator.pop(ctx);
+              await _updateStatus(liveOrder.id, OrderStatus.ready);
+              if (context.mounted) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('Marked ready')));
+              }
+            },
+          ),
+          _ActionRow(
+            icon: Icons.undo,
+            label: 'Void order',
+            enabled: session.hasPermission(PosPermissions.voidOrder),
+            destructive: true,
+            onTap: () async {
+              Navigator.pop(ctx);
+
+              if (session.requiresFreshPinFor(PosPermissions.voidOrder)) {
+                final pinned = await ForceRepinDialog.show(
+                  context,
+                  franchiseId: widget.franchiseId,
+                  reasonLabel: 'Void order ${liveOrder.id}',
+                );
+                if (pinned != true) return;
+              }
+
+              if (!context.mounted) return;
+              final ok = await showDialog<bool>(
+                context: context,
+                builder: (dCtx) => AlertDialog(
+                  title: const Text('Void order?'),
+                  content: Text('Void ${liveOrder.id}?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(dCtx, false),
+                      child: const Text('Cancel'),
+                    ),
+                    FilledButton(
+                      onPressed: () => Navigator.pop(dCtx, true),
+                      child: const Text('Void'),
+                    ),
+                  ],
+                ),
+              );
+              if (ok == true) {
+                await _updateStatus(liveOrder.id, OrderStatus.cancelled);
+                if (_normalizeType(liveOrder) == 'dine_in') {
+                  try {
+                    final snap = await FirebaseFirestore.instance
+                        .collection('franchises')
+                        .doc(widget.franchiseId)
+                        .collection('orders')
+                        .doc(liveOrder.id)
+                        .get();
+                    final tableId = snap.data()?['tableId'] as String?;
+                    if (tableId != null && tableId.isNotEmpty) {
+                      await setTableStatus(
+                        franchiseId: widget.franchiseId,
+                        tableId: tableId,
+                        status: 'free',
                       );
                     }
-                  },
-                ),
-                _ActionRow(
-                  icon: Icons.soup_kitchen_outlined,
-                  label: 'Send to kitchen',
-                  enabled: session.hasPermission(PosPermissions.takeOrder),
-                  onTap: () async {
-                    Navigator.pop(dialogContext);
-                    await _sendToKitchen(order);
+                  } catch (_) {}
+                }
+                if (context.mounted) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text('Order voided')));
+                }
+              }
+            },
+          ),
+          if (isDelivery)
+            _ActionRow(
+              icon: Icons.delivery_dining,
+              label: 'Assign / deliver',
+              enabled:
+                  (session.staff?.role.trim().toLowerCase() == 'driver') ||
+                  session.hasPermission(PosPermissions.takeOrder) ||
+                  session.hasPermission(PosPermissions.managerOverride),
+              onTap: () async {
+                Navigator.pop(ctx);
+                final ok = await DriverAssignSheet.show(
+                  context,
+                  franchiseId: widget.franchiseId,
+                  orderId: liveOrder.id,
+                );
+                if (ok && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Driver assigned')),
+                  );
+                }
+              },
+            ),
+          if (isDelivery)
+            _ActionRow(
+              icon: Icons.home_outlined,
+              label: 'Mark delivered',
+              enabled:
+                  (session.staff?.role.trim().toLowerCase() == 'driver') ||
+                  session.hasPermission(PosPermissions.takeOrder) ||
+                  session.hasPermission(PosPermissions.managerOverride),
+              onTap: () async {
+                Navigator.pop(ctx);
+                final ok = await showDialog<bool>(
+                  context: context,
+                  builder: (dCtx) => AlertDialog(
+                    title: const Text('Mark delivered?'),
+                    content: Text(
+                      'Close delivery ${liveOrder.id}'
+                      '${liveOrder.userNameDisplay.isNotEmpty ? ' for ${liveOrder.userNameDisplay}' : ''}?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(dCtx, false),
+                        child: const Text('Cancel'),
+                      ),
+                      FilledButton(
+                        onPressed: () => Navigator.pop(dCtx, true),
+                        child: const Text('Delivered'),
+                      ),
+                    ],
+                  ),
+                );
+                if (ok == true) {
+                  final paid = _isPaid(liveOrder);
+                  if (paid) {
+                    await _updateStatus(liveOrder.id, OrderStatus.delivered);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Order ${order.id} sent to kitchen · ticket (mock)',
-                          ),
-                        ),
+                        const SnackBar(content: Text('Marked delivered')),
                       );
                     }
-                  },
-                ),
-                _ActionRow(
-                  icon: Icons.check_circle_outline,
-                  label: 'Mark ready',
-                  enabled: session.hasPermission(PosPermissions.takeOrder),
-                  onTap: () async {
-                    Navigator.pop(dialogContext);
-                    await _updateStatus(order.id, OrderStatus.ready);
+                  } else {
+                    await _updateStatus(liveOrder.id, OrderStatus.pendingTill);
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Marked ready')),
-                      );
-                    }
-                  },
-                ),
-                _ActionRow(
-                  icon: Icons.undo,
-                  label: 'Void order',
-                  enabled: session.hasPermission(PosPermissions.voidOrder),
-                  destructive: true,
-                  onTap: () async {
-                    Navigator.pop(dialogContext);
-
-                    if (session.requiresFreshPinFor(PosPermissions.voidOrder)) {
-                      final pinned = await ForceRepinDialog.show(
-                        context,
-                        franchiseId: widget.franchiseId,
-                        reasonLabel: 'Void order ${order.id}',
-                      );
-                      if (pinned != true) return;
-                    }
-
-                    if (!context.mounted) return;
-                    final ok = await showDialog<bool>(
-                      context: context,
-                      builder: (ctx) => AlertDialog(
-                        title: const Text('Void order?'),
-                        content: Text('Void ${order.id}?'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx, false),
-                            child: const Text('Cancel'),
-                          ),
-                          FilledButton(
-                            onPressed: () => Navigator.pop(ctx, true),
-                            child: const Text('Void'),
-                          ),
-                        ],
-                      ),
-                    );
-                    if (ok == true) {
-                      await _updateStatus(order.id, OrderStatus.cancelled);
-                      if (_normalizeType(order) == 'dine_in') {
-                        try {
-                          final snap = await FirebaseFirestore.instance
-                              .collection('franchises')
-                              .doc(widget.franchiseId)
-                              .collection('orders')
-                              .doc(order.id)
-                              .get();
-                          final tableId = snap.data()?['tableId'] as String?;
-                          if (tableId != null && tableId.isNotEmpty) {
-                            await setTableStatus(
-                              franchiseId: widget.franchiseId,
-                              tableId: tableId,
-                              status: 'free',
-                            );
-                          }
-                        } catch (_) {}
-                      }
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Order voided')),
-                        );
-                      }
-                    }
-                  },
-                ),
-                if (isDelivery)
-                  _ActionRow(
-                    icon: Icons.delivery_dining,
-                    label: 'Assign / deliver',
-                    enabled:
-                        (session.staff?.role.trim().toLowerCase() ==
-                            'driver') ||
-                        session.hasPermission(PosPermissions.takeOrder) ||
-                        session.hasPermission(PosPermissions.managerOverride),
-                    onTap: () async {
-                      Navigator.pop(dialogContext);
-                      final ok = await DriverAssignSheet.show(
-                        context,
-                        franchiseId: widget.franchiseId,
-                        orderId: order.id,
-                      );
-                      if (ok && context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Driver assigned')),
-                        );
-                      }
-                    },
-                  ),
-                if (isDelivery)
-                  _ActionRow(
-                    icon: Icons.home_outlined,
-                    label: 'Mark delivered',
-                    enabled:
-                        (session.staff?.role.trim().toLowerCase() ==
-                            'driver') ||
-                        session.hasPermission(PosPermissions.takeOrder) ||
-                        session.hasPermission(PosPermissions.managerOverride),
-                    onTap: () async {
-                      Navigator.pop(dialogContext);
-                      final ok = await showDialog<bool>(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: const Text('Mark delivered?'),
-                          content: Text(
-                            'Close delivery ${order.id}'
-                            '${order.userNameDisplay.isNotEmpty ? ' for ${order.userNameDisplay}' : ''}?',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx, false),
-                              child: const Text('Cancel'),
-                            ),
-                            FilledButton(
-                              onPressed: () => Navigator.pop(ctx, true),
-                              child: const Text('Delivered'),
-                            ),
-                          ],
-                        ),
-                      );
-                      if (ok == true) {
-                        final paid = _isPaid(order);
-                        if (paid) {
-                          await _updateStatus(order.id, OrderStatus.delivered);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Marked delivered')),
-                            );
-                          }
-                        } else {
-                          // COD: food delivered, cash still owed to till
-                          await _updateStatus(
-                            order.id,
-                            OrderStatus.pendingTill,
-                          );
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Delivered — close till when cash is in drawer',
-                                ),
-                              ),
-                            );
-                          }
-                        }
-                      }
-                    },
-                  ),
-                if (isDelivery &&
-                    order.status.trim().toLowerCase() ==
-                        OrderStatus.pendingTill)
-                  _ActionRow(
-                    icon: Icons.point_of_sale,
-                    label: 'Close till (cash)',
-                    enabled:
-                        session.hasPermission(PosPermissions.takePayment) &&
-                        session.hasPermission(PosPermissions.openDrawer),
-                    onTap: () async {
-                      Navigator.pop(dialogContext);
-                      final ok = await showDialog<bool>(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: const Text('Close till?'),
-                          content: Text(
-                            'Record \$${order.total.toStringAsFixed(2)} cash '
-                            'into the till for ${order.id}?',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx, false),
-                              child: const Text('Cancel'),
-                            ),
-                            FilledButton(
-                              onPressed: () => Navigator.pop(ctx, true),
-                              child: const Text('Cash in till'),
-                            ),
-                          ],
-                        ),
-                      );
-                      if (ok == true) {
-                        await _closeTillCash(order);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Till closed — delivery complete'),
-                            ),
-                          );
-                        }
-                      }
-                    },
-                  ),
-                _ActionRow(
-                  icon: Icons.replay,
-                  label: 'Refund',
-                  enabled: session.hasPermission(PosPermissions.refund),
-                  destructive: true,
-                  onTap: () async {
-                    Navigator.pop(dialogContext);
-
-                    if (!_isPaid(order)) {
-                      if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text(
-                            'Order is not paid — use Void instead of Refund',
+                            'Delivered — close till when cash is in drawer',
                           ),
                         ),
                       );
-                      return;
                     }
-
-                    if (session.requiresFreshPinFor(PosPermissions.refund)) {
-                      final pinned = await ForceRepinDialog.show(
-                        context,
-                        franchiseId: widget.franchiseId,
-                        reasonLabel: 'Refund order ${order.id}',
-                      );
-                      if (pinned != true) return;
-                    }
-
-                    if (!context.mounted) return;
-                    final ok = await showDialog<bool>(
-                      context: context,
-                      builder: (ctx) => AlertDialog(
-                        title: const Text('Refund order?'),
-                        content: Text(
-                          'Refund \$${order.total.toStringAsFixed(2)} cash '
-                          'for ${order.id}?\n\n'
-                          'Skeleton: full cash refund only. '
-                          'Card reverse comes with Terminal.',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx, false),
-                            child: const Text('Cancel'),
-                          ),
-                          FilledButton(
-                            onPressed: () => Navigator.pop(ctx, true),
-                            child: const Text('Refund cash'),
-                          ),
-                        ],
+                  }
+                }
+              },
+            ),
+          if (isDelivery &&
+              liveOrder.status.trim().toLowerCase() == OrderStatus.pendingTill)
+            _ActionRow(
+              icon: Icons.point_of_sale,
+              label: 'Close till (cash)',
+              enabled:
+                  session.hasPermission(PosPermissions.takePayment) &&
+                  session.hasPermission(PosPermissions.openDrawer),
+              onTap: () async {
+                Navigator.pop(ctx);
+                final ok = await showDialog<bool>(
+                  context: context,
+                  builder: (dCtx) => AlertDialog(
+                    title: const Text('Close till?'),
+                    content: Text(
+                      'Record \$${liveOrder.total.toStringAsFixed(2)} cash '
+                      'into the till for ${liveOrder.id}?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(dCtx, false),
+                        child: const Text('Cancel'),
                       ),
-                    );
-                    if (ok != true) return;
-
-                    await _refundCash(order);
-                    if (!context.mounted) return;
+                      FilledButton(
+                        onPressed: () => Navigator.pop(dCtx, true),
+                        child: const Text('Cash in till'),
+                      ),
+                    ],
+                  ),
+                );
+                if (ok == true) {
+                  await _closeTillCash(liveOrder);
+                  if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Refunded \$${order.total.toStringAsFixed(2)} cash · ${order.id}',
-                        ),
+                      const SnackBar(
+                        content: Text('Till closed — delivery complete'),
                       ),
                     );
-                  },
+                  }
+                }
+              },
+            ),
+          _ActionRow(
+            icon: Icons.replay,
+            label: 'Refund',
+            enabled: session.hasPermission(PosPermissions.refund),
+            destructive: true,
+            onTap: () async {
+              Navigator.pop(ctx);
+
+              if (!_isPaid(liveOrder)) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Order is not paid — use Void instead of Refund',
+                    ),
+                  ),
+                );
+                return;
+              }
+
+              if (session.requiresFreshPinFor(PosPermissions.refund)) {
+                final pinned = await ForceRepinDialog.show(
+                  context,
+                  franchiseId: widget.franchiseId,
+                  reasonLabel: 'Refund order ${liveOrder.id}',
+                );
+                if (pinned != true) return;
+              }
+
+              if (!context.mounted) return;
+              final ok = await showDialog<bool>(
+                context: context,
+                builder: (dCtx) => AlertDialog(
+                  title: const Text('Refund order?'),
+                  content: Text(
+                    'Refund \$${liveOrder.total.toStringAsFixed(2)} cash '
+                    'for ${liveOrder.id}?\n\n'
+                    'Skeleton: full cash refund only. '
+                    'Card reverse comes with Terminal.',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(dCtx, false),
+                      child: const Text('Cancel'),
+                    ),
+                    FilledButton(
+                      onPressed: () => Navigator.pop(dCtx, true),
+                      child: const Text('Refund cash'),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              );
+              if (ok != true) return;
+
+              await _refundCash(liveOrder);
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Refunded \$${liveOrder.total.toStringAsFixed(2)} cash · ${liveOrder.id}',
+                  ),
+                ),
+              );
+            },
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Close'),
-            ),
-          ],
-        );
+        ];
       },
     );
   }

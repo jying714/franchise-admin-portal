@@ -1934,6 +1934,7 @@ class FirestoreServiceImpl implements FirestoreService {
 
     final q = _franchiseCollection(franchiseId, _orders)
         .where('userId', isEqualTo: userId)
+        .orderBy('timestamp', descending: true)
         .limit(limit);
 
     return q.snapshots().map((s) => s.docs
@@ -1953,7 +1954,8 @@ class FirestoreServiceImpl implements FirestoreService {
     }
 
     final q = _franchiseCollection(franchiseId, _orders)
-        .where('userId', isEqualTo: userId);
+        .where('userId', isEqualTo: userId)
+        .orderBy('timestamp', descending: true);
 
     return q.snapshots().map((s) => s.docs
         .map((d) => Order.fromFirestore(d.data() as Map<String, dynamic>, d.id))

@@ -328,10 +328,29 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
         return null;
       }
       final existing = Order.fromFirestore(snap.data()!, snap.id);
-      final mergedItems = [...existing.items, ...items];
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      final newItems = <OrderItem>[];
+      for (var i = 0; i < items.length; i++) {
+        final it = items[i];
+        newItems.add(
+          OrderItem(
+            menuItemId: it.menuItemId,
+            name: it.name,
+            price: it.price,
+            quantity: it.quantity,
+            customizations: it.customizations,
+            image: it.image,
+            size: it.size,
+            cartItemKey: it.cartItemKey ?? '${it.menuItemId}_${nowMs}_$i',
+            lineStatus: 'active',
+          ),
+        );
+      }
+      final mergedItems = [...existing.items, ...newItems];
+      // Active lines only (voided/comped contribute 0).
       final subtotal = mergedItems.fold<double>(
         0,
-        (s, i) => s + i.price * i.quantity,
+        (s, i) => s + i.effectiveLineTotal,
       );
       final discount = existing.discount;
       final taxable = _taxableAmount(subtotal: subtotal, discount: discount);
@@ -342,21 +361,12 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
         deliveryFee: existing.deliveryFee,
       );
       await ref.set({
-        'items': mergedItems
-            .map(
-              (i) => <String, dynamic>{
-                'menuItemId': i.menuItemId,
-                'name': i.name,
-                'price': i.price,
-                'quantity': i.quantity,
-                'customizations': i.customizations,
-              },
-            )
-            .toList(),
+        'items': mergedItems.map((i) => i.toMap()).toList(),
         'subtotal': subtotal,
         'tax': tax,
         'total': total,
         'timestamps.updated': DateTime.now().toIso8601String(),
+        'timestamps.line_adjusted': DateTime.now().toIso8601String(),
       }, SetOptions(merge: true));
       // Do not change table status on append
       return existingId;

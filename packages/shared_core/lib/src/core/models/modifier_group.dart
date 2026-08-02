@@ -9,6 +9,7 @@ abstract final class MenuProfile {
   static const String calzone = 'calzone';
   static const String wings = 'wings';
   static const String drinks = 'drinks';
+  static const String sub = 'sub';
 
   static const List<String> known = [
     standard,
@@ -16,6 +17,7 @@ abstract final class MenuProfile {
     calzone,
     wings,
     drinks,
+    sub,
   ];
 }
 

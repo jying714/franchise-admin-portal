@@ -53,6 +53,8 @@ abstract final class MenuProfileTemplates {
         return _wings();
       case MenuProfile.drinks:
         return _drinks();
+      case MenuProfile.sub:
+        return _sub();
       case MenuProfile.standard:
       default:
         return _standard();
@@ -72,6 +74,33 @@ abstract final class MenuProfileTemplates {
         max: 1,
         sortOrder: 0,
         options: const [],
+      ),
+    ];
+  }
+
+  /// Sub / sandwich: cook style only (Regular | Crispy).
+  /// HQ disables by clearing cook options in the modifier binder.
+  /// Included / optional toppings stay on the item lists (dinner-style), not here.
+  static List<ModifierGroup> _sub() {
+    return [
+      ModifierGroup(
+        id: 'cook',
+        label: 'Cook',
+        selectMode: ModifierSelectMode.single,
+        min: 1,
+        max: 1,
+        sortOrder: 0,
+        options: const [
+          ModifierOption(
+            id: 'cook_regular',
+            label: 'Regular',
+            defaultSelected: true,
+          ),
+          ModifierOption(
+            id: 'cook_crispy',
+            label: 'Crispy',
+          ),
+        ],
       ),
     ];
   }

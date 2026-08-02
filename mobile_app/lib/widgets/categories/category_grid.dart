@@ -36,7 +36,6 @@ class CategoryGrid extends StatelessWidget {
     final loc = AppLocalizations.of(context)!;
 
     if (categories.isEmpty) {
-      // Show provided emptyWidget, or a default empty state
       return emptyWidget ??
           Center(
             child: Text(
@@ -53,13 +52,36 @@ class CategoryGrid extends StatelessWidget {
           );
     }
 
-    // Responsive grid columns: default 2 (mobile), 3 (tablet+)
     final int gridCount =
         crossAxisCount ?? (MediaQuery.of(context).size.width > 600 ? 3 : 2);
 
+    int orderOf(shared.Category c) => c.sortOrder ?? 999999;
+
+    final withImage = categories
+        .where((c) => c.image != null && c.image!.trim().isNotEmpty)
+        .toList()
+      ..sort((a, b) => orderOf(a).compareTo(orderOf(b)));
+
+    final reducedList = categories
+        .where((c) => c.image == null || c.image!.trim().isEmpty)
+        .toList()
+      ..sort((a, b) => orderOf(a).compareTo(orderOf(b)));
+
+    // Unified slots: each image category = 1 cell; each pair of reduced = 1 cell.
+    // Reduced pairs append after image cells so they fill the next open grid cell
+    // (e.g. empty right slot beside the last image card).
+    final List<List<shared.Category>> slots = [
+      for (final c in withImage) [c],
+      for (var i = 0; i < reducedList.length; i += 2)
+        reducedList.sublist(
+          i,
+          i + 2 > reducedList.length ? reducedList.length : i + 2,
+        ),
+    ];
+
     return GridView.builder(
       padding: padding ?? shared.UiConfig.defaultPadding,
-      itemCount: categories.length,
+      itemCount: slots.length,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: gridCount,
         childAspectRatio:
@@ -68,10 +90,40 @@ class CategoryGrid extends StatelessWidget {
         mainAxisSpacing: shared.DesignTokens.gridSpacing,
       ),
       itemBuilder: (context, index) {
-        final category = categories[index];
-        return CategoryCard(
-          category: category,
-          onTap: onCategoryTap,
+        final slot = slots[index];
+
+        // Image category — full card
+        if (slot.length == 1 &&
+            slot.first.image != null &&
+            slot.first.image!.trim().isNotEmpty) {
+          return CategoryCard(
+            category: slot.first,
+            onTap: onCategoryTap,
+            reduced: false,
+          );
+        }
+
+        // Reduced pair (or single leftover) stacked in one cell
+        return Column(
+          children: [
+            Expanded(
+              child: CategoryCard(
+                category: slot.first,
+                onTap: onCategoryTap,
+                reduced: true,
+              ),
+            ),
+            if (slot.length > 1) ...[
+              SizedBox(height: shared.DesignTokens.gridSpacing),
+              Expanded(
+                child: CategoryCard(
+                  category: slot[1],
+                  onTap: onCategoryTap,
+                  reduced: true,
+                ),
+              ),
+            ],
+          ],
         );
       },
     );

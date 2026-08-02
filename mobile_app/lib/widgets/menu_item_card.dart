@@ -24,6 +24,10 @@ class MenuItemCard extends StatefulWidget {
   final bool?
       isFavorited; // Optional: parent (e.g. CategoryScreen) can provide via its own favorites stream for reactivity
 
+  /// When true, omit the image column (no-image items). Parent places these
+  /// below image cards while preserving stream / sort order within the band.
+  final bool reduced;
+
   const MenuItemCard({
     super.key,
     required this.menuItem,
@@ -32,6 +36,7 @@ class MenuItemCard extends StatefulWidget {
     this.expanded = false,
     this.margin,
     this.isFavorited,
+    this.reduced = false,
   });
 
   @override
@@ -153,6 +158,298 @@ class _MenuItemCardState extends State<MenuItemCard> {
     final ingredientMetadata =
         Provider.of<Map<String, shared.IngredientMetadata>>(context);
 
+    final Widget actionsRow = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_showCustomizeOnly)
+          Expanded(
+            child: SizedBox(
+              height: 36,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: scheme.surface,
+                  foregroundColor: scheme.primary,
+                  side: BorderSide(color: scheme.outline),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  padding: EdgeInsets.zero,
+                  elevation: shared.DesignTokens.buttonElevation,
+                ),
+                onPressed: () => _handleCustomizeAndAdd(loc),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      loc.customize,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        if (_showCustomizeOnly && _showPlainAddToCart) const SizedBox(width: 8),
+        if (_showPlainAddToCart)
+          Expanded(
+            child: SizedBox(
+              height: 36,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: scheme.primary,
+                  foregroundColor: scheme.onPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  padding: EdgeInsets.zero,
+                  elevation: shared.DesignTokens.buttonElevation,
+                ),
+                onPressed: () => _handleAddToCart(loc),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      loc.addToCart,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        if (_hasCustomizations && !_requiresCustomizeForPrice) ...[
+          const SizedBox(width: 8),
+          Expanded(
+            child: SizedBox(
+              height: 36,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: scheme.primary,
+                  foregroundColor: scheme.onPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  padding: EdgeInsets.zero,
+                  elevation: shared.DesignTokens.buttonElevation,
+                ),
+                onPressed: () => _handleAddToCart(loc),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      loc.addToCart,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+        const SizedBox(width: 8),
+        _userId == null
+            ? _favoriteHeart(false, false, loc)
+            : StreamBuilder<List<shared.MenuItem>>(
+                stream: firestoreService.getFavoriteMenuItemsForUser(
+                  _userId!,
+                  franchiseId: Provider.of<shared.FranchiseProvider>(context,
+                          listen: false)
+                      .currentFranchiseId,
+                ),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return _favoriteHeart(false, false, loc);
+                  }
+                  if (snapshot.hasError) {
+                    return _favoriteHeart(false, true, loc);
+                  }
+                  final isFavorited =
+                      snapshot.data?.any((mi) => mi.id == widget.menuItem.id) ??
+                          false;
+                  return _favoriteHeart(isFavorited, true, loc);
+                },
+              ),
+      ],
+    );
+
+    final Widget quantityStepper = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: Icon(Icons.remove, color: scheme.onSurface),
+          visualDensity: VisualDensity.compact,
+          onPressed: _quantity > 1 ? () => setState(() => _quantity--) : null,
+        ),
+        Text(
+          '$_quantity',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: shared.DesignTokens.bodyFontSize,
+            color: scheme.onSurface,
+          ),
+        ),
+        IconButton(
+          icon: Icon(Icons.add, color: scheme.primary),
+          visualDensity: VisualDensity.compact,
+          onPressed: () => setState(() => _quantity++),
+        ),
+      ],
+    );
+
+    final Widget detailsColumn = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.menuItem.name,
+          style: shared.UiConfig.titleStyle.copyWith(
+            color: scheme.onSurface,
+            fontWeight: FontWeight.w600,
+          ),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        Text(
+          '\$${widget.menuItem.price.toStringAsFixed(2)}',
+          style: shared.UiConfig.bodyStyle.copyWith(
+            color: scheme.onSurface,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        if (widget.showDescription && widget.menuItem.description.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 4.0),
+            child: Text(
+              widget.menuItem.description,
+              style: shared.UiConfig.captionStyle.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+              maxLines: widget.expanded ? 4 : 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        const SizedBox(height: 10),
+        actionsRow,
+        if (_hasCustomizations && widget.menuItem.includedIngredients != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Wrap(
+              spacing: 6,
+              children:
+                  widget.menuItem.includedIngredients!.map((ingredientId) {
+                final meta = ingredientMetadata[ingredientId];
+                if (meta == null || meta.allergens.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                return Chip(
+                  label: Text(meta.allergens.join(', ')),
+                  backgroundColor: Colors.orange.shade100,
+                );
+              }).toList(),
+            ),
+          ),
+      ],
+    );
+
+    if (widget.reduced) {
+      return Card(
+        margin: widget.margin ??
+            const EdgeInsets.symmetric(vertical: 3, horizontal: 6),
+        elevation: 1,
+        color: scheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
+          side: BorderSide(color: scheme.outline, width: 1),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Title + quantity on one row (keeps card short)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.menuItem.name,
+                      style: shared.UiConfig.titleStyle.copyWith(
+                        color: scheme.onSurface,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  quantityStepper,
+                ],
+              ),
+              Text(
+                '\$${widget.menuItem.price.toStringAsFixed(2)}',
+                style: shared.UiConfig.bodyStyle.copyWith(
+                  color: scheme.onSurface,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (widget.showDescription &&
+                  widget.menuItem.description.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 2.0),
+                  child: Text(
+                    widget.menuItem.description,
+                    style: shared.UiConfig.captionStyle.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              const SizedBox(height: 6),
+              // Customize / Add / heart under title row
+              actionsRow,
+              if (_hasCustomizations &&
+                  widget.menuItem.includedIngredients != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6.0),
+                  child: Wrap(
+                    spacing: 6,
+                    children: widget.menuItem.includedIngredients!
+                        .map((ingredientId) {
+                      final meta = ingredientMetadata[ingredientId];
+                      if (meta == null || meta.allergens.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+                      return Chip(
+                        label: Text(meta.allergens.join(', ')),
+                        backgroundColor: Colors.orange.shade100,
+                      );
+                    }).toList(),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Card(
       margin: widget.margin ??
           const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
@@ -169,7 +466,6 @@ class _MenuItemCardState extends State<MenuItemCard> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- ITEM IMAGE + QUANTITY ---
             Column(
               children: [
                 ClipRRect(
@@ -196,238 +492,11 @@ class _MenuItemCardState extends State<MenuItemCard> {
                         ),
                 ),
                 const SizedBox(height: 8),
-                // Quantity Selector under Image
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.remove, color: scheme.onSurface),
-                      visualDensity: VisualDensity.compact,
-                      onPressed: _quantity > 1
-                          ? () => setState(() => _quantity--)
-                          : null,
-                    ),
-                    Text(
-                      '$_quantity',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: shared.DesignTokens.bodyFontSize,
-                        color: scheme.onSurface,
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.add, color: scheme.primary),
-                      visualDensity: VisualDensity.compact,
-                      onPressed: () => setState(() => _quantity++),
-                    ),
-                  ],
-                ),
+                quantityStepper,
               ],
             ),
             const SizedBox(width: 14),
-            // --- DETAILS + ACTIONS ---
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // NAME - HIGH CONTRAST FIX (guaranteed visible on light card background)
-                  Text(
-                    widget.menuItem.name,
-                    style: shared.UiConfig.titleStyle.copyWith(
-                      color: scheme.onSurface,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  // PRICE
-                  Text(
-                    '\$${widget.menuItem.price.toStringAsFixed(2)}',
-                    style: shared.UiConfig.bodyStyle.copyWith(
-                      color: scheme.onSurface,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  // DESCRIPTION
-                  if (widget.showDescription &&
-                      widget.menuItem.description.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4.0),
-                      child: Text(
-                        widget.menuItem.description,
-                        style: shared.UiConfig.captionStyle.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
-                        maxLines: widget.expanded ? 4 : 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  const SizedBox(height: 10),
-                  // --- BUTTONS & HEART ROW ---
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Customize when required (modifiers or size/price-driven)
-                      if (_showCustomizeOnly)
-                        Expanded(
-                          child: SizedBox(
-                            height: 36,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: scheme.surface,
-                                foregroundColor: scheme.primary,
-                                side: BorderSide(color: scheme.outline),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(18),
-                                ),
-                                padding: EdgeInsets.zero,
-                                elevation: shared.DesignTokens.buttonElevation,
-                              ),
-                              onPressed: () => _handleCustomizeAndAdd(loc),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 5, vertical: 4),
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    loc.customize,
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      if (_showCustomizeOnly && _showPlainAddToCart)
-                        const SizedBox(width: 8),
-                      // Plain add only when base price is valid and no customize path
-                      if (_showPlainAddToCart)
-                        Expanded(
-                          child: SizedBox(
-                            height: 36,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: scheme.primary,
-                                foregroundColor: scheme.onPrimary,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(18),
-                                ),
-                                padding: EdgeInsets.zero,
-                                elevation: shared.DesignTokens.buttonElevation,
-                              ),
-                              onPressed: () => _handleAddToCart(loc),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 5, vertical: 4),
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    loc.addToCart,
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      // Second Add button only when customize is optional extras
-                      // and base price is still valid (not size-driven $0).
-                      if (_hasCustomizations &&
-                          !_requiresCustomizeForPrice) ...[
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: SizedBox(
-                            height: 36,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: scheme.primary,
-                                foregroundColor: scheme.onPrimary,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(18),
-                                ),
-                                padding: EdgeInsets.zero,
-                                elevation: shared.DesignTokens.buttonElevation,
-                              ),
-                              onPressed: () => _handleAddToCart(loc),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 5, vertical: 4),
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    loc.addToCart,
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                      const SizedBox(width: 8),
-                      // Heart/favorite
-                      _userId == null
-                          ? _favoriteHeart(false, false, loc)
-                          : StreamBuilder<List<shared.MenuItem>>(
-                              stream:
-                                  firestoreService.getFavoriteMenuItemsForUser(
-                                _userId!,
-                                franchiseId:
-                                    Provider.of<shared.FranchiseProvider>(
-                                            context,
-                                            listen: false)
-                                        .currentFranchiseId,
-                              ),
-                              builder: (context, snapshot) {
-                                if (snapshot.connectionState ==
-                                    ConnectionState.waiting) {
-                                  return _favoriteHeart(false, false, loc);
-                                }
-                                if (snapshot.hasError) {
-                                  return _favoriteHeart(false, true, loc);
-                                }
-                                final isFavorited = snapshot.data?.any(
-                                        (mi) => mi.id == widget.menuItem.id) ??
-                                    false;
-                                return _favoriteHeart(isFavorited, true, loc);
-                              },
-                            ),
-                    ],
-                  ),
-                  // Allergen tags example (optional)
-                  if (_hasCustomizations &&
-                      widget.menuItem.includedIngredients != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Wrap(
-                        spacing: 6,
-                        children: widget.menuItem.includedIngredients!
-                            .map((ingredientId) {
-                          final meta = ingredientMetadata[ingredientId];
-                          if (meta == null || meta.allergens.isEmpty)
-                            return const SizedBox();
-                          return Chip(
-                            label: Text(meta.allergens.join(', ')),
-                            backgroundColor: Colors.orange.shade100,
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                ],
-              ),
-            ),
+            Expanded(child: detailsColumn),
           ],
         ),
       ),
