@@ -1,4 +1,5 @@
 // web-app/lib/admin/hq_owner/screens/website_settings_panel.dart
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -25,6 +26,11 @@ class _WebsiteSettingsPanelState extends State<WebsiteSettingsPanel> {
   final _story = TextEditingController();
   final _photoUrl = TextEditingController();
 
+  bool _loading = true;
+  bool _saving = false;
+  String? _syncedFranchiseId;
+  String? _loadError;
+
   @override
   void dispose() {
     _heroUrl.dispose();
@@ -33,6 +39,81 @@ class _WebsiteSettingsPanelState extends State<WebsiteSettingsPanel> {
     _story.dispose();
     _photoUrl.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final id =
+        Provider.of<shared.FranchiseProvider>(context).franchiseId.trim();
+    if (id.isEmpty || id == 'unknown') return;
+    if (_syncedFranchiseId == id) return;
+    _syncedFranchiseId = id;
+    _load(id);
+  }
+
+  Future<void> _load(String franchiseId) async {
+    setState(() {
+      _loading = true;
+      _loadError = null;
+    });
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('config')
+          .doc('storefront')
+          .get();
+      final data = snap.data() ?? {};
+      _heroUrl.text = (data['heroImageUrl'] ?? '').toString();
+      _headline.text = (data['heroHeadline'] ?? '').toString();
+      _subheadline.text = (data['heroSubheadline'] ?? '').toString();
+      _photoUrl.text = (data['storefrontPhotoUrl'] ?? '').toString();
+      _story.text = (data['storyBody'] ?? '').toString();
+    } catch (e) {
+      _loadError = '$e';
+    }
+    if (mounted) setState(() => _loading = false);
+  }
+
+  Future<void> _save() async {
+    final fp = Provider.of<shared.FranchiseProvider>(context, listen: false);
+    final franchiseId = fp.franchiseId.trim();
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No franchise selected')),
+      );
+      return;
+    }
+
+    setState(() => _saving = true);
+    try {
+      await FirebaseFirestore.instance
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('config')
+          .doc('storefront')
+          .set({
+        'heroImageUrl': _heroUrl.text.trim(),
+        'heroHeadline': _headline.text.trim(),
+        'heroSubheadline': _subheadline.text.trim(),
+        'storefrontPhotoUrl': _photoUrl.text.trim(),
+        'storyBody': _story.text.trim(),
+        'updatedAt': DateTime.now().toIso8601String(),
+      }, SetOptions(merge: true));
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Website content saved')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Save failed: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
   }
 
   static String urlFor(String franchiseId) =>
@@ -47,6 +128,10 @@ class _WebsiteSettingsPanelState extends State<WebsiteSettingsPanel> {
         franchiseId != 'unknown' &&
         franchiseId != 'test';
     final url = canLink ? urlFor(franchiseId) : null;
+
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
     return ListView(
       padding: EdgeInsets.all(DesignTokens.paddingLg),
@@ -152,18 +237,25 @@ class _WebsiteSettingsPanelState extends State<WebsiteSettingsPanel> {
         ),
         const SizedBox(height: 24),
         Text(
-          'Site content (draft — save in a later phase)',
+          'Site content',
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: 4),
         Text(
-          'Fields map to config/storefront when persistence lands.',
+          'Stored at franchises/{id}/config/storefront for customer_web.',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
+        if (_loadError != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Load warning: $_loadError',
+            style: TextStyle(color: theme.colorScheme.error),
+          ),
+        ],
         const SizedBox(height: 12),
         TextField(
           controller: _heroUrl,
@@ -211,18 +303,20 @@ class _WebsiteSettingsPanelState extends State<WebsiteSettingsPanel> {
           ),
         ),
         const SizedBox(height: 16),
-        OutlinedButton.icon(
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  'Storefront content save lands when config/storefront is wired',
-                ),
-              ),
-            );
-          },
-          icon: const Icon(Icons.save_outlined, size: 18),
-          label: const Text('Save website content (soon)'),
+        FilledButton.icon(
+          onPressed: (!canLink || _saving) ? null : _save,
+          icon: _saving
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.save_outlined, size: 18),
+          label: Text(_saving ? 'Saving…' : 'Save website content'),
+          style: FilledButton.styleFrom(
+            backgroundColor: DesignTokens.primaryColor,
+            foregroundColor: DesignTokens.foregroundColor,
+          ),
         ),
       ],
     );

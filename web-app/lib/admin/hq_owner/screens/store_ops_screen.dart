@@ -24,6 +24,11 @@ class StoreOpsScreen extends StatefulWidget {
 
 class _StoreOpsScreenState extends State<StoreOpsScreen> {
   final _taxController = TextEditingController(text: '9.25');
+  final _deliveryFeeController = TextEditingController(text: '0');
+  final _deliveryMinimumController = TextEditingController(text: '0');
+  bool _deliveryEnabled = false;
+  bool _pickupEnabled = true;
+  bool _acceptingOnlineOrders = true;
 
   static const _dayKeys = <String>[
     'mon',
@@ -63,6 +68,8 @@ class _StoreOpsScreenState extends State<StoreOpsScreen> {
   @override
   void dispose() {
     _taxController.dispose();
+    _deliveryFeeController.dispose();
+    _deliveryMinimumController.dispose();
     for (final c in _openByDay.values) {
       c.dispose();
     }
@@ -100,6 +107,18 @@ class _StoreOpsScreenState extends State<StoreOpsScreen> {
         final rate = (data['taxRate'] as num?)?.toDouble();
         if (rate != null) {
           _taxController.text = (rate * 100).toStringAsFixed(2);
+        }
+
+        _deliveryEnabled = data['deliveryEnabled'] == true;
+        _pickupEnabled = data['pickupEnabled'] != false;
+        _acceptingOnlineOrders = data['acceptingOnlineOrders'] != false;
+        final fee = (data['deliveryFee'] as num?)?.toDouble();
+        if (fee != null) {
+          _deliveryFeeController.text = fee.toStringAsFixed(2);
+        }
+        final minOrder = (data['deliveryMinimum'] as num?)?.toDouble();
+        if (minOrder != null) {
+          _deliveryMinimumController.text = minOrder.toStringAsFixed(2);
         }
 
         final hoursRaw = data['hours'];
@@ -168,6 +187,22 @@ class _StoreOpsScreenState extends State<StoreOpsScreen> {
       );
       return;
     }
+    final deliveryFee = double.tryParse(_deliveryFeeController.text.trim());
+    final deliveryMinimum =
+        double.tryParse(_deliveryMinimumController.text.trim());
+    if (deliveryFee == null || deliveryFee < 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Delivery fee must be ≥ 0')),
+      );
+      return;
+    }
+    if (deliveryMinimum == null || deliveryMinimum < 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Delivery minimum must be ≥ 0')),
+      );
+      return;
+    }
+
     final hoursPayload = <String, dynamic>{};
     for (final key in _dayKeys) {
       final closed = _closedByDay[key] == true;
@@ -212,6 +247,11 @@ class _StoreOpsScreenState extends State<StoreOpsScreen> {
           .set({
         'taxRate': taxPct / 100.0,
         'hours': hoursPayload,
+        'deliveryEnabled': _deliveryEnabled,
+        'pickupEnabled': _pickupEnabled,
+        'acceptingOnlineOrders': _acceptingOnlineOrders,
+        'deliveryFee': deliveryFee,
+        'deliveryMinimum': deliveryMinimum,
         'updatedAt': DateTime.now().toIso8601String(),
       }, SetOptions(merge: true));
 
@@ -314,6 +354,77 @@ class _StoreOpsScreenState extends State<StoreOpsScreen> {
                                 isDense: true,
                                 helperText:
                                     'Stored as decimal (9.25 → 0.0925). Mobile + POS will read this next.',
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            Text(
+                              'Fulfillment',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 8),
+                            SwitchListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text('Accepting online orders'),
+                              subtitle: const Text(
+                                'Master kill switch for web + mobile intake',
+                              ),
+                              value: _acceptingOnlineOrders,
+                              onChanged: (v) =>
+                                  setState(() => _acceptingOnlineOrders = v),
+                            ),
+                            SwitchListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text('Pickup enabled'),
+                              value: _pickupEnabled,
+                              onChanged: (v) =>
+                                  setState(() => _pickupEnabled = v),
+                            ),
+                            SwitchListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text('Delivery enabled'),
+                              value: _deliveryEnabled,
+                              onChanged: (v) =>
+                                  setState(() => _deliveryEnabled = v),
+                            ),
+                            const SizedBox(height: 8),
+                            TextField(
+                              controller: _deliveryFeeController,
+                              enabled: _deliveryEnabled,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                decimal: true,
+                              ),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r'[0-9.]'),
+                                ),
+                              ],
+                              decoration: const InputDecoration(
+                                labelText: 'Delivery fee (\$)',
+                                border: OutlineInputBorder(),
+                                isDense: true,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _deliveryMinimumController,
+                              enabled: _deliveryEnabled,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                decimal: true,
+                              ),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r'[0-9.]'),
+                                ),
+                              ],
+                              decoration: const InputDecoration(
+                                labelText: 'Delivery minimum (\$)',
+                                border: OutlineInputBorder(),
+                                isDense: true,
                               ),
                             ),
                             const SizedBox(height: 24),
