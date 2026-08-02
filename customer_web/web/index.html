@@ -33,6 +33,26 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
+  <script>
+    (function () {
+      var path = window.location.pathname || '/';
+      var hash = window.location.hash || '';
+      var search = window.location.search || '';
+
+      // Dual: /f/xxx#/f/xxx  →  /#/f/xxx
+      if (path.indexOf('/f/') === 0 && hash.indexOf('/f/') !== -1) {
+        var cleaned = hash.charAt(0) === '#' ? hash : ('#' + hash);
+        window.location.replace('/' + cleaned + search);
+        return;
+      }
+
+      // Path-only: /f/xxx  →  /#/f/xxx
+      if (path.indexOf('/f/') === 0 && hash === '') {
+        window.location.replace('/#' + path + search);
+        return;
+      }
+    })();
+  </script>
   <script src="https://js.stripe.com/v3/"></script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
