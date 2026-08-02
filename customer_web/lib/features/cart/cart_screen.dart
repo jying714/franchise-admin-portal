@@ -96,7 +96,41 @@ class CartScreen extends StatelessWidget {
           final items = cart?.items ?? const <shared.OrderItem>[];
 
           if (items.isEmpty) {
-            return const Center(child: Text('Your cart is empty'));
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.shopping_cart_outlined,
+                      size: 48,
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Your cart is empty',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Browse the menu and add items to get started.',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    FilledButton(
+                      onPressed: () {
+                        Navigator.of(context).popUntil((r) => r.isFirst);
+                      },
+                      child: const Text('Continue shopping'),
+                    ),
+                  ],
+                ),
+              ),
+            );
           }
 
           double subtotal = 0;
@@ -104,39 +138,106 @@ class CartScreen extends StatelessWidget {
             subtotal += line.price * line.quantity;
           }
 
-          return Column(
-            children: [
-              Expanded(
-                child: ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: items.length,
-                  separatorBuilder: (_, __) => const Divider(),
-                  itemBuilder: (context, index) {
-                    final line = items[index];
-                    return ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(line.name),
-                      subtitle: Text(
-                        [
-                          '\$${line.price.toStringAsFixed(2)} each',
-                          _lineCustomizationSummary(line),
-                        ].where((s) => s.isNotEmpty).join('\n'),
-                      ),
-                      isThreeLine: true,
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            tooltip: 'Decrease',
-                            icon: const Icon(Icons.remove_circle_outline),
-                            onPressed: line.quantity <= 1
-                                ? null
-                                : () async {
+          return Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: ListView.separated(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: items.length,
+                      separatorBuilder: (_, __) => const Divider(),
+                      itemBuilder: (context, index) {
+                        final line = items[index];
+                        return ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(line.name),
+                          subtitle: Text(
+                            [
+                              '\$${line.price.toStringAsFixed(2)} each',
+                              _lineCustomizationSummary(line),
+                            ].where((s) => s.isNotEmpty).join('\n'),
+                          ),
+                          isThreeLine: true,
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                tooltip: 'Decrease',
+                                icon: const Icon(Icons.remove_circle_outline),
+                                onPressed: line.quantity <= 1
+                                    ? null
+                                    : () async {
+                                        final next =
+                                            List<shared.OrderItem>.from(items);
+                                        final q = line.quantity - 1;
+                                        next[index] = line.copyWith(
+                                          quantity: q,
+                                        );
+                                        final sub = next.fold<double>(
+                                          0,
+                                          (s, i) => s + i.price * i.quantity,
+                                        );
+                                        await fs.updateCart(
+                                          cart!.copyWith(
+                                            items: next,
+                                            subtotal: sub,
+                                            total:
+                                                sub +
+                                                (cart.tax) +
+                                                (cart.deliveryFee) -
+                                                (cart.discount),
+                                          ),
+                                        );
+                                      },
+                              ),
+                              Text(
+                                '${line.quantity}',
+                                style: Theme.of(context).textTheme.titleSmall,
+                              ),
+                              IconButton(
+                                tooltip: 'Increase',
+                                icon: const Icon(Icons.add_circle_outline),
+                                onPressed: () async {
+                                  final next = List<shared.OrderItem>.from(
+                                    items,
+                                  );
+                                  next[index] = line.copyWith(
+                                    quantity: line.quantity + 1,
+                                  );
+                                  final sub = next.fold<double>(
+                                    0,
+                                    (s, i) => s + i.price * i.quantity,
+                                  );
+                                  await fs.updateCart(
+                                    cart!.copyWith(
+                                      items: next,
+                                      subtotal: sub,
+                                      total:
+                                          sub +
+                                          (cart.tax) +
+                                          (cart.deliveryFee) -
+                                          (cart.discount),
+                                    ),
+                                  );
+                                },
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '\$${(line.price * line.quantity).toStringAsFixed(2)}',
+                                style: Theme.of(context).textTheme.titleSmall,
+                              ),
+                              IconButton(
+                                tooltip: 'Remove',
+                                icon: const Icon(Icons.delete_outline),
+                                onPressed: () async {
+                                  final key = line.cartItemKey;
+                                  if (key == null || key.isEmpty) {
                                     final next = List<shared.OrderItem>.from(
                                       items,
-                                    );
-                                    final q = line.quantity - 1;
-                                    next[index] = line.copyWith(quantity: q);
+                                    )..removeAt(index);
                                     final sub = next.fold<double>(
                                       0,
                                       (s, i) => s + i.price * i.quantity,
@@ -152,116 +253,59 @@ class CartScreen extends StatelessWidget {
                                             (cart.discount),
                                       ),
                                     );
-                                  },
+                                    return;
+                                  }
+                                  await fs.removeFromCart(
+                                    user.uid,
+                                    key,
+                                    franchiseId: franchiseId,
+                                  );
+                                },
+                              ),
+                            ],
                           ),
-                          Text(
-                            '${line.quantity}',
-                            style: Theme.of(context).textTheme.titleSmall,
+                        );
+                      },
+                    ),
+                  ),
+                  Material(
+                    elevation: 4,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                'Subtotal',
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              const Spacer(),
+                              Text(
+                                '\$${subtotal.toStringAsFixed(2)}',
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                            ],
                           ),
-                          IconButton(
-                            tooltip: 'Increase',
-                            icon: const Icon(Icons.add_circle_outline),
-                            onPressed: () async {
-                              final next = List<shared.OrderItem>.from(items);
-                              next[index] = line.copyWith(
-                                quantity: line.quantity + 1,
-                              );
-                              final sub = next.fold<double>(
-                                0,
-                                (s, i) => s + i.price * i.quantity,
-                              );
-                              await fs.updateCart(
-                                cart!.copyWith(
-                                  items: next,
-                                  subtotal: sub,
-                                  total:
-                                      sub +
-                                      (cart.tax) +
-                                      (cart.deliveryFee) -
-                                      (cart.discount),
+                          const SizedBox(height: 12),
+                          FilledButton(
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) => const CheckoutScreen(),
                                 ),
                               );
                             },
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '\$${(line.price * line.quantity).toStringAsFixed(2)}',
-                            style: Theme.of(context).textTheme.titleSmall,
-                          ),
-                          IconButton(
-                            tooltip: 'Remove',
-                            icon: const Icon(Icons.delete_outline),
-                            onPressed: () async {
-                              final key = line.cartItemKey;
-                              if (key == null || key.isEmpty) {
-                                final next = List<shared.OrderItem>.from(items)
-                                  ..removeAt(index);
-                                final sub = next.fold<double>(
-                                  0,
-                                  (s, i) => s + i.price * i.quantity,
-                                );
-                                await fs.updateCart(
-                                  cart!.copyWith(
-                                    items: next,
-                                    subtotal: sub,
-                                    total:
-                                        sub +
-                                        (cart.tax) +
-                                        (cart.deliveryFee) -
-                                        (cart.discount),
-                                  ),
-                                );
-                                return;
-                              }
-                              await fs.removeFromCart(
-                                user.uid,
-                                key,
-                                franchiseId: franchiseId,
-                              );
-                            },
+                            child: const Text('Checkout'),
                           ),
                         ],
                       ),
-                    );
-                  },
-                ),
-              ),
-              Material(
-                elevation: 4,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            'Subtotal',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          const Spacer(),
-                          Text(
-                            '\$${subtotal.toStringAsFixed(2)}',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      FilledButton(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => const CheckoutScreen(),
-                            ),
-                          );
-                        },
-                        child: const Text('Checkout'),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           );
         },
       ),

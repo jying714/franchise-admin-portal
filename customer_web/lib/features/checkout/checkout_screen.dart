@@ -357,82 +357,90 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           final tax = subtotal * _taxRate;
           final total = subtotal + tax;
 
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              Text(
-                'Checkout',
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _storeOpenNow
-                    ? 'Open · ${_open.format(context)}–${_close.format(context)}'
-                    : 'Closed · opens ${_open.format(context)}',
-                style: TextStyle(
-                  color: _storeOpenNow
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.error,
-                ),
-              ),
-              const SizedBox(height: 16),
-              const ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text('Order type'),
-                subtitle: Text('Pickup (web MVP)'),
-              ),
-              const Divider(),
-              ...items.map(
-                (i) => ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(i.name),
-                  trailing: Text(
-                    '\$${(i.price * i.quantity).toStringAsFixed(2)}',
+          return Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  Text(
+                    'Checkout',
+                    style: Theme.of(context).textTheme.headlineSmall,
                   ),
-                  subtitle: Text('×${i.quantity}'),
-                ),
-              ),
-              const Divider(),
-              _row('Subtotal', subtotal),
-              _row('Tax (${(_taxRate * 100).toStringAsFixed(2)}%)', tax),
-              _row('Total', total, bold: true),
-              const SizedBox(height: 24),
-              Text('Card', style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 8),
-              CardField(
-                controller: _cardController,
-                onCardChanged: (details) {
-                  setState(() => _cardComplete = details?.complete == true);
-                },
-                decoration: const InputDecoration(border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 16),
-              FilledButton(
-                onPressed: (_paying || !_storeOpenNow || !_cardComplete)
-                    ? null
-                    : () => _placeOrder(cart!, subtotal),
-                child: _paying
-                    ? const SizedBox(
-                        height: 22,
-                        width: 22,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text('Pay \$${total.toStringAsFixed(2)}'),
-              ),
-              if (!fp.paymentsEnabled)
-                const Padding(
-                  padding: EdgeInsets.only(top: 8),
-                  child: Text('Payments not set up for this restaurant'),
-                ),
-              if (kIsWeb)
-                const Padding(
-                  padding: EdgeInsets.only(top: 8),
-                  child: Text(
-                    'Card form uses Stripe on web. Use test card 4242…',
-                    style: TextStyle(fontSize: 12),
+                  const SizedBox(height: 8),
+                  Text(
+                    _storeOpenNow
+                        ? 'Open · ${_open.format(context)}–${_close.format(context)}'
+                        : 'Closed · opens ${_open.format(context)}',
+                    style: TextStyle(
+                      color: _storeOpenNow
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.error,
+                    ),
                   ),
-                ),
-            ],
+                  const SizedBox(height: 16),
+                  const ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text('Order type'),
+                    subtitle: Text('Pickup (web MVP)'),
+                  ),
+                  const Divider(),
+                  ...items.map(
+                    (i) => ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(i.name),
+                      trailing: Text(
+                        '\$${(i.price * i.quantity).toStringAsFixed(2)}',
+                      ),
+                      subtitle: Text('×${i.quantity}'),
+                    ),
+                  ),
+                  const Divider(),
+                  _row('Subtotal', subtotal),
+                  _row('Tax (${(_taxRate * 100).toStringAsFixed(2)}%)', tax),
+                  _row('Total', total, bold: true),
+                  const SizedBox(height: 24),
+                  Text('Card', style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  CardField(
+                    controller: _cardController,
+                    onCardChanged: (details) {
+                      setState(() => _cardComplete = details?.complete == true);
+                    },
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: (_paying || !_storeOpenNow || !_cardComplete)
+                        ? null
+                        : () => _placeOrder(cart!, subtotal),
+                    child: _paying
+                        ? const SizedBox(
+                            height: 22,
+                            width: 22,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text('Pay \$${total.toStringAsFixed(2)}'),
+                  ),
+                  if (!fp.paymentsEnabled)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 8),
+                      child: Text('Payments not set up for this restaurant'),
+                    ),
+                  if (kIsWeb)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 8),
+                      child: Text(
+                        'Card form uses Stripe on web. Use test card 4242…',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
+                ],
+              ),
+            ),
           );
         },
       ),

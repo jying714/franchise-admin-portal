@@ -6,6 +6,7 @@ import 'package:shared_core/shared_core.dart' as shared;
 
 import '../../widgets/branding_shell.dart';
 import '../auth/sign_in_screen.dart';
+import 'order_detail_screen.dart';
 
 class OrderHistoryScreen extends StatelessWidget {
   const OrderHistoryScreen({super.key});
@@ -96,6 +97,13 @@ class OrderHistoryScreen extends StatelessWidget {
                   '\$${order.total.toStringAsFixed(2)}',
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => OrderDetailScreen(order: order),
+                    ),
+                  );
+                },
               );
             },
           );
