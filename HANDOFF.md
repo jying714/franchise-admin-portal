@@ -1,13 +1,13 @@
 # HANDOFF.md — Agent Context & Project Status
 
-**Last Updated**: August 1, 2026 (~22:40 CDT — customer_web scaffold; website epic next)  
+**Last Updated**: August 2, 2026 (~09:15 CDT — customer_web live vertical slice + HQ QR)  
 **Hardware**: MINISFORUM AI X1 Pro-470  
-**Active branch**: `main`  
+**Active branch**: `feat/customer-website-v1`  
 **Repo**: https://github.com/jying714/franchise-admin-portal  
 **Local path**: `C:\\projects\\franchise-admin-portal`  
 **Firebase**: `doughboyspizzeria-2b3d2`  
-**Live web (Admin/HQ)**: franchisehq.io (Deploy Web on push to `main` only)  
-**Customer site host**: TBD (intent: separate from Admin shell, e.g. `order.franchisehq.io`)
+**Live web (Admin/HQ)**: franchisehq.io (Hosting target `admin`)  
+**Live storefront**: https://franchise-storefront.web.app (Hosting target `storefront`)
 
 Prefer **STATUS.md + this handoff + `docs/slices/*` + `docs/plans/*` + `docs/DECISIONS.md`** over agent memory.
 
@@ -17,20 +17,18 @@ Prefer **STATUS.md + this handoff + `docs/slices/*` + `docs/plans/*` + `docs/DEC
 
 **On `main` and done:** HQ onboarding, Design & Branding, Platform Owner, Admin ops, menu M1–M5, mobile tokens, developer dashboard, customer franchise context (11), Stripe Connect (12), POS software pilot + order-detail workspace (14), 2026-08-01 mobile/web/POS cleanup.
 
-**Next epic: Customer website**
-- Path: **`customer_web/`** — top-level Flutter **web** app (sibling to `mobile_app` / `pos_app` / `web-app`)
-- Slice: **`docs/slices/customer-website-v1.md`**
-- Scaffold script: **`scripts/scaffold_customer_web.ps1`** (empty feature files only)
-- **Implementation not started** — wire `shared_core`, `/f/{slug}` bind, menu, auth, checkout, Hosting target still open
+**On `feat/customer-website-v1` (2026-08-02): Customer website vertical slice PASS**
 
 | Item | State |
 |------|--------|
 | Thin POS software pilot | **COMPLETE on main** |
 | POS order-detail workspace | **COMPLETE on main** |
-| Customer website | **Scaffold only** — next build |
+| Customer website product path | **PASS** — bind → menu → auth → cart → Connect pay → POS sees `source: 'web'` |
+| Storefront Hosting | **Live** — `franchise-storefront.web.app` |
+| HQ publish UX | **Copy / Open / QR** on Owner HQ dashboard |
 | Stripe Terminal / real print | **Open** |
 
-**Hard release gate:** Thin POS (software **done**) + **customer website** + polished mobile + web.
+**Hard release gate:** Thin POS (software **done**) + customer website (vertical slice **done on feature branch**) + polished mobile + web. Merge when human approves.
 
 ---
 
@@ -40,23 +38,27 @@ Prefer **STATUS.md + this handoff + `docs/slices/*` + `docs/plans/*` + `docs/DEC
 |---------|------|
 | **Customer website app** | `customer_web/` |
 | **Customer website slice** | `docs/slices/customer-website-v1.md` |
-| Scaffold script | `scripts/scaffold_customer_web.ps1` |
-| HQ Tax & hours | `web-app/lib/admin/hq_owner/screens/store_ops_screen.dart` |
-| POS order detail | `pos_app/lib/features/orders/widgets/order_detail_dialog.dart` |
-| POS line ops | `pos_app/lib/features/orders/order_line_ops.dart` |
-| shared_core orders / lineStatus | `packages/shared_core/lib/src/core/models/order.dart` |
-| MenuProfile.sub | `packages/shared_core/lib/src/core/models/menu_profile_templates.dart` |
-| Mobile checkout (parity reference) | `mobile_app/lib/features/ordering/checkout_screen.dart` |
+| Router / bind | `customer_web/lib/core/router.dart`, `franchise_bind.dart` |
+| Checkout | `customer_web/lib/features/checkout/checkout_screen.dart` |
+| HQ storefront card | `web-app/lib/admin/hq_owner/owner_hq_dashboard_screen.dart` (`StorefrontLinkCard`) |
+| Hosting config | `firebase.json` (targets `admin` + `storefront`), `.firebaserc` |
+| Storefront CI | `.github/workflows/deploy-storefront.yml` |
+| Mobile checkout (parity) | `mobile_app/lib/features/ordering/checkout_screen.dart` |
 
-### Customer website local (when implementing)
+### Customer website local
 
 ```powershell
 cd C:\projects\franchise-admin-portal\customer_web
-flutter create --platforms=web --project-name customer_web .   # if not already
-powershell -ExecutionPolicy Bypass -File ..\scripts\scaffold_customer_web.ps1
-# then: path dependency on packages/shared_core in pubspec.yaml
-flutter run -d chrome
+flutter run -d chrome --dart-define=STRIPE_PK=pk_test_...
+
+# Production-like build (no PWA SW cache traps)
+flutter build web --release --pwa-strategy=none --dart-define=STRIPE_PK=pk_test_...
+cd ..
+firebase deploy --only hosting:storefront
 ```
+
+**Public link:** `https://franchise-storefront.web.app/f/{franchiseId}`  
+Path cold-load uses `index.html` hash bootstrap + landing/GoRouter bind so mobile QR works.
 
 ### Station run (POS)
 
@@ -71,7 +73,7 @@ flutter run -d <deviceId> --dart-define=STRIPE_PK=pk_test_... --dart-define=STAT
 
 | ID | Residual | Status |
 |----|----------|--------|
-| R7 | **Customer website** | Scaffold started; product build **next** |
+| R7 | **Customer website** | Vertical slice **PASS**; merge + Phase 4b (modifier customizations on cart line) + optional custom domains |
 | R3–R4 | Terminal / printers | Open |
 | R8 | Staff bootstrap docs | Open |
 | R10 | Order-detail workspace | **Done** |
@@ -82,10 +84,12 @@ flutter run -d <deviceId> --dart-define=STRIPE_PK=pk_test_... --dart-define=STAT
 
 - Station = `pos_app` only  
 - Customer storefront = **`customer_web`**, not Admin `web-app` routes  
-- One website app; franchise bind via URL slug/path; no per-franchise Hosting project for MVP  
-- Decision 11 rules: browse signed-out; cart/checkout authed; clear cart on franchise switch  
+- **One** storefront Hosting site; franchises share it; bind via `/f/{franchiseId}`  
+- Decision 11: browse signed-out; cart/checkout authed; clear cart on franchise switch  
 - Orders from site: `source: 'web'`  
 - No second menu modifier tree  
+- Stripe publishable key only via `--dart-define` / CI secret `STRIPE_PK_TEST`  
+- Prefer `--pwa-strategy=none` for storefront deploys  
 - POS line void/comp via `lineStatus` + stream detail dialog  
 
 ---
@@ -101,4 +105,4 @@ flutter run -d <deviceId> --dart-define=STRIPE_PK=pk_test_... --dart-define=STAT
 
 ---
 
-**Bottom line:** POS pilot + order workspace are on **main**. **Build `customer_web` next** (hard release). Do not put customer ordering inside the Admin shell.
+**Bottom line:** POS pilot is on **main**. Customer website **orders end-to-end on Hosting** on `feat/customer-website-v1`. Merge when ready; keep Admin and storefront as separate Hosting targets.

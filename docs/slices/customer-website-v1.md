@@ -1,9 +1,12 @@
 # Slice: Customer Website v1 (`customer_web`)
 
-**Status**: **Scaffold / structure started** (2026-08-01) — product implementation **not started**  
+**Status**: **Vertical slice PASS** (2026-08-02) on `feat/customer-website-v1` — Hosting live; HQ copy/open/QR  
 **App path**: `customer_web/` (top-level Flutter **web** target; sibling to `mobile_app`, `pos_app`, `web-app`)  
-**Authority**: Decision **11** (franchise bind) · Decision **12** (Connect) · Decision **14** (hard release gate includes customer website) · STATUS · HANDOFF · this file  
+**Authority**: Decision **11** (franchise bind) · Decision **12** (Connect) · Decision **14** (hard release gate) · STATUS · HANDOFF · this file  
 **Depends on**: shared_core menu/modifiers/branding; franchise-scoped orders; Stripe Connect checkout patterns from mobile  
+
+**Live storefront:** https://franchise-storefront.web.app  
+**URL pattern:** `https://franchise-storefront.web.app/f/{franchiseId}`
 
 ---
 
@@ -13,58 +16,65 @@ Hard product release requires a **customer-facing ordering website** in addition
 
 ---
 
-## 2. Product locks (intent)
+## 2. Product locks
 
 | Lock | Choice |
 |------|--------|
 | App shape | **One** Flutter web app (`customer_web`), not one static site per franchise |
 | Tenancy | Session = one `franchiseId` (Decision 11 parallel) |
-| Primary entry | Path bind e.g. `/f/{slug}` → franchise (exact host TBD: e.g. `order.franchisehq.io`) |
+| Primary entry | `/f/{franchiseId}` on shared Hosting site |
+| Hosting | Target **`storefront`** → site id `franchise-storefront`; Admin stays target **`admin`** |
 | Browse | Signed-out **menu browse** allowed |
-| Cart / checkout | **Auth required** (guest cart deferred) |
+| Cart / checkout | **Auth required** (Google + email; guest cart deferred) |
 | Pay | Franchise **Stripe Connect** (Decision 12); order `source: 'web'` |
-| Hours | `franchises/{id}/config/store_ops` — same open/closed rules as mobile |
+| Hours / tax | `franchises/{id}/config/store_ops` — same rules as mobile |
 | Menu / branding | Read existing franchise config — **no second menu tree** |
-| Onboarding | On successful publish gates, HQ writes stable `storefrontUrl` (+ QR); not a new Hosting site per franchise |
+| HQ publish | Owner HQ **StorefrontLinkCard**: copy, open, QR (no per-franchise Hosting project) |
 | Admin isolation | **Not** routes inside `web-app` admin shell |
+| PWA | Prefer `flutter build web --pwa-strategy=none` for storefront |
 
 ---
 
-## 3. Repo structure
+## 3. Repo structure (implemented)
 
 ```text
-customer_web/           # Flutter web (`flutter create --platforms=web`)
+customer_web/
   lib/
-    main.dart           # from flutter create
-    app.dart
-    core/               # router, franchise_bind, constants
-    features/           # landing, home, menu, cart, checkout, auth, orders, account
-    widgets/            # branding_shell, grids, cards, customization
-  web/
-packages/shared_core/   # domain (shared)
-web-app/                # HQ writes storefrontUrl on publish (later)
-docs/slices/customer-website-v1.md
-scripts/scaffold_customer_web.ps1   # empty placeholder tree helper
-```
-
-Scaffold helper (placeholders only, no logic):
-
-```powershell
-cd C:\projects\franchise-admin-portal
-powershell -ExecutionPolicy Bypass -File .\scripts\scaffold_customer_web.ps1
+    main.dart              # Firebase, providers, Stripe PK dart-define
+    app.dart               # MaterialApp.router + live theme
+    core/                  # router, franchise_bind, constants, app_local_storage
+    features/
+      menu/                # browse + item detail
+      auth/                # Google + email
+      cart/
+      checkout/            # store_ops + CardField + createOrderPaymentIntent
+      orders/              # confirmation
+    widgets/               # branding_shell, menu_item_card
+  web/index.html           # Stripe.js + path→hash bootstrap for /f/{id}
+web-app/.../owner_hq_dashboard_screen.dart   # StorefrontLinkCard
+firebase.json              # hosting targets admin + storefront
+.firebaserc                # target → site mapping
+.github/workflows/deploy-storefront.yml
 ```
 
 ---
 
-## 4. Acceptance (MVP — not yet done)
+## 4. Acceptance (MVP)
 
-- [ ] `customer_web` runs on Chrome with Firebase + `shared_core`
-- [ ] `/f/{slug}` (or locked equivalent) binds franchise and loads branding + menu
-- [ ] Signed-out browse; auth gate on cart/checkout
-- [ ] Checkout creates order with `source: 'web'`; POS open board sees it
-- [ ] In-hours → kitchen path; outside hours / closed day blocks place
-- [ ] HQ onboarding/publish exposes `storefrontUrl` + QR
-- [ ] Hosting target for customer site (separate from Admin `franchisehq.io` shell)
+- [x] `customer_web` runs on Chrome with Firebase + `shared_core`
+- [x] `/f/{franchiseId}` binds franchise and loads branding + menu (desktop + mobile QR)
+- [x] Signed-out browse; auth gate on cart/checkout
+- [x] Checkout creates order with `source: 'web'`; POS open board sees it
+- [x] In-hours path; outside hours / closed day blocks place
+- [x] HQ exposes storefront URL + QR (dashboard card)
+- [x] Hosting target for customer site (separate from Admin shell)
+
+### Residual (post vertical slice)
+
+- [ ] Phase 4b: modifier selections → cart `customizations` + upcharge in line price (size may still be specialInstructions)
+- [ ] Optional custom domain map (CNAME → same Hosting site; hostname→franchiseId)
+- [ ] Merge to `main` + Hosting CI secret `STRIPE_PK_TEST` verified on Actions
+- [ ] Docs / hard-release checklist sign-off
 
 ---
 
@@ -77,6 +87,20 @@ powershell -ExecutionPolicy Bypass -File .\scripts\scaffold_customer_web.ps1
 
 ---
 
-## 6. Bottom line
+## 6. Ops notes
 
-**Next hard-release epic.** Structure and slice are in place; wire `shared_core`, router bind, menu, auth, checkout next. Keep Admin (`web-app`) and storefront (`customer_web`) separate deploys/shells.
+```powershell
+# Local
+cd customer_web
+flutter build web --release --pwa-strategy=none --dart-define=STRIPE_PK=pk_test_...
+cd ..
+firebase deploy --only hosting:storefront
+```
+
+Firebase Auth → Authorized domains must include `franchise-storefront.web.app`.
+
+---
+
+## 7. Bottom line
+
+**Vertical slice is live.** One storefront Hosting deployment, franchise path bind, Connect pay, HQ QR. Merge when human gates; residual is cart modifier fidelity and optional custom domains—not a second app.
