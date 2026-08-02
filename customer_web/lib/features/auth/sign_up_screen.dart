@@ -1,23 +1,20 @@
-// customer_web/lib/features/auth/sign_in_screen.dart
+// customer_web/lib/features/auth/sign_up_screen.dart
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../widgets/branding_shell.dart';
-import 'sign_up_screen.dart';
 
-class SignInScreen extends StatefulWidget {
-  const SignInScreen({super.key, this.returnTo});
-
-  /// Optional route/name hint for post-login navigation (caller pops on success).
-  final String? returnTo;
+class SignUpScreen extends StatefulWidget {
+  const SignUpScreen({super.key});
 
   @override
-  State<SignInScreen> createState() => _SignInScreenState();
+  State<SignUpScreen> createState() => _SignUpScreenState();
 }
 
-class _SignInScreenState extends State<SignInScreen> {
+class _SignUpScreenState extends State<SignUpScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
+  final _confirm = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _busy = false;
   String? _error;
@@ -26,28 +23,8 @@ class _SignInScreenState extends State<SignInScreen> {
   void dispose() {
     _email.dispose();
     _password.dispose();
+    _confirm.dispose();
     super.dispose();
-  }
-
-  Future<void> _signInWithGoogle() async {
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
-    try {
-      final provider = GoogleAuthProvider()
-        ..addScope('email')
-        ..setCustomParameters({'prompt': 'select_account'});
-      await FirebaseAuth.instance.signInWithPopup(provider);
-      if (!mounted) return;
-      Navigator.of(context).pop(true);
-    } on FirebaseAuthException catch (e) {
-      setState(() => _error = e.message ?? e.code);
-    } catch (e) {
-      setState(() => _error = '$e');
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
   }
 
   Future<void> _submit() async {
@@ -57,11 +34,12 @@ class _SignInScreenState extends State<SignInScreen> {
       _error = null;
     });
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: _email.text.trim(),
         password: _password.text,
       );
       if (!mounted) return;
+      // Pop sign-up; caller may also pop sign-in.
       Navigator.of(context).pop(true);
     } on FirebaseAuthException catch (e) {
       setState(() => _error = e.message ?? e.code);
@@ -92,42 +70,15 @@ class _SignInScreenState extends State<SignInScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  FilledButton.icon(
-                    onPressed: _busy ? null : _signInWithGoogle,
-                    icon: const Icon(Icons.login),
-                    label: const Text('Continue with Google'),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      const Expanded(child: Divider()),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Text(
-                          'or email',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ),
-                      const Expanded(child: Divider()),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
                   Text(
-                    'Sign in',
+                    'Create account',
                     style: Theme.of(context).textTheme.headlineSmall,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Required to add items and checkout',
-                    style: Theme.of(context).textTheme.bodyMedium,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
                   TextFormField(
                     controller: _email,
                     keyboardType: TextInputType.emailAddress,
-                    autofillHints: const [AutofillHints.email],
                     decoration: const InputDecoration(
                       labelText: 'Email',
                       border: OutlineInputBorder(),
@@ -143,13 +94,27 @@ class _SignInScreenState extends State<SignInScreen> {
                   TextFormField(
                     controller: _password,
                     obscureText: true,
-                    autofillHints: const [AutofillHints.password],
                     decoration: const InputDecoration(
                       labelText: 'Password',
                       border: OutlineInputBorder(),
                     ),
                     validator: (v) {
-                      if (v == null || v.isEmpty) return 'Password required';
+                      if (v == null || v.length < 6) {
+                        return 'At least 6 characters';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _confirm,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Confirm password',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (v) {
+                      if (v != _password.text) return 'Passwords do not match';
                       return null;
                     },
                     onFieldSubmitted: (_) => _submit(),
@@ -172,20 +137,7 @@ class _SignInScreenState extends State<SignInScreen> {
                             width: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Sign in'),
-                  ),
-                  const SizedBox(height: 12),
-                  TextButton(
-                    onPressed: _busy
-                        ? null
-                        : () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) => const SignUpScreen(),
-                              ),
-                            );
-                          },
-                    child: const Text('Create an account'),
+                        : const Text('Create account'),
                   ),
                 ],
               ),
