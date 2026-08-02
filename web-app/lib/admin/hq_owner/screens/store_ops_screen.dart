@@ -30,6 +30,40 @@ class _StoreOpsScreenState extends State<StoreOpsScreen> {
   bool _pickupEnabled = true;
   bool _acceptingOnlineOrders = true;
 
+  /// value = IANA id (stored); label = owner-facing text.
+  static const _timezoneOptions = <({String value, String label})>[
+    (
+      value: 'America/New_York',
+      label: 'Eastern Time — New York (ET, UTC-5/-4)',
+    ),
+    (
+      value: 'America/Chicago',
+      label: 'Central Time — Chicago (CT, UTC-6/-5)',
+    ),
+    (
+      value: 'America/Denver',
+      label: 'Mountain Time — Denver (MT, UTC-7/-6)',
+    ),
+    (
+      value: 'America/Phoenix',
+      label: 'Mountain Time — Phoenix (no DST, UTC-7)',
+    ),
+    (
+      value: 'America/Los_Angeles',
+      label: 'Pacific Time — Los Angeles (PT, UTC-8/-7)',
+    ),
+    (
+      value: 'America/Anchorage',
+      label: 'Alaska Time — Anchorage (AKT, UTC-9/-8)',
+    ),
+    (
+      value: 'Pacific/Honolulu',
+      label: 'Hawaii Time — Honolulu (no DST, UTC-10)',
+    ),
+  ];
+
+  String _timezone = 'America/Chicago';
+
   static const _dayKeys = <String>[
     'mon',
     'tue',
@@ -119,6 +153,13 @@ class _StoreOpsScreenState extends State<StoreOpsScreen> {
         final minOrder = (data['deliveryMinimum'] as num?)?.toDouble();
         if (minOrder != null) {
           _deliveryMinimumController.text = minOrder.toStringAsFixed(2);
+        }
+        final tz = data['timezone']?.toString().trim();
+        if (tz != null && tz.isNotEmpty) {
+          final known = _timezoneOptions.any((o) => o.value == tz);
+          _timezone = known ? tz : 'America/Chicago';
+        } else {
+          _timezone = 'America/Chicago';
         }
 
         final hoursRaw = data['hours'];
@@ -252,6 +293,7 @@ class _StoreOpsScreenState extends State<StoreOpsScreen> {
         'acceptingOnlineOrders': _acceptingOnlineOrders,
         'deliveryFee': deliveryFee,
         'deliveryMinimum': deliveryMinimum,
+        'timezone': _timezone,
         'updatedAt': DateTime.now().toIso8601String(),
       }, SetOptions(merge: true));
 
@@ -355,6 +397,32 @@ class _StoreOpsScreenState extends State<StoreOpsScreen> {
                                 helperText:
                                     'Stored as decimal (9.25 → 0.0925). Mobile + POS will read this next.',
                               ),
+                            ),
+                            const SizedBox(height: 12),
+                            DropdownButtonFormField<String>(
+                              value: _timezone,
+                              isExpanded: true,
+                              decoration: const InputDecoration(
+                                labelText: 'Timezone',
+                                border: OutlineInputBorder(),
+                                isDense: true,
+                                helperText:
+                                    'Used for open/closed. Offsets change with daylight saving where noted.',
+                              ),
+                              items: [
+                                for (final o in _timezoneOptions)
+                                  DropdownMenuItem(
+                                    value: o.value,
+                                    child: Text(
+                                      o.label,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                              ],
+                              onChanged: (v) {
+                                if (v == null) return;
+                                setState(() => _timezone = v);
+                              },
                             ),
                             const SizedBox(height: 24),
                             Text(
