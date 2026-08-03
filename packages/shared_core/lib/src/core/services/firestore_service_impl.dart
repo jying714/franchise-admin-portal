@@ -1826,6 +1826,7 @@ class FirestoreServiceImpl implements FirestoreService {
         },
         specialInstructions: specialInstructions,
         image: menuItem.image,
+        cartItemKey: '${DateTime.now().microsecondsSinceEpoch}_${menuItem.id}',
       );
 
       final updatedItems = [...current.items, newItem];

@@ -119,6 +119,7 @@ class ScheduledOrder extends base_order.Order {
     String? refundStatus,
     Address? deliveryAddress,
     String? specialInstructions,
+    String? customerPhone,
     String? source,
     String? frequency,
     DateTime? nextDate,

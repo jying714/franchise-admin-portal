@@ -9,44 +9,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart' hide Card;
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-
+import '../cart/line_customization_summary.dart';
 import '../../widgets/branding_shell.dart';
 import '../auth/sign_in_screen.dart';
-
-String _lineCustomizationSummary(shared.OrderItem line) {
-  final parts = <String>[];
-
-  final raw = line.customizations;
-  if (raw != null && raw.isNotEmpty) {
-    final groups = raw['groups'];
-    if (groups is List) {
-      for (final e in groups) {
-        if (e is! Map) continue;
-        final m = Map<String, dynamic>.from(e);
-        final name = (m['name'] ?? '').toString().trim();
-        if (name.isEmpty) continue;
-        final group = (m['group'] ?? '').toString().trim();
-        if (group.toLowerCase() == 'size') continue;
-        final price = (m['price'] is num)
-            ? (m['price'] as num).toDouble()
-            : 0.0;
-        final label = group.isNotEmpty ? '$group: $name' : name;
-        if (price > 0) {
-          parts.add('$label (+\$${price.toStringAsFixed(2)})');
-        } else {
-          parts.add(label);
-        }
-      }
-    }
-  }
-
-  final si = line.specialInstructions?.trim();
-  if (si != null && si.isNotEmpty) {
-    parts.add('Note: $si');
-  }
-
-  return parts.join(' · ');
-}
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -124,6 +89,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
     if (_zipController.text.trim().isEmpty) {
       return 'Enter ZIP';
+    }
+    if (_phoneController.text.trim().isEmpty) {
+      return 'Enter phone number';
     }
     return null;
   }
@@ -331,6 +299,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         userName: recipientName.isNotEmpty
             ? recipientName
             : (user.displayName ?? user.email),
+        customerPhone: _phoneController.text.trim().isEmpty
+            ? null
+            : _phoneController.text.trim(),
         time: TimeOfDay.now().format(context),
         status: 'pending_payment',
         timestamp: DateTime.now(),
@@ -580,7 +551,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ],
                   const Divider(),
                   ...items.map((i) {
-                    final summary = _lineCustomizationSummary(i);
+                    final summary = lineCustomizationSummary(i);
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(i.name),

@@ -24,9 +24,18 @@ import 'widgets/menu_item_wings_dips_section.dart';
 /// Phase 4a: detail + size + modifier group shells.
 /// Cart write and auth gate land in Phase 5/6.
 class MenuItemDetailScreen extends StatefulWidget {
-  const MenuItemDetailScreen({super.key, required this.item});
+  const MenuItemDetailScreen({
+    super.key,
+    required this.item,
+    this.initialQuantity = 1,
+    this.cartItemKeyToReplace,
+  });
 
   final shared.MenuItem item;
+
+  /// When editing a cart line.
+  final int initialQuantity;
+  final String? cartItemKeyToReplace;
 
   @override
   State<MenuItemDetailScreen> createState() => _MenuItemDetailScreenState();
@@ -843,6 +852,7 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
   void initState() {
     super.initState();
     final sizes = item.sizes;
+    _qty = widget.initialQuantity < 1 ? 1 : widget.initialQuantity;
     _seedTypesFromItem();
     if (sizes != null && sizes.isNotEmpty) {
       _selectedSize = sizes.first.label;
@@ -1458,7 +1468,10 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
 
     final customizations = _buildCustomizations();
     final unit = _unitPrice;
-
+    final replaceKey = widget.cartItemKeyToReplace?.trim();
+    if (replaceKey != null && replaceKey.isNotEmpty) {
+      await fs.removeFromCart(user.uid, replaceKey, franchiseId: franchiseId);
+    }
     try {
       await fs.addToCart(
         userId: user.uid,

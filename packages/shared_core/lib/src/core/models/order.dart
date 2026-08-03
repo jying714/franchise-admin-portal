@@ -23,6 +23,9 @@ class Order {
   final Address? deliveryAddress;
   final String? specialInstructions;
 
+  /// Contact phone (POS / delivery). Optional on legacy docs.
+  final String? customerPhone;
+
   /// Channel that created the order: `pos` | `mobile` | `web`.
   /// Missing on legacy docs → treated as `mobile`.
   final String source;
@@ -53,6 +56,7 @@ class Order {
     this.refundStatus,
     this.deliveryAddress,
     this.specialInstructions,
+    this.customerPhone,
     this.source = 'mobile',
   });
 
@@ -86,6 +90,7 @@ class Order {
           ? Address.fromMap(Map<String, dynamic>.from(data['deliveryAddress']))
           : null,
       specialInstructions: data['specialInstructions'],
+      customerPhone: data['customerPhone']?.toString(),
       storeId: data['storeId'] ?? '',
       source: (data['source'] as String?)?.trim().isNotEmpty == true
           ? (data['source'] as String).trim()
@@ -114,6 +119,8 @@ class Order {
       'refundStatus': refundStatus,
       'deliveryAddress': deliveryAddress?.toMap(),
       'specialInstructions': specialInstructions,
+      if (customerPhone != null && customerPhone!.trim().isNotEmpty)
+        'customerPhone': customerPhone!.trim(),
       'source': source,
     };
   }
@@ -139,6 +146,7 @@ class Order {
     String? refundStatus,
     Address? deliveryAddress,
     String? specialInstructions,
+    String? customerPhone,
     String? source,
   }) {
     return Order(
@@ -162,6 +170,7 @@ class Order {
       refundStatus: refundStatus ?? this.refundStatus,
       deliveryAddress: deliveryAddress ?? this.deliveryAddress,
       specialInstructions: specialInstructions ?? this.specialInstructions,
+      customerPhone: customerPhone ?? this.customerPhone,
       source: source ?? this.source,
     );
   }

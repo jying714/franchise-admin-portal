@@ -6,45 +6,72 @@ import 'package:shared_core/shared_core.dart' as shared;
 import '../checkout/checkout_screen.dart';
 import '../../widgets/branding_shell.dart';
 import '../auth/sign_in_screen.dart';
-
-String _lineCustomizationSummary(shared.OrderItem line) {
-  final parts = <String>[];
-
-  final raw = line.customizations;
-  if (raw != null && raw.isNotEmpty) {
-    final groups = raw['groups'];
-    if (groups is List) {
-      for (final e in groups) {
-        if (e is! Map) continue;
-        final m = Map<String, dynamic>.from(e);
-        final name = (m['name'] ?? '').toString().trim();
-        if (name.isEmpty) continue;
-        final group = (m['group'] ?? '').toString().trim();
-        // Size is already implied by the line; skip pure size noise.
-        if (group.toLowerCase() == 'size') continue;
-        final price = (m['price'] is num)
-            ? (m['price'] as num).toDouble()
-            : 0.0;
-        final label = group.isNotEmpty ? '$group: $name' : name;
-        if (price > 0) {
-          parts.add('$label (+\$${price.toStringAsFixed(2)})');
-        } else {
-          parts.add(label);
-        }
-      }
-    }
-  }
-
-  final si = line.specialInstructions?.trim();
-  if (si != null && si.isNotEmpty) {
-    parts.add('Note: $si');
-  }
-
-  return parts.join(' · ');
-}
+import 'line_customization_summary.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../menu/menu_item_detail_screen.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
+
+  Future<void> _editCartLine(
+    BuildContext context, {
+    required shared.OrderItem line,
+    required String franchiseId,
+  }) async {
+    if (line.cartItemKey == null || line.cartItemKey!.trim().isEmpty) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'This line was added before edit support. Remove it and add again.',
+            ),
+          ),
+        );
+      }
+      return;
+    }
+    final id = line.menuItemId.trim();
+    if (id.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Cannot edit this line')));
+      return;
+    }
+
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('menu_items')
+          .doc(id)
+          .get();
+      if (!snap.exists || snap.data() == null) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Menu item no longer available')),
+          );
+        }
+        return;
+      }
+      final item = shared.MenuItem.fromFirestore(snap.data()!, snap.id);
+      if (!context.mounted) return;
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => MenuItemDetailScreen(
+            item: item,
+            initialQuantity: line.quantity,
+            cartItemKeyToReplace: line.cartItemKey,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not open editor: $e')));
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -160,13 +187,22 @@ class CartScreen extends StatelessWidget {
                           subtitle: Text(
                             [
                               '\$${line.price.toStringAsFixed(2)} each',
-                              _lineCustomizationSummary(line),
+                              lineCustomizationSummary(line),
                             ].where((s) => s.isNotEmpty).join('\n'),
                           ),
                           isThreeLine: true,
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
+                              IconButton(
+                                tooltip: 'Edit',
+                                icon: const Icon(Icons.edit_outlined),
+                                onPressed: () => _editCartLine(
+                                  context,
+                                  line: line,
+                                  franchiseId: franchiseId,
+                                ),
+                              ),
                               IconButton(
                                 tooltip: 'Decrease',
                                 icon: const Icon(Icons.remove_circle_outline),
