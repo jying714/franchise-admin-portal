@@ -1,6 +1,6 @@
 # Slice: HQ Restaurant Settings v1
 
-**Status:** Implementation **largely complete** on `feat/hq-restaurant-settings-v1` (2026-08-02)  
+**Status:** **COMPLETE on `main`** (2026-08-02) — feature branch merged and deleted  
 **Authority:** this slice · `docs/plans/customer-web-parity-brand-storefront-v1.md` · Decision 8 · Decision 14 · `docs/architecture/firestore-per-franchise-config.md` · STATUS
 
 ---
@@ -31,22 +31,12 @@ HQ Owner config was scattered across Design & Branding, Customer website card, T
 
 | Phase | Work | Status |
 |-------|------|--------|
-| **S0** | Shell + top tabs + HQ **Restaurant settings** card | **Done** |
-| **S1** | Brand = `DesignBrandingScreen(embeddedInSettingsShell)` | **Done** |
-| **S2** | Store ops = `StoreOpsScreen(embeddedInSettingsShell)` | **Done** |
-| **S3** | Website panel: URL/QR + content fields | **Done** |
-| **S3b** | Website Save → `config/storefront` | **Done** |
-| **S4** | Contact → franchise `public*` + `mapEmbedUrl` | **Done** |
-| **S5** | Channels → `config/features` | **Done** |
-| **S6** | Payments → Connect callables | **Done** |
-| **S7** | Station → `config/pos` + stubs | **Done** |
-| **S8** | HQ cleanup: drop website card; Tax & hours → tab 2 | **Done** |
-| **S9** | Store ops delivery + timezone dropdown (labeled) | **Done** |
-| **S10** | Merge to `main` + delete feature branch | **Open** |
+| **S0–S9** | Shell, tabs, Brand, Website, Store ops, Contact, Channels, Payments, Station, HQ cleanup | **Done** |
+| **S10** | Merge to `main` + delete feature branch | **Done** |
 | — | Feature Setup onboarding → shell deep-link | **Deferred** |
 | — | FAQ/gallery/careers/reviews editors on Website | **Optional residual** |
 | — | POS reads `config/pos` | **POS residual** |
-| — | customer_web reads `config/storefront` | **Parity D0** |
+| — | customer_web reads `config/storefront` | **Parity D0 (next)** |
 
 ---
 
@@ -83,8 +73,8 @@ HQ Owner config was scattered across Design & Branding, Customer website card, T
 - [x] Website URL/QR + content → `config/storefront`  
 - [x] Station lists Decision 14 settings (stub or live)  
 - [x] Design & Branding card replaced; Customer website card removed from grid  
-- [ ] Merge feature branch → `main`  
-- [ ] STATUS/HANDOFF on main after merge  
+- [x] Merge feature branch → `main`  
+- [x] STATUS/HANDOFF updated after merge  
 
 ---
 
@@ -94,7 +84,7 @@ HQ Owner config was scattered across Design & Branding, Customer website card, T
 - Admin Menu day-2 ops  
 - Rework Feature Setup onboarding in this slice  
 - Full printer wizard  
-- customer_web marketing UI (consumes storefront doc in parity plan)  
+- customer_web marketing UI (consumes storefront doc in parity D0)  
 
 ---
 
