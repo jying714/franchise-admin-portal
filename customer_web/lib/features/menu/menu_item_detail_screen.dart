@@ -350,29 +350,19 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
     return labels[optionId] ?? _ingredientDisplayName(optionId);
   }
 
-  List<String> _availableWingSauceIds() {
-    return _wingSauceOptionIds()
-        .where((id) => !_selectedWingSauces.contains(id))
-        .toList();
-  }
-
-  void _addWingSauce(String id) {
-    if (_selectedWingSauces.length >= _maxWingSauces) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Max $_maxWingSauces sauces (split allowed)')),
-      );
-      return;
-    }
+  void _setWingPortionLeft(String id) {
     setState(() {
-      _selectedWingSauces.add(id);
+      _wingPortionLeft = id;
     });
   }
 
-  void _removeWingSauce(String id) {
+  void _setWingPortionRight(String id) {
     setState(() {
-      _selectedWingSauces.remove(id);
+      _wingPortionRight = id;
     });
   }
+
+  bool _isWingPlain(String id) => id.toLowerCase() == _wingPlainId;
 
   List<String> _wingDipOptionIds() {
     final g = _wingGroupMap('wing_dips');
@@ -840,8 +830,9 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
   static const int _maxSauces = 2;
 
   /// Wings toss sauces (wing_sauce group) — max 2.
-  late Set<String> _selectedWingSauces;
-  static const int _maxWingSauces = 2;
+  /// Wings flavor portions: always 2 halves (mobile parity).
+  late String _wingPortionLeft;
+  late String _wingPortionRight;
 
   /// ingredientId → isDouble (Current toppings, cheeses, sauces).
   final Map<String, bool> _isDouble = {};
@@ -1019,8 +1010,11 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
     }
 
     // Wings toss sauces — always initialize (avoids LateInitializationError).
-    _selectedWingSauces = {};
+    // Wings: always two portions (default both Plain).
+    _wingPortionLeft = _wingPlainId;
+    _wingPortionRight = _wingPlainId;
     if (_isWings()) {
+      final defaults = <String>[];
       final stored = item.modifierGroups?.where(
         (mg) =>
             mg.id.toLowerCase() == 'wing_sauce' ||
@@ -1033,14 +1027,12 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
               (o.ingredientId != null && o.ingredientId!.trim().isNotEmpty)
               ? o.ingredientId!.trim()
               : o.id.trim();
-          if (key.isNotEmpty) _selectedWingSauces.add(key);
+          if (key.isNotEmpty) defaults.add(key);
         }
       }
-      if (_selectedWingSauces.isEmpty) {
-        _selectedWingSauces.add(_wingPlainId);
-      }
-      if (_selectedWingSauces.length > _maxWingSauces) {
-        _selectedWingSauces = _selectedWingSauces.take(_maxWingSauces).toSet();
+      if (defaults.isNotEmpty) {
+        _wingPortionLeft = defaults.first;
+        _wingPortionRight = defaults.length > 1 ? defaults[1] : defaults.first;
       }
     }
   }
@@ -1175,11 +1167,8 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
     }
 
     if (_isWings()) {
-      if (_selectedWingSauces.isEmpty) {
-        return 'Select at least 1 wing sauce';
-      }
-      if (_selectedWingSauces.length > _maxWingSauces) {
-        return 'Max $_maxWingSauces wing sauces';
+      if (_wingPortionLeft.trim().isEmpty || _wingPortionRight.trim().isEmpty) {
+        return 'Select a sauce (or Plain) for both halves';
       }
     }
     // Two sauces cannot both be whole.
@@ -1342,22 +1331,40 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
       );
     }
 
-    // Wings toss sauces.
+    // Wings toss sauces — two halves (mobile parity).
     if (_isWings()) {
-      for (final id in _selectedWingSauces) {
-        list.add(
-          shared.Customization(
-            id: id,
-            ingredientId: id,
-            name: _wingOptionLabel('wing_sauce', id),
-            isGroup: false,
-            price: 0,
-            group: 'Sauce',
-            selected: true,
-            isDefault: false,
-          ),
-        );
-      }
+      list.add(
+        shared.Customization(
+          id: 'wing_left_${_wingPortionLeft}',
+          ingredientId: _isWingPlain(_wingPortionLeft)
+              ? null
+              : _wingPortionLeft,
+          name: _isWingPlain(_wingPortionLeft)
+              ? 'Plain (Left)'
+              : '${_wingOptionLabel('wing_sauce', _wingPortionLeft)} (Left)',
+          isGroup: false,
+          price: 0,
+          group: 'Sauce',
+          selected: true,
+          portion: shared.Portion.left,
+        ),
+      );
+      list.add(
+        shared.Customization(
+          id: 'wing_right_${_wingPortionRight}',
+          ingredientId: _isWingPlain(_wingPortionRight)
+              ? null
+              : _wingPortionRight,
+          name: _isWingPlain(_wingPortionRight)
+              ? 'Plain (Right)'
+              : '${_wingOptionLabel('wing_sauce', _wingPortionRight)} (Right)',
+          isGroup: false,
+          price: 0,
+          group: 'Sauce',
+          selected: true,
+          portion: shared.Portion.right,
+        ),
+      );
     }
 
     // Wings side dip cups.
@@ -1662,12 +1669,12 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
 
           if (_isWings())
             MenuItemWingsSauceSection(
-              selectedIds: _selectedWingSauces.toList(),
-              availableIds: _availableWingSauceIds(),
-              maxSauces: _maxWingSauces,
+              optionIds: _wingSauceOptionIds(),
+              leftId: _wingPortionLeft,
+              rightId: _wingPortionRight,
               labelFor: (id) => _wingOptionLabel('wing_sauce', id),
-              onAdd: _addWingSauce,
-              onRemove: _removeWingSauce,
+              onLeftSelected: _setWingPortionLeft,
+              onRightSelected: _setWingPortionRight,
             ),
           if (_isWings())
             MenuItemWingsDipsSection(
