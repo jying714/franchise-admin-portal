@@ -13,6 +13,41 @@ import 'package:shared_core/shared_core.dart' as shared;
 import '../../widgets/branding_shell.dart';
 import '../auth/sign_in_screen.dart';
 
+String _lineCustomizationSummary(shared.OrderItem line) {
+  final parts = <String>[];
+
+  final raw = line.customizations;
+  if (raw != null && raw.isNotEmpty) {
+    final groups = raw['groups'];
+    if (groups is List) {
+      for (final e in groups) {
+        if (e is! Map) continue;
+        final m = Map<String, dynamic>.from(e);
+        final name = (m['name'] ?? '').toString().trim();
+        if (name.isEmpty) continue;
+        final group = (m['group'] ?? '').toString().trim();
+        if (group.toLowerCase() == 'size') continue;
+        final price = (m['price'] is num)
+            ? (m['price'] as num).toDouble()
+            : 0.0;
+        final label = group.isNotEmpty ? '$group: $name' : name;
+        if (price > 0) {
+          parts.add('$label (+\$${price.toStringAsFixed(2)})');
+        } else {
+          parts.add(label);
+        }
+      }
+    }
+  }
+
+  final si = line.specialInstructions?.trim();
+  if (si != null && si.isNotEmpty) {
+    parts.add('Note: $si');
+  }
+
+  return parts.join(' · ');
+}
+
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
 
@@ -32,10 +67,65 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final CardEditController _cardController = CardEditController();
   bool _cardComplete = false;
 
+  /// POS parity: lowercase "pickup" | "delivery"
+  String _deliveryType = 'pickup';
+  static const double _deliveryFeeFlat = 5.0;
+
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _streetController = TextEditingController();
+  final TextEditingController _cityController = TextEditingController();
+  final TextEditingController _stateController = TextEditingController();
+  final TextEditingController _zipController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+
   @override
   void dispose() {
     _cardController.dispose();
+    _nameController.dispose();
+    _streetController.dispose();
+    _cityController.dispose();
+    _stateController.dispose();
+    _zipController.dispose();
+    _phoneController.dispose();
     super.dispose();
+  }
+
+  double get _deliveryFee =>
+      _deliveryType == 'delivery' ? _deliveryFeeFlat : 0.0;
+
+  shared.Address? _buildDeliveryAddress() {
+    if (_deliveryType != 'delivery') return null;
+    return shared.Address(
+      id: 'web_delivery',
+      street: _streetController.text.trim(),
+      city: _cityController.text.trim(),
+      state: _stateController.text.trim(),
+      zip: _zipController.text.trim(),
+      label: 'Delivery',
+      name: _nameController.text.trim().isEmpty
+          ? null
+          : _nameController.text.trim(),
+    );
+  }
+
+  String? _validateDeliveryForm() {
+    if (_deliveryType != 'delivery') return null;
+    if (_nameController.text.trim().isEmpty) {
+      return 'Enter recipient name';
+    }
+    if (_streetController.text.trim().isEmpty) {
+      return 'Enter street address';
+    }
+    if (_cityController.text.trim().isEmpty) {
+      return 'Enter city';
+    }
+    if (_stateController.text.trim().isEmpty) {
+      return 'Enter state';
+    }
+    if (_zipController.text.trim().isEmpty) {
+      return 'Enter ZIP';
+    }
+    return null;
   }
 
   static String _weekdayKey(DateTime dt) {
@@ -208,8 +298,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return;
     }
 
+    final addressError = _validateDeliveryForm();
+    if (addressError != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(addressError)));
+      return;
+    }
+
     final tax = subtotal * _taxRate;
-    final total = subtotal + tax;
+    final deliveryFee = _deliveryFee;
+    final total = subtotal + tax + deliveryFee;
+    final deliveryAddress = _buildDeliveryAddress();
+    final recipientName = _nameController.text.trim();
     final orderId = _orderId();
 
     setState(() => _paying = true);
@@ -222,10 +323,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         items: List<shared.OrderItem>.from(cart.items),
         subtotal: subtotal,
         tax: tax,
-        deliveryFee: 0,
+        deliveryFee: deliveryFee,
         discount: 0,
         total: total,
-        deliveryType: 'Pickup',
+        deliveryType: _deliveryType,
+        deliveryAddress: deliveryAddress,
+        userName: recipientName.isNotEmpty
+            ? recipientName
+            : (user.displayName ?? user.email),
         time: TimeOfDay.now().format(context),
         status: 'pending_payment',
         timestamp: DateTime.now(),
@@ -284,7 +389,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           builder: (_) => OrderConfirmationScreen(
             orderId: orderId,
             total: total,
-            pickupLabel: 'Pickup',
+            pickupLabel: _deliveryType == 'delivery' ? 'Delivery' : 'Pickup',
           ),
         ),
         (route) => route.isFirst,
@@ -355,7 +460,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             subtotal += i.price * i.quantity;
           }
           final tax = subtotal * _taxRate;
-          final total = subtotal + tax;
+          final deliveryFee = _deliveryFee;
+          final total = subtotal + tax + deliveryFee;
 
           return Align(
             alignment: Alignment.topCenter,
@@ -380,25 +486,120 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text('Order type'),
-                    subtitle: Text('Pickup (web MVP)'),
+                  Text(
+                    'Order type',
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      ChoiceChip(
+                        label: const Text('Pickup'),
+                        selected: _deliveryType == 'pickup',
+                        onSelected: (_) =>
+                            setState(() => _deliveryType = 'pickup'),
+                      ),
+                      ChoiceChip(
+                        label: const Text('Delivery'),
+                        selected: _deliveryType == 'delivery',
+                        onSelected: (_) =>
+                            setState(() => _deliveryType = 'delivery'),
+                      ),
+                    ],
+                  ),
+                  if (_deliveryType == 'delivery') ...[
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _nameController,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: const InputDecoration(
+                        labelText: 'Name',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _streetController,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: const InputDecoration(
+                        labelText: 'Street',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _cityController,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: const InputDecoration(
+                        labelText: 'City',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _stateController,
+                            textCapitalization: TextCapitalization.characters,
+                            decoration: const InputDecoration(
+                              labelText: 'State',
+                              border: OutlineInputBorder(),
+                              isDense: true,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: _zipController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: 'ZIP',
+                              border: OutlineInputBorder(),
+                              isDense: true,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                        labelText: 'Phone',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                    ),
+                  ],
                   const Divider(),
-                  ...items.map(
-                    (i) => ListTile(
+                  ...items.map((i) {
+                    final summary = _lineCustomizationSummary(i);
+                    return ListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(i.name),
                       trailing: Text(
                         '\$${(i.price * i.quantity).toStringAsFixed(2)}',
                       ),
-                      subtitle: Text('×${i.quantity}'),
-                    ),
-                  ),
+                      subtitle: Text(
+                        [
+                          '×${i.quantity}',
+                          if (summary.isNotEmpty) summary,
+                        ].join('\n'),
+                      ),
+                      isThreeLine: summary.isNotEmpty,
+                    );
+                  }),
                   const Divider(),
                   _row('Subtotal', subtotal),
                   _row('Tax (${(_taxRate * 100).toStringAsFixed(2)}%)', tax),
+                  if (deliveryFee > 0) _row('Delivery fee', deliveryFee),
                   _row('Total', total, bold: true),
                   const SizedBox(height: 24),
                   Text('Card', style: Theme.of(context).textTheme.titleMedium),
