@@ -5,10 +5,19 @@ import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:firebase_auth/firebase_auth.dart';
 import '../auth/sign_in_screen.dart';
-import '../../widgets/branding_shell.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart' as shared;
 import '../cart/cart_screen.dart';
+
+// widgets
+import '../../widgets/branding_shell.dart';
+import 'widgets/menu_item_size_section.dart';
+import 'widgets/menu_item_order_details_section.dart';
+import 'widgets/menu_item_current_toppings_section.dart';
+import 'widgets/menu_item_additional_toppings_section.dart';
+import 'widgets/menu_item_cheeses_section.dart';
+import 'widgets/menu_item_sauces_section.dart';
+import 'widgets/menu_item_qty_total_section.dart';
+import 'widgets/menu_item_notes_section.dart';
 
 /// Phase 4a: detail + size + modifier group shells.
 /// Cart write and auth gate land in Phase 5/6.
@@ -24,6 +33,7 @@ class MenuItemDetailScreen extends StatefulWidget {
 class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
   late String? _selectedSize;
   int _qty = 1;
+  final TextEditingController _notesController = TextEditingController();
 
   /// groupId → selected option ids (multi where maxSelectable > 1).
   final Map<String, Set<String>> _selectedByGroup = {};
@@ -45,6 +55,12 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
   static const String _portionWhole = 'whole';
   static const String _portionLeft = 'left';
   static const String _portionRight = 'right';
+
+  @override
+  void dispose() {
+    _notesController.dispose();
+    super.dispose();
+  }
 
   Future<void> _loadTypeMaps(String franchiseId) async {
     if (franchiseId.isEmpty || franchiseId == 'unknown') return;
@@ -126,6 +142,20 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
 
   void _setPortion(String id, String value) {
     setState(() {
+      if (_selectedSauces.contains(id) && _selectedSauces.length == 2) {
+        if (value == _portionWhole) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'With 2 sauces, each must be Left or Right — not Whole',
+              ),
+            ),
+          );
+          return;
+        }
+        _enforceSaucePortions(preferredId: id, preferredPortion: value);
+        return;
+      }
       if (value == _portionWhole) {
         _portion.remove(id);
       } else {
@@ -139,17 +169,6 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
     return _isPizza() && !_isCalzone();
   }
 
-  String _portionLabel(String id) {
-    switch (_getPortion(id)) {
-      case _portionLeft:
-        return 'Left';
-      case _portionRight:
-        return 'Right';
-      default:
-        return 'Whole';
-    }
-  }
-
   void _addSauce(String id) {
     if (_selectedSauces.length >= _maxSauces) {
       ScaffoldMessenger.of(
@@ -159,6 +178,10 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
     }
     setState(() {
       _selectedSauces.add(id);
+      if (_selectedSauces.length == 2) {
+        // Two sauces cannot both cover the whole pie.
+        _enforceSaucePortions();
+      }
     });
   }
 
@@ -168,6 +191,47 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
       _isDouble.remove(id);
       _portion.remove(id);
     });
+  }
+
+  /// When two sauces are selected, both cannot be whole: force Left + Right.
+  void _enforceSaucePortions({String? preferredId, String? preferredPortion}) {
+    if (_selectedSauces.length < 2) return;
+    final ids = _selectedSauces.toList();
+    final a = ids[0];
+    final b = ids[1];
+
+    if (preferredId != null && preferredPortion != null) {
+      if (preferredPortion == _portionWhole) {
+        // Cannot set whole while two sauces exist — ignore / keep halves.
+        return;
+      }
+      _portion[preferredId] = preferredPortion;
+      final other = preferredId == a ? b : a;
+      _portion[other] = preferredPortion == _portionLeft
+          ? _portionRight
+          : _portionLeft;
+      return;
+    }
+
+    final pa = _getPortion(a);
+    final pb = _getPortion(b);
+    if (pa == _portionWhole && pb == _portionWhole) {
+      _portion[a] = _portionLeft;
+      _portion[b] = _portionRight;
+      return;
+    }
+    if (pa == _portionWhole) {
+      _portion[a] = pb == _portionLeft ? _portionRight : _portionLeft;
+      return;
+    }
+    if (pb == _portionWhole) {
+      _portion[b] = pa == _portionLeft ? _portionRight : _portionLeft;
+      return;
+    }
+    // Both already half — if same side, flip the second.
+    if (pa == pb) {
+      _portion[b] = pa == _portionLeft ? _portionRight : _portionLeft;
+    }
   }
 
   void _seedTypesFromItem() {
@@ -399,14 +463,14 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
     return 1.0;
   }
 
-  String _portionSuffix(String id) {
+  shared.Portion _portionEnum(String id) {
     switch (_getPortion(id)) {
-      case 'left':
-        return ' (Left)';
-      case 'right':
-        return ' (Right)';
+      case _portionLeft:
+        return shared.Portion.left;
+      case _portionRight:
+        return shared.Portion.right;
       default:
-        return '';
+        return shared.Portion.whole;
     }
   }
 
@@ -797,182 +861,6 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
     return item.price;
   }
 
-  String _typeSectionLabel(shared.ModifierOption opt) {
-    final ing = (opt.ingredientId ?? '').trim();
-    final key = ing.isNotEmpty ? ing : opt.id.trim();
-
-    final typeId =
-        _ingredientTypeId[key] ?? _ingredientTypeId[key.toLowerCase()] ?? '';
-
-    if (typeId.isNotEmpty) {
-      final label =
-          _typeLabels[typeId] ?? _typeLabels[typeId.toLowerCase()] ?? typeId;
-      // Title-case slug if needed
-      if (label == typeId && typeId.contains('-')) {
-        return typeId
-            .split(RegExp(r'[-_]'))
-            .map(
-              (w) => w.isEmpty
-                  ? w
-                  : '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}',
-            )
-            .join(' ');
-      }
-      // Normalize common ids to display names if type doc missing name
-      switch (typeId.toLowerCase()) {
-        case 'meats':
-        case 'meat':
-          return 'Meats';
-        case 'veggies':
-        case 'veggie':
-        case 'vegetables':
-          return 'Veggies';
-        case 'cheeses':
-        case 'cheese':
-          return 'Cheeses';
-        case 'toppings':
-        case 'topping':
-          return 'Toppings';
-        case 'proteins':
-        case 'protein':
-          return 'Proteins';
-        default:
-          return label;
-      }
-    }
-
-    // Label-only structural options (cook/crust) — no section spam
-    if (opt.isLabelOnly) return 'Options';
-    return 'Other';
-  }
-
-  bool _isStructuralGroup(shared.ModifierGroup group) {
-    final id = group.id.toLowerCase().trim();
-    final label = group.label.toLowerCase().trim();
-    const keys = <String>[
-      'cook',
-      'cut',
-      'crust',
-      'temp',
-      'temperature',
-      'doneness',
-      'size',
-      'sauce', // single sauce pick often structural for pizza
-    ];
-    for (final k in keys) {
-      if (id == k ||
-          id.startsWith('${k}_') ||
-          id.endsWith('_$k') ||
-          label == k ||
-          label.startsWith('$k ') ||
-          label.endsWith(' $k')) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /// Section only when multi-select AND ≥2 options map to real ingredient types.
-  bool _shouldSectionGroup(shared.ModifierGroup group) {
-    if (_isStructuralGroup(group)) return false;
-    if (group.selectMode == shared.ModifierSelectMode.single) return false;
-    if (group.max <= 1) return false;
-
-    final resolvedTypeLabels = <String>{};
-    for (final o in group.options) {
-      final ing = (o.ingredientId ?? '').trim();
-      final key = ing.isNotEmpty ? ing : o.id.trim();
-      if (key.isEmpty) continue;
-
-      final typeId =
-          _ingredientTypeId[key] ?? _ingredientTypeId[key.toLowerCase()];
-      if (typeId == null || typeId.isEmpty) continue;
-
-      resolvedTypeLabels.add(_typeSectionLabel(o));
-    }
-    return resolvedTypeLabels.length >= 2;
-  }
-
-  Widget _buildGroupOptions(BuildContext context, shared.ModifierGroup group) {
-    final useSections = _shouldSectionGroup(group);
-
-    FilterChip chipFor(shared.ModifierOption opt) {
-      final delta = _optionDelta(opt);
-      return FilterChip(
-        label: Text(
-          delta != 0
-              ? '${opt.label} (+\$${delta.toStringAsFixed(2)})'
-              : opt.label,
-        ),
-        selected: _selectedByGroup[group.id]?.contains(opt.id) ?? false,
-        onSelected: (_) => _toggleOption(group, opt.id),
-      );
-    }
-
-    if (!useSections) {
-      return Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: [for (final opt in group.options) chipFor(opt)],
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (final section in _optionsByType(group.options)) ...[
-          Padding(
-            padding: const EdgeInsets.only(top: 12, bottom: 6),
-            child: Text(
-              section.key,
-              style: Theme.of(
-                context,
-              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-            ),
-          ),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [for (final opt in section.value) chipFor(opt)],
-          ),
-        ],
-      ],
-    );
-  }
-
-  /// Stable display order for known sections; unknown labels sort after.
-  int _sectionSortKey(String label) {
-    const order = [
-      'Meats',
-      'Veggies',
-      'Cheeses',
-      'Proteins',
-      'Sauces',
-      'Toppings',
-      'Options',
-      'Other',
-    ];
-    final i = order.indexWhere((o) => o.toLowerCase() == label.toLowerCase());
-    return i < 0 ? 100 : i;
-  }
-
-  List<MapEntry<String, List<shared.ModifierOption>>> _optionsByType(
-    List<shared.ModifierOption> options,
-  ) {
-    final map = <String, List<shared.ModifierOption>>{};
-    for (final o in options) {
-      final label = _typeSectionLabel(o);
-      map.putIfAbsent(label, () => []).add(o);
-    }
-    final entries = map.entries.toList()
-      ..sort((a, b) {
-        final c = _sectionSortKey(a.key).compareTo(_sectionSortKey(b.key));
-        if (c != 0) return c;
-        return a.key.compareTo(b.key);
-      });
-    return entries;
-  }
-
   double get _unitPrice {
     var total = _baseSizePrice;
 
@@ -1043,6 +931,19 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
       final selected = _structuralSelections[label];
       if (min > 0 && (selected == null || selected.isEmpty)) {
         return 'Select ${label.toLowerCase()}';
+      }
+    }
+    // Two sauces cannot both be whole.
+    if (_selectedSauces.length == 2) {
+      final ids = _selectedSauces.toList();
+      final bothWhole =
+          _getPortion(ids[0]) == _portionWhole &&
+          _getPortion(ids[1]) == _portionWhole;
+      final sameHalf =
+          _getPortion(ids[0]) != _portionWhole &&
+          _getPortion(ids[0]) == _getPortion(ids[1]);
+      if (bothWhole || sameHalf) {
+        return 'With 2 sauces, set one Left and one Right';
       }
     }
     for (final g in item.effectiveModifierGroups) {
@@ -1116,6 +1017,7 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
       list.add(
         shared.Customization(
           id: id,
+          ingredientId: id,
           name: nameParts.length == 1
               ? display
               : '${nameParts.first} (${nameParts.skip(1).join(', ')})',
@@ -1124,6 +1026,8 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
           group: 'Current',
           selected: true,
           isDefault: _wasIncludedIngredient(id),
+          portion: _portionEnum(id),
+          quantity: _getDouble(id) ? 2 : 1,
         ),
       );
     }
@@ -1141,6 +1045,7 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
       list.add(
         shared.Customization(
           id: id,
+          ingredientId: id,
           name: nameParts.length == 1
               ? display
               : '${nameParts.first} (${nameParts.skip(1).join(', ')})',
@@ -1149,6 +1054,8 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
           group: 'Cheeses',
           selected: true,
           isDefault: _isOriginallyIncluded(id),
+          portion: _portionEnum(id),
+          quantity: _getDouble(id) ? 2 : 1,
         ),
       );
     }
@@ -1244,7 +1151,9 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
         customizations: customizations,
         quantity: _qty,
         price: unit,
-        specialInstructions: null,
+        specialInstructions: _notesController.text.trim().isEmpty
+            ? null
+            : _notesController.text.trim(),
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1267,8 +1176,6 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
       ).showSnackBar(SnackBar(content: Text('Could not add to cart: $e')));
     }
   }
-
-  double get _linePreview => _unitPrice * _qty;
 
   List<String> get _sizeLabels {
     if (item.sizes != null && item.sizes!.isNotEmpty) {
@@ -1360,503 +1267,88 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
               ).textTheme.bodySmall?.copyWith(color: scheme.error),
             ),
           ],
-          const SizedBox(height: 8),
-          Text(
-            'Profile: ${item.effectiveMenuProfile}',
-            style: Theme.of(context).textTheme.labelMedium,
+
+          MenuItemSizeSection(
+            sizeLabels: sizes,
+            selectedSize: _selectedSize,
+            onSizeSelected: (label) => setState(() => _selectedSize = label),
           ),
-          if (sizes.isNotEmpty) ...[
-            const SizedBox(height: 20),
-            Text('Size', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final label in sizes)
-                  ChoiceChip(
-                    label: Text(label),
-                    selected: _selectedSize == label,
-                    onSelected: (_) => setState(() => _selectedSize = label),
-                  ),
-              ],
-            ),
-          ],
 
-          // --- Current Toppings (included; removable) ---
-          if (_showsCurrentIngredients()) ...[
-            const SizedBox(height: 24),
-            Text(
-              'Current Toppings',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            if (_currentIngredients.isEmpty)
-              Text(
-                'None — defaults appear here when set on the item. Add extras below.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                  fontStyle: FontStyle.italic,
-                ),
-              )
-            else
-              ..._currentIngredients.map((id) {
-                final doubled = _getDouble(id);
-                final portion = _getPortion(id);
-                final display = _ingredientDisplayName(id);
-                final titleBits = <String>[display];
-                if (doubled) titleBits.add('Double');
-                if (portion == 'left') titleBits.add('Left');
-                if (portion == 'right') titleBits.add('Right');
-                return Card(
-                  margin: const EdgeInsets.symmetric(vertical: 4),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                titleBits.length == 1
-                                    ? display
-                                    : '${titleBits.first} (${titleBits.skip(1).join(', ')})',
-                                style: Theme.of(context).textTheme.titleSmall,
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () => _setDouble(id, !doubled),
-                              child: Text(doubled ? 'Single' : 'Double'),
-                            ),
-                            TextButton(
-                              style: TextButton.styleFrom(
-                                foregroundColor: scheme.error,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _currentIngredients.remove(id);
-                                  _isDouble.remove(id);
-                                  _portion.remove(id);
-                                });
-                              },
-                              child: const Text('Remove'),
-                            ),
-                          ],
-                        ),
-                        if (_isPizza()) ...[
-                          const SizedBox(height: 4),
-                          Wrap(
-                            spacing: 6,
-                            children: [
-                              ChoiceChip(
-                                label: const Text('Left'),
-                                selected: portion == 'left',
-                                onSelected: (_) => _setPortion(id, 'left'),
-                              ),
-                              ChoiceChip(
-                                label: const Text('Whole'),
-                                selected: portion == 'whole',
-                                onSelected: (_) => _setPortion(id, 'whole'),
-                              ),
-                              ChoiceChip(
-                                label: const Text('Right'),
-                                selected: portion == 'right',
-                                onSelected: (_) => _setPortion(id, 'right'),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                );
-              }),
-          ],
-
-          // --- Additional Toppings (optionalAddOns by type, minus Current) ---
-          if (_isPizza()) ...[
-            Builder(
-              builder: (context) {
-                final meatIds = _availableIdsByType('meats');
-                final vegIds = _availableIdsByType('veggies');
-                if (meatIds.isEmpty && vegIds.isEmpty) {
-                  return const SizedBox.shrink();
-                }
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 24),
-                    Text(
-                      'Additional Toppings',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Tap to add. Added items move to Current Toppings.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                    if (meatIds.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        'Meats',
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          for (final id in meatIds)
-                            ActionChip(
-                              label: Text(() {
-                                final price = _toppingUnitPrice();
-                                final name = _optionalLabel(id, 'meats');
-                                if (price > 0) {
-                                  return '$name (+\$${price.toStringAsFixed(2)})';
-                                }
-                                return name;
-                              }()),
-                              onPressed: () {
-                                setState(() {
-                                  _currentIngredients.add(id);
-                                });
-                              },
-                            ),
-                        ],
-                      ),
-                    ],
-                    if (vegIds.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        'Veggies',
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          for (final id in vegIds)
-                            ActionChip(
-                              label: Text(() {
-                                final price = _toppingUnitPrice();
-                                final name = _optionalLabel(id, 'veggies');
-                                if (price > 0) {
-                                  return '$name (+\$${price.toStringAsFixed(2)})';
-                                }
-                                return name;
-                              }()),
-                              onPressed: () {
-                                setState(() {
-                                  _currentIngredients.add(id);
-                                });
-                              },
-                            ),
-                        ],
-                      ),
-                    ],
-                  ],
-                );
+          if (_showsCurrentIngredients())
+            MenuItemCurrentToppingsSection(
+              ingredientIds: _currentIngredients,
+              displayName: _ingredientDisplayName,
+              isDouble: _getDouble,
+              portion: _getPortion,
+              showPortionControls: _showsPortionControls(),
+              onToggleDouble: _setDouble,
+              onSetPortion: _setPortion,
+              onRemove: (id) {
+                setState(() {
+                  _currentIngredients.remove(id);
+                  _isDouble.remove(id);
+                  _portion.remove(id);
+                });
               },
             ),
-          ],
 
-          // --- Cheeses (max 2; side-by-side available chips) ---
-          if (_isPizza()) ...[
-            Builder(
-              builder: (context) {
-                final available = _availableCheeseIds();
-                final selected = _selectedCheeses.toList();
-                if (selected.isEmpty && available.isEmpty) {
-                  return const SizedBox.shrink();
-                }
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 24),
-                    Text(
-                      'Cheeses',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Up to $_maxCheeses. Selected cheeses are free if they came on the item.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                    if (selected.isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      Text(
-                        'Selected',
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          for (final id in selected) ...[
-                            InputChip(
-                              label: Text(() {
-                                final bits = <String>[
-                                  _optionalLabel(id, 'cheeses'),
-                                ];
-                                if (_getDouble(id)) bits.add('Double');
-                                final p = _getPortion(id);
-                                if (p == 'left') bits.add('Left');
-                                if (p == 'right') bits.add('Right');
-                                return bits.length == 1
-                                    ? bits.first
-                                    : '${bits.first} (${bits.skip(1).join(', ')})';
-                              }()),
-                              onPressed: () => _setDouble(id, !_getDouble(id)),
-                              onDeleted: () => _removeCheese(id),
-                              deleteIconColor: scheme.error,
-                            ),
-                            if (_isPizza())
-                              Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: Wrap(
-                                  spacing: 4,
-                                  children: [
-                                    ChoiceChip(
-                                      label: const Text('L'),
-                                      selected: _getPortion(id) == 'left',
-                                      onSelected: (_) =>
-                                          _setPortion(id, 'left'),
-                                      visualDensity: VisualDensity.compact,
-                                    ),
-                                    ChoiceChip(
-                                      label: const Text('W'),
-                                      selected: _getPortion(id) == 'whole',
-                                      onSelected: (_) =>
-                                          _setPortion(id, 'whole'),
-                                      visualDensity: VisualDensity.compact,
-                                    ),
-                                    ChoiceChip(
-                                      label: const Text('R'),
-                                      selected: _getPortion(id) == 'right',
-                                      onSelected: (_) =>
-                                          _setPortion(id, 'right'),
-                                      visualDensity: VisualDensity.compact,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                          ],
-                        ],
-                      ),
-                    ],
-                    if (available.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        'Available',
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          for (final id in available)
-                            ActionChip(
-                              label: Text(() {
-                                final price = _toppingUnitPrice();
-                                final name = _optionalLabel(id, 'cheeses');
-                                final free = _isOriginallyIncluded(id);
-                                if (free || price <= 0) return name;
-                                return '$name (+\$${price.toStringAsFixed(2)})';
-                              }()),
-                              onPressed: () => _addCheese(id),
-                            ),
-                        ],
-                      ),
-                    ],
-                  ],
-                );
+          if (_isPizza())
+            MenuItemAdditionalToppingsSection(
+              meatIds: _availableIdsByType('meats'),
+              veggieIds: _availableIdsByType('veggies'),
+              labelFor: _optionalLabel,
+              toppingPrice: _toppingUnitPrice(),
+              onAdd: (id) {
+                setState(() {
+                  _currentIngredients.add(id);
+                });
               },
             ),
-          ],
 
-          // --- Sauces (max 2; own section; not in Current / not in Add-ons) ---
-          if (_isPizza()) ...[
-            Builder(
-              builder: (context) {
-                final available = _availableSauceIds();
-                final selected = _selectedSauces.toList();
-                if (selected.isEmpty && available.isEmpty) {
-                  return const SizedBox.shrink();
-                }
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 24),
-                    Text(
-                      'Sauces',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Up to $_maxSauces. Included sauces stay selected here (not under Current Toppings).',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                    if (selected.isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      Text(
-                        'Selected',
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          for (final id in selected) ...[
-                            InputChip(
-                              label: Text(() {
-                                final bits = <String>[
-                                  _optionalLabel(id, 'sauces'),
-                                ];
-                                if (_getDouble(id)) bits.add('Double');
-                                final p = _getPortion(id);
-                                if (p == 'left') bits.add('Left');
-                                if (p == 'right') bits.add('Right');
-                                return bits.length == 1
-                                    ? bits.first
-                                    : '${bits.first} (${bits.skip(1).join(', ')})';
-                              }()),
-                              onPressed: () => _setDouble(id, !_getDouble(id)),
-                              onDeleted: () => _removeSauce(id),
-                              deleteIconColor: scheme.error,
-                            ),
-                            if (_isPizza())
-                              Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: Wrap(
-                                  spacing: 4,
-                                  children: [
-                                    ChoiceChip(
-                                      label: const Text('L'),
-                                      selected: _getPortion(id) == 'left',
-                                      onSelected: (_) =>
-                                          _setPortion(id, 'left'),
-                                      visualDensity: VisualDensity.compact,
-                                    ),
-                                    ChoiceChip(
-                                      label: const Text('W'),
-                                      selected: _getPortion(id) == 'whole',
-                                      onSelected: (_) =>
-                                          _setPortion(id, 'whole'),
-                                      visualDensity: VisualDensity.compact,
-                                    ),
-                                    ChoiceChip(
-                                      label: const Text('R'),
-                                      selected: _getPortion(id) == 'right',
-                                      onSelected: (_) =>
-                                          _setPortion(id, 'right'),
-                                      visualDensity: VisualDensity.compact,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                          ],
-                        ],
-                      ),
-                    ],
-                    if (available.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        'Available',
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          for (final id in available)
-                            ActionChip(
-                              label: Text(() {
-                                final price = _toppingUnitPrice();
-                                final name = _optionalLabel(id, 'sauces');
-                                final free = _isOriginallyIncluded(id);
-                                if (free || price <= 0) return name;
-                                return '$name (+\$${price.toStringAsFixed(2)})';
-                              }()),
-                              onPressed: () => _addSauce(id),
-                            ),
-                        ],
-                      ),
-                    ],
-                  ],
-                );
-              },
+          if (_isPizza())
+            MenuItemCheesesSection(
+              selectedIds: _selectedCheeses.toList(),
+              availableIds: _availableCheeseIds(),
+              maxCheeses: _maxCheeses,
+              labelFor: _optionalLabel,
+              isDouble: _getDouble,
+              portion: _getPortion,
+              isOriginallyIncluded: _isOriginallyIncluded,
+              toppingPrice: _toppingUnitPrice(),
+              showPortionControls: _showsPortionControls(),
+              onToggleDouble: _setDouble,
+              onSetPortion: _setPortion,
+              onRemove: _removeCheese,
+              onAdd: _addCheese,
             ),
-          ],
 
-          // --- Order Details: Crust / Cook / Cut (or Cook only for sub) ---
-          if (_structuralGroupsForUi().isNotEmpty) ...[
-            const SizedBox(height: 24),
-            Text(
-              'Order Details',
-              style: Theme.of(context).textTheme.titleMedium,
+          if (_isPizza())
+            MenuItemSaucesSection(
+              selectedIds: _selectedSauces.toList(),
+              availableIds: _availableSauceIds(),
+              maxSauces: _maxSauces,
+              labelFor: _optionalLabel,
+              isDouble: _getDouble,
+              portion: _getPortion,
+              isOriginallyIncluded: _isOriginallyIncluded,
+              toppingPrice: _toppingUnitPrice(),
+              showPortionControls: _showsPortionControls(),
+              onToggleDouble: _setDouble,
+              onSetPortion: _setPortion,
+              onRemove: _removeSauce,
+              onAdd: _addSauce,
             ),
-            const SizedBox(height: 4),
-            Text(
-              _isSub()
-                  ? 'Choose how your sub is cooked.'
-                  : 'Crust, cook, and cut.',
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-            ),
-            const SizedBox(height: 12),
-            for (final g in _structuralGroupsForUi()) ...[
-              Text(
-                (g['label'] ?? '').toString(),
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-              const SizedBox(height: 6),
-              Builder(
-                builder: (context) {
-                  final label = (g['label'] ?? '').toString();
-                  final ids = (g['ingredientIds'] as List? ?? [])
-                      .map((e) => e.toString())
-                      .where((id) => id.isNotEmpty)
-                      .toList();
-                  final labels =
-                      (g['optionLabels'] as Map?)?.map(
-                        (k, v) => MapEntry(k.toString(), v.toString()),
-                      ) ??
-                      const <String, String>{};
-                  final selected = _structuralSelections[label];
-                  return Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final id in ids)
-                        ChoiceChip(
-                          label: Text(labels[id] ?? id),
-                          selected: selected == id,
-                          onSelected: (_) {
-                            setState(() {
-                              _structuralSelections[label] = id;
-                            });
-                          },
-                        ),
-                    ],
-                  );
-                },
-              ),
-              const SizedBox(height: 16),
-            ],
-          ],
+
+          MenuItemOrderDetailsSection(
+            groups: _structuralGroupsForUi(),
+            selections: _structuralSelections,
+            isSub: _isSub(),
+            onSelected: (groupLabel, optionId) {
+              setState(() {
+                _structuralSelections[groupLabel] = optionId;
+              });
+            },
+          ),
 
           // Non-structural modifier groups only.
           // Pizza: skip groups handled by Current / Additional / Cheeses / Sauces sections.
@@ -1900,43 +1392,15 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
               ),
             ],
           ],
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Text('Qty', style: Theme.of(context).textTheme.titleMedium),
-              const Spacer(),
-              IconButton(
-                onPressed: _qty > 1 ? () => setState(() => _qty--) : null,
-                icon: const Icon(Icons.remove_circle_outline),
-              ),
-              Text('$_qty', style: Theme.of(context).textTheme.titleMedium),
-              IconButton(
-                onPressed: () => setState(() => _qty++),
-                icon: const Icon(Icons.add_circle_outline),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Line total'),
-            trailing: Text(
-              '\$${_linePreview.toStringAsFixed(2)}',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: scheme.primary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            subtitle: Text(
-              'Base \$${_baseSizePrice.toStringAsFixed(2)}'
-              ' + extras \$${(_unitPrice - _baseSizePrice).toStringAsFixed(2)}'
-              ' × $_qty'
-              '${_selectedSize != null ? ' · $_selectedSize' : ''}',
-            ),
-          ),
-          const SizedBox(height: 16),
-          FilledButton(
-            onPressed: () async {
+          MenuItemNotesSection(controller: _notesController),
+          MenuItemQtyTotalSection(
+            qty: _qty,
+            baseSizePrice: _baseSizePrice,
+            unitPrice: _unitPrice,
+            selectedSize: _selectedSize,
+            isSignedIn: FirebaseAuth.instance.currentUser != null,
+            onQtyChanged: (v) => setState(() => _qty = v),
+            onPrimaryPressed: () async {
               final user = FirebaseAuth.instance.currentUser;
               if (user != null) {
                 await _addToCart();
@@ -1950,11 +1414,6 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
                 await _addToCart();
               }
             },
-            child: Text(
-              FirebaseAuth.instance.currentUser == null
-                  ? 'Sign in to add'
-                  : 'Add to cart',
-            ),
           ),
         ],
       ),
