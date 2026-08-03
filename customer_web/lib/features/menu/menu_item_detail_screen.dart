@@ -18,6 +18,8 @@ import 'widgets/menu_item_cheeses_section.dart';
 import 'widgets/menu_item_sauces_section.dart';
 import 'widgets/menu_item_qty_total_section.dart';
 import 'widgets/menu_item_notes_section.dart';
+import 'widgets/menu_item_wings_sauce_section.dart';
+import 'widgets/menu_item_wings_dips_section.dart';
 
 /// Phase 4a: detail + size + modifier group shells.
 /// Cart write and auth gate land in Phase 5/6.
@@ -306,6 +308,121 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
     return item.effectiveMenuProfile.toLowerCase() == shared.MenuProfile.sub;
   }
 
+  bool _isWings() {
+    return item.effectiveMenuProfile.toLowerCase() == shared.MenuProfile.wings;
+  }
+
+  Map<String, dynamic>? _wingGroupMap(String groupId) {
+    final id = groupId.toLowerCase();
+    for (final g in _groupsForUi()) {
+      if ((g['id'] ?? '').toString().toLowerCase() == id) return g;
+    }
+    return null;
+  }
+
+  static const String _wingPlainId = 'plain';
+
+  List<String> _wingSauceOptionIds() {
+    final g = _wingGroupMap('wing_sauce');
+    final raw = (g?['ingredientIds'] as List? ?? [])
+        .map((e) => e.toString().trim())
+        .where((id) => id.isNotEmpty)
+        .toList();
+    // Product rule: Plain is always a valid portion choice.
+    if (!raw.any((id) => id.toLowerCase() == _wingPlainId)) {
+      return [_wingPlainId, ...raw];
+    }
+    return raw;
+  }
+
+  /// Wings side dip cups: sauceId → cup count.
+  final Map<String, int> _wingDipCounts = {};
+  static const int _maxWingDipCups = 4;
+
+  String _wingOptionLabel(String groupId, String optionId) {
+    if (optionId.toLowerCase() == _wingPlainId) return 'Plain';
+    final g = _wingGroupMap(groupId);
+    final labels =
+        (g?['optionLabels'] as Map?)?.map(
+          (k, v) => MapEntry(k.toString(), v.toString()),
+        ) ??
+        const <String, String>{};
+    return labels[optionId] ?? _ingredientDisplayName(optionId);
+  }
+
+  List<String> _availableWingSauceIds() {
+    return _wingSauceOptionIds()
+        .where((id) => !_selectedWingSauces.contains(id))
+        .toList();
+  }
+
+  void _addWingSauce(String id) {
+    if (_selectedWingSauces.length >= _maxWingSauces) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Max $_maxWingSauces sauces (split allowed)')),
+      );
+      return;
+    }
+    setState(() {
+      _selectedWingSauces.add(id);
+    });
+  }
+
+  void _removeWingSauce(String id) {
+    setState(() {
+      _selectedWingSauces.remove(id);
+    });
+  }
+
+  List<String> _wingDipOptionIds() {
+    final g = _wingGroupMap('wing_dips');
+    final raw = (g?['ingredientIds'] as List? ?? [])
+        .map((e) => e.toString().trim())
+        .where((id) => id.isNotEmpty)
+        .toList();
+    if (raw.isNotEmpty) return raw;
+    // Same catalog as toss (product rule); exclude synthetic plain.
+    return _wingSauceOptionIds()
+        .where((id) => id.toLowerCase() != _wingPlainId)
+        .toList();
+  }
+
+  int _freeDipCupsForSize() {
+    return item.getFreeDipCupCountForSize(_selectedSize);
+  }
+
+  double _sideDipUpchargeForSize() {
+    return item.getSideDipUpchargeForSize(_selectedSize);
+  }
+
+  int get _totalWingDipCups => _wingDipCounts.values.fold(0, (a, b) => a + b);
+
+  int get _paidWingDipCups {
+    final free = _freeDipCupsForSize();
+    final total = _totalWingDipCups;
+    return total > free ? total - free : 0;
+  }
+
+  void _setWingDipCount(String id, int count) {
+    setState(() {
+      if (count <= 0) {
+        _wingDipCounts.remove(id);
+        return;
+      }
+      final others = _totalWingDipCups - (_wingDipCounts[id] ?? 0);
+      final allowed = _maxWingDipCups - others;
+      final next = count > allowed ? allowed : count;
+      if (next <= 0) {
+        _wingDipCounts.remove(id);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Max $_maxWingDipCups dip cups')),
+        );
+        return;
+      }
+      _wingDipCounts[id] = next;
+    });
+  }
+
   bool _isStructuralIdOrLabel(String? raw) {
     final v = (raw ?? '').trim().toLowerCase();
     return v == 'crust' || v == 'cook' || v == 'cut';
@@ -402,6 +519,85 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
       }
     }
 
+    // Wings: ensure wing_sauce + wing_dips shells when missing/empty.
+    if (_isWings()) {
+      final template = shared.MenuProfileTemplates.seedGroups(
+        shared.MenuProfile.wings,
+      );
+      for (final seed in template) {
+        final sid = seed.id.toLowerCase();
+        final idx = groups.indexWhere(
+          (g) =>
+              (g['id'] ?? '').toString().toLowerCase() == sid ||
+              (g['label'] ?? '').toString().toLowerCase() ==
+                  seed.label.toLowerCase(),
+        );
+        final hasOptions =
+            idx >= 0 &&
+            ((groups[idx]['ingredientIds'] as List?)?.isNotEmpty ?? false);
+        if (hasOptions) continue;
+
+        // Prefer options already bound on item.modifierGroups even if map empty.
+        final stored = item.modifierGroups?.where(
+          (mg) =>
+              mg.id.toLowerCase() == sid ||
+              mg.label.toLowerCase() == seed.label.toLowerCase(),
+        );
+        final source = (stored != null && stored.isNotEmpty)
+            ? stored.first
+            : seed;
+        final mapped = groupToMap(source);
+        if (idx >= 0) {
+          groups[idx] = mapped;
+        } else {
+          groups.add(mapped);
+        }
+      }
+
+      // If wing_sauce still has no options, bind dippingSauceOptions ids.
+      final sauceIdx = groups.indexWhere(
+        (g) => (g['id'] ?? '').toString().toLowerCase() == 'wing_sauce',
+      );
+      if (sauceIdx >= 0) {
+        final ids = (groups[sauceIdx]['ingredientIds'] as List? ?? []);
+        if (ids.isEmpty) {
+          final fromItem = item.dippingSauceOptions ?? const <String>[];
+          if (fromItem.isNotEmpty) {
+            groups[sauceIdx] = {
+              ...groups[sauceIdx],
+              'ingredientIds': List<String>.from(fromItem),
+              'optionLabels': {
+                for (final id in fromItem) id: _ingredientDisplayName(id),
+              },
+            };
+          }
+        }
+      }
+
+      // wing_dips: prefer sideDipSauceOptions, else same pool as sauces.
+      final dipsIdx = groups.indexWhere(
+        (g) => (g['id'] ?? '').toString().toLowerCase() == 'wing_dips',
+      );
+      if (dipsIdx >= 0) {
+        final ids = (groups[dipsIdx]['ingredientIds'] as List? ?? []);
+        if (ids.isEmpty) {
+          final fromItem =
+              item.sideDipSauceOptions ??
+              item.dippingSauceOptions ??
+              const <String>[];
+          if (fromItem.isNotEmpty) {
+            groups[dipsIdx] = {
+              ...groups[dipsIdx],
+              'ingredientIds': List<String>.from(fromItem),
+              'optionLabels': {
+                for (final id in fromItem) id: _ingredientDisplayName(id),
+              },
+            };
+          }
+        }
+      }
+    }
+
     return groups;
   }
 
@@ -416,6 +612,16 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
       if (a == want || b == want) return true;
     }
     return false;
+  }
+
+  bool _isWingsDedicatedGroup(String id, String label) {
+    final v = '${id.toLowerCase().trim()} ${label.toLowerCase().trim()}';
+    return v.contains('wing_sauce') ||
+        v.contains('wing_dips') ||
+        v == 'sauce' ||
+        v.contains('dipping') ||
+        v.contains('dip cup') ||
+        v.contains('dip');
   }
 
   bool _isPizzaDedicatedGroup(String id, String label) {
@@ -633,6 +839,10 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
   late Set<String> _selectedSauces;
   static const int _maxSauces = 2;
 
+  /// Wings toss sauces (wing_sauce group) — max 2.
+  late Set<String> _selectedWingSauces;
+  static const int _maxWingSauces = 2;
+
   /// ingredientId → isDouble (Current toppings, cheeses, sauces).
   final Map<String, bool> _isDouble = {};
 
@@ -675,7 +885,6 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
           .toList();
       if (ids.isEmpty) continue;
 
-      // Prefer defaultSelected from original ModifierGroup when present.
       String? chosen;
       final stored = item.modifierGroups?.where(
         (mg) =>
@@ -691,7 +900,6 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
               : o.id.trim();
         }
       }
-      // Sub / common default: Regular cook.
       if ((chosen == null || chosen.isEmpty) &&
           (label.toLowerCase() == 'cook')) {
         chosen = ids.firstWhere(
@@ -706,7 +914,6 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
     // Current toppings from includedIngredients (mobile parity).
     _currentIngredients = {};
     _originalIncludedIds = {};
-    // Also capture cheeses/sauces that were stripped from Current so re-add stays free later.
     if (item.includedIngredients != null) {
       for (final ing in item.includedIngredients!) {
         final id = (ing['ingredientId'] ?? ing['id'])?.toString().trim() ?? '';
@@ -720,6 +927,7 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
         _currentIngredients.add(id);
       }
     }
+
     // Cheeses: defaults from included + optional pool of type cheeses.
     final cheesePool = _optionalIdsByType('cheeses');
     _selectedCheeses = {};
@@ -734,7 +942,6 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
         }
       }
     }
-    // Also any defaultSelected on a cheeses modifier group.
     for (final g in item.effectiveModifierGroups) {
       final gl = g.label.toLowerCase();
       final gid = g.id.toLowerCase();
@@ -752,7 +959,7 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
       }
     }
 
-    // Sauces: defaults from included + optional pool of type sauces (stay in Sauces section).
+    // Sauces: defaults from included + optional pool (stay in Sauces section).
     final saucePool = _optionalIdsByType('sauces');
     _selectedSauces = {};
     if (item.includedIngredients != null) {
@@ -788,7 +995,7 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
       }
     }
 
-    // Pizza/calzone: cheeses & sauces live in their own sections later — not in Current.
+    // Pizza/calzone: cheeses & sauces live in their own sections — not in Current.
     if (_isPizza()) {
       _currentIngredients.removeWhere((id) {
         final typeId =
@@ -800,7 +1007,6 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
             typeId == 'sauce') {
           return true;
         }
-        // Fallback: inspect the included map entry itself.
         final entry = item.includedIngredients?.firstWhere(
           (e) => (e['ingredientId'] ?? e['id'])?.toString().trim() == id,
           orElse: () => <String, dynamic>{},
@@ -810,6 +1016,32 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
             .toLowerCase();
         return t == 'cheeses' || t == 'cheese' || t == 'sauces' || t == 'sauce';
       });
+    }
+
+    // Wings toss sauces — always initialize (avoids LateInitializationError).
+    _selectedWingSauces = {};
+    if (_isWings()) {
+      final stored = item.modifierGroups?.where(
+        (mg) =>
+            mg.id.toLowerCase() == 'wing_sauce' ||
+            mg.label.toLowerCase() == 'sauce',
+      );
+      if (stored != null && stored.isNotEmpty) {
+        for (final o in stored.first.options) {
+          if (!o.defaultSelected) continue;
+          final key =
+              (o.ingredientId != null && o.ingredientId!.trim().isNotEmpty)
+              ? o.ingredientId!.trim()
+              : o.id.trim();
+          if (key.isNotEmpty) _selectedWingSauces.add(key);
+        }
+      }
+      if (_selectedWingSauces.isEmpty) {
+        _selectedWingSauces.add(_wingPlainId);
+      }
+      if (_selectedWingSauces.length > _maxWingSauces) {
+        _selectedWingSauces = _selectedWingSauces.take(_maxWingSauces).toSet();
+      }
     }
   }
 
@@ -884,6 +1116,14 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
       }
     }
 
+    // Wings side dip cups (extras only).
+    if (_isWings()) {
+      final paid = _paidWingDipCups;
+      if (paid > 0) {
+        total += paid * _sideDipUpchargeForSize();
+      }
+    }
+
     // Non-structural modifier groups that are not already represented in Current.
     for (final g in item.effectiveModifierGroups) {
       if (_isStructuralIdOrLabel(g.id) || _isStructuralIdOrLabel(g.label)) {
@@ -933,6 +1173,15 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
         return 'Select ${label.toLowerCase()}';
       }
     }
+
+    if (_isWings()) {
+      if (_selectedWingSauces.isEmpty) {
+        return 'Select at least 1 wing sauce';
+      }
+      if (_selectedWingSauces.length > _maxWingSauces) {
+        return 'Max $_maxWingSauces wing sauces';
+      }
+    }
     // Two sauces cannot both be whole.
     if (_selectedSauces.length == 2) {
       final ids = _selectedSauces.toList();
@@ -948,6 +1197,14 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
     }
     for (final g in item.effectiveModifierGroups) {
       if (_isStructuralIdOrLabel(g.id) || _isStructuralIdOrLabel(g.label)) {
+        continue;
+      }
+      // Wings: wing_sauce / wing_dips are owned by dedicated state, not _selectedByGroup.
+      if (_isWings() && _isWingsDedicatedGroup(g.id, g.label)) {
+        continue;
+      }
+      // Pizza dedicated groups are owned by Current / Cheeses / Sauces sections.
+      if (_isPizza() && _isPizzaDedicatedGroup(g.id, g.label)) {
         continue;
       }
       final n = _selectedByGroup[g.id]?.length ?? 0;
@@ -1085,9 +1342,61 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
       );
     }
 
+    // Wings toss sauces.
+    if (_isWings()) {
+      for (final id in _selectedWingSauces) {
+        list.add(
+          shared.Customization(
+            id: id,
+            ingredientId: id,
+            name: _wingOptionLabel('wing_sauce', id),
+            isGroup: false,
+            price: 0,
+            group: 'Sauce',
+            selected: true,
+            isDefault: false,
+          ),
+        );
+      }
+    }
+
+    // Wings side dip cups.
+    if (_isWings()) {
+      final free = _freeDipCupsForSize();
+      final upcharge = _sideDipUpchargeForSize();
+      // Assign free to first cups in stable id order, then charge rest.
+      var freeLeft = free;
+      final ids = _wingDipCounts.keys.toList()..sort();
+      for (final id in ids) {
+        final count = _wingDipCounts[id] ?? 0;
+        for (var i = 0; i < count; i++) {
+          final isFree = freeLeft > 0;
+          if (isFree) freeLeft--;
+          list.add(
+            shared.Customization(
+              id: '${id}_cup_$i',
+              ingredientId: id,
+              name: '${_wingOptionLabel('wing_dips', id)} (cup)',
+              isGroup: false,
+              price: isFree ? 0 : upcharge,
+              group: 'Dipping cups',
+              selected: true,
+              quantity: 1,
+            ),
+          );
+        }
+      }
+    }
+
     // Non-structural modifier groups (extras the user added via chips).
     for (final g in item.effectiveModifierGroups) {
       if (_isStructuralIdOrLabel(g.id) || _isStructuralIdOrLabel(g.label)) {
+        continue;
+      }
+      if (_isWings() && _isWingsDedicatedGroup(g.id, g.label)) {
+        continue;
+      }
+      if (_isPizza() && _isPizzaDedicatedGroup(g.id, g.label)) {
         continue;
       }
       final selected = _selectedByGroup[g.id] ?? const <String>{};
@@ -1292,7 +1601,7 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
               },
             ),
 
-          if (_isPizza())
+          if (_isPizza() && !_isWings())
             MenuItemAdditionalToppingsSection(
               meatIds: _availableIdsByType('meats'),
               veggieIds: _availableIdsByType('veggies'),
@@ -1339,16 +1648,37 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
               onAdd: _addSauce,
             ),
 
-          MenuItemOrderDetailsSection(
-            groups: _structuralGroupsForUi(),
-            selections: _structuralSelections,
-            isSub: _isSub(),
-            onSelected: (groupLabel, optionId) {
-              setState(() {
-                _structuralSelections[groupLabel] = optionId;
-              });
-            },
-          ),
+          if (!_isWings())
+            MenuItemOrderDetailsSection(
+              groups: _structuralGroupsForUi(),
+              selections: _structuralSelections,
+              isSub: _isSub(),
+              onSelected: (groupLabel, optionId) {
+                setState(() {
+                  _structuralSelections[groupLabel] = optionId;
+                });
+              },
+            ),
+
+          if (_isWings())
+            MenuItemWingsSauceSection(
+              selectedIds: _selectedWingSauces.toList(),
+              availableIds: _availableWingSauceIds(),
+              maxSauces: _maxWingSauces,
+              labelFor: (id) => _wingOptionLabel('wing_sauce', id),
+              onAdd: _addWingSauce,
+              onRemove: _removeWingSauce,
+            ),
+          if (_isWings())
+            MenuItemWingsDipsSection(
+              optionIds: _wingDipOptionIds(),
+              counts: Map<String, int>.from(_wingDipCounts),
+              freeCups: _freeDipCupsForSize(),
+              upcharge: _sideDipUpchargeForSize(),
+              maxCups: _maxWingDipCups,
+              labelFor: (id) => _wingOptionLabel('wing_dips', id),
+              onSetCount: _setWingDipCount,
+            ),
 
           // Non-structural modifier groups only.
           // Pizza: skip groups handled by Current / Additional / Cheeses / Sauces sections.
@@ -1358,6 +1688,9 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
               const SizedBox.shrink()
             else if (_isPizza() &&
                 _isPizzaDedicatedGroup(group.id, group.label))
+              const SizedBox.shrink()
+            else if (_isWings() &&
+                _isWingsDedicatedGroup(group.id, group.label))
               const SizedBox.shrink()
             else ...[
               const SizedBox(height: 20),
