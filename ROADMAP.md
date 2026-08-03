@@ -1,23 +1,22 @@
 # Doughboys Pizzeria Franchise Platform — Roadmap
 
-**Last Updated**: August 3, 2026 (~00:25 CDT)  
-**Current focus**: customer_web **Storefront shell Wave 1** (nested UX + widgetized home)  
-**Active branch**: **`main`** · next feature: `feat/customer-web-storefront-shell-v1`
+**Last Updated**: August 3, 2026 (~00:45 CDT)  
+**Current focus**: Parallel **guest shell Wave 1** + **MVP-Ops** (inventory → staff/labor) for Owner.com hard cutover  
+**Active branch**: **`main`**
 
 ## Vision
 
 Multi-tenant white-label Flutter platform: web + mobile + counter station, franchise-scoped.  
-Public storefront: order-capable **and** brandable homepage via a **composition engine** (web first; mobile later).
+Doughboys path: soft parallel → fix → hard swap when ops gates met.
 
 ---
 
 ## Completed (high level)
 
-- HQ onboarding, branding, Platform Owner, Admin ops, menu M1–M5
-- Mobile Design Tokens; Developer Dashboard
-- Customer franchise context (11); Stripe Connect (12); thin POS software (14)
-- HQ Restaurant settings v1
-- customer_web MVP + **parity core** (customize, cart, checkout delivery)
+- HQ, Admin, menu M1–M5, mobile tokens, Stripe Connect, POS software pilot  
+- customer_web order + customize parity  
+- HQ Restaurant settings  
+- Docs: storefront Wave 1/2, MVP-Ops inventory + staff/labor  
 
 ---
 
@@ -25,37 +24,33 @@ Public storefront: order-capable **and** brandable homepage via a **composition 
 
 | Epic | Status |
 |------|--------|
-| customer_web parity core | **Done on main** |
-| **Storefront shell Wave 1** (shell, nested flow, section home) | **Locked — next** |
-| **Home composition engine Wave 2** (HQ studio, widget CRUD) | **Deferred (docs locked)** |
-| Composition on **mobile** home | **Post-MVP** (shared schema, mobile renderer) |
-| Homepage **templates** | **Post-MVP** |
-| Promos / directory / loyalty | **Open** |
-| Custom domains | **Open** (optional) |
-| POS Terminal / printers · iOS port | **Waiting on hardware / Mac** |
+| Storefront shell Wave 1 | **Locked — next guest** |
+| Inventory v1 | **Locked plan — cutover gate** |
+| Staff/labor v1 (schedule, clock, hours, print) | **Locked plan — cutover gate, greenfield** |
+| Home composition engine Wave 2 | **Deferred** |
+| Promos / push / loyalty / upsells | **Growth — after soft stability** |
+| POS hardware / iOS | **Waiting on devices** |
+| Custom domains | **Open** |
 | CF Node 22 | Before ~2026-10-30 |
 
 ---
 
-## Customer website milestones
+## Release model (Doughboys)
 
-| Milestone | Status |
-|-----------|--------|
-| Order path + customize parity on main | **Reached** |
-| Persistent shell + in-panel menu→checkout | **Next (Wave 1)** |
-| Widgetized marketing home | **Next (Wave 1)** |
-| HQ add/remove/reorder + live preview | **Deferred (Wave 2)** |
-| Templates + mobile composition | **Post-MVP** |
-| Custom domains | **Open** |
+| Stage | Criteria |
+|-------|----------|
+| **Soft** | POS parallel with Owner.com; order path live; inventory/labor may be partial |
+| **Hard swap** | Inventory v1 + staff/labor v1 (incl. clock + hours + print) + stable POS |
+| **Growth** | Notifications, loyalty, upsells, home studio |
 
 ---
 
 ## Success criteria
 
-- Order + customize + pay on web and mobile; POS software baseline  
-- Storefront feels like a **restaurant site** (Wave 1), not a thin admin skin  
-- Owners later compose home from a **safe widget catalog** (Wave 2) without breaking platform quality  
+- Guests order on brand-capable web/mobile  
+- Counter runs FranchiseHQ POS as primary after burn-in  
+- Managers track **stock at zero** and **who worked** without Owner.com  
 
 ## How to use
 
-Agents: STATUS + HANDOFF + plan docs under `docs/plans/`.
+Agents: STATUS + HANDOFF + `docs/plans/mvp-ops-*.md` + storefront plans.

@@ -1,9 +1,9 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: August 3, 2026 (~00:25 CDT — storefront shell Wave 1 + composition engine locked)  
+**Last Updated**: August 3, 2026 (~00:45 CDT — MVP-Ops inventory + staff/labor cutover gates locked)  
 **Hardware**: MINISFORUM AI X1 Pro-470  
-**Branch (active work)**: **`main`** (next feature: `feat/customer-web-storefront-shell-v1` when coding starts)  
-**Main**: HQ Restaurant settings · customer_web MVP + parity core · POS/mobile/HQ pilots  
+**Branch (active work)**: **`main`**  
+**Main**: HQ · customer_web parity · POS software pilot · mobile  
 **Firebase**: `doughboyspizzeria-2b3d2`  
 **Storefront**: https://franchise-storefront.web.app  
 **Admin/HQ**: franchisehq.io
@@ -16,66 +16,54 @@
 
 | Area | State |
 |------|--------|
-| HQ / Admin / menu / mobile / POS pilot | **On main** |
-| HQ Restaurant settings v1 | **On main** |
-| customer_web order + customize parity | **On main** |
-| **Storefront shell + nested order UX (Wave 1)** | **Locked — next build** |
-| **Home composition engine / HQ studio (Wave 2)** | **Locked deferred** |
-| POS hardware · mobile iOS port | **Waiting on equipment** |
+| Order path (web/mobile/POS software) | **On main** |
+| Storefront shell Wave 1 | **Locked — next guest-facing build** |
+| Home composition engine Wave 2 | **Deferred** |
+| **Inventory v1 (MVP-Ops)** | **Locked plan — Owner.com hard cutover gate** |
+| **Staff/labor v1 (MVP-Ops)** | **Locked plan — greenfield; cutover gate** |
+| POS hardware · iOS Mac | **In transit** |
 
 ---
 
-## Decision locks (2026-08-03) — storefront presentation
+## Owner.com cutover gates (Doughboys)
 
-### Wave 1 — Public storefront shell (build next)
+**Soft release:** POS parallel with current terminal/Owner.com OK while gaps exist.  
+**Hard swap** (manager bar) requires:
 
-**Authority:** `docs/plans/customer-web-storefront-shell-v1.md`
+| Gate | Plan | Minimum |
+|------|------|---------|
+| **Inventory** | `docs/plans/mvp-ops-inventory-v1.md` | Enabled item/ingredient qty; 0 → not sellable all channels; sale decrement; void restore; HQ adjust |
+| **Staff/labor** | `docs/plans/mvp-ops-staff-labor-v1.md` | Schedule + **print**; **clock in/out**; **hours summary**; per-employee paperwork |
 
-| Lock | Choice |
-|------|--------|
-| Navigation | **Persistent shell**; menu → items → customize → cart → checkout **in-panel** (not leave-site stack of disconnected screens) |
-| First impl | Shell + nested navigator (or equivalent stack); full `go_router` nested URLs can follow |
-| Home | **Widget-shaped sections** (Hero, Story, CTA, Hours, …) even if order still code-default |
-| Config | Read existing `config/storefront` + branding + `store_ops` |
-| HQ live designer | **Out of Wave 1** |
-
-### Wave 2 — Home page composition engine (deferred)
-
-**Authority:** `docs/plans/home-page-composition-engine-v1.md`
-
-| Lock | Choice |
-|------|--------|
-| Model | Ordered **closed widget catalog** (not free HTML/CSS/JS) |
-| HQ UX | Split pane: editor left, **live preview** right; add / remove / reorder |
-| Integrity | Prop schemas, design tokens, draft → publish, responsive rules inside widgets |
-| Templates | **Post-MVP** starter packs |
-| Mobile | **Same composition principle post-MVP**; shared schema; **surface-specific renderers**; order-biased mobile templates — not 1:1 web layout |
+Order/pay/ticket already largely satisfied for soft parallel.
 
 ---
 
-## customer_web parity core (on main)
+## Decision locks (storefront)
 
-Pizza/wings customize, cart summary + edit via `cartItemKey`, checkout pickup/delivery + `deliveryAddress` + `customerPhone`.  
-**Authority:** `docs/slices/customer-website-v1.md` · `docs/plans/customer-web-parity-brand-storefront-v1.md`
-
-### Residual (after / beside Wave 1)
-
-| Priority | Work |
-|----------|------|
-| P1 | Promo codes; store_ops delivery fee; out-of-stock options |
-| P2 | Directory / change restaurant; loyalty; saved addresses |
-| P3 | Custom domains |
+| Wave | Plan | State |
+|------|------|--------|
+| 1 Shell + nested UX + section home | `docs/plans/customer-web-storefront-shell-v1.md` | Next guest track |
+| 2 Composition engine / HQ studio | `docs/plans/home-page-composition-engine-v1.md` | Deferred |
 
 ---
 
-## Next product focus
+## customer_web parity core
 
-1. **Wave 1:** `StorefrontShell` + nested in-panel flow + home visual sections.  
-2. Promos / fee residual as needed.  
-3. **Wave 2** only after Wave 1 home is widgetized and shippable.  
-4. POS hardware + iOS when devices arrive.
+On **main**: pizza/wings customize, cart edit via `cartItemKey`, checkout delivery + `customerPhone`.
 
-**Decision locks:** 11 / 12 / 14 + storefront Wave 1/2 above.
+---
+
+## Next product focus (parallel tracks)
+
+| Track | Focus |
+|-------|--------|
+| **A – Guest** | Storefront shell Wave 1 |
+| **B – Ops cutover** | Inventory v1 → Staff/labor v1 (schedule, clock, hours, print) |
+| **C – Hardware** | Terminals + iOS when devices arrive |
+| **D – Growth** | Promos, push/SMS, loyalty, upsells — after soft stability |
+
+**Decision locks:** 11 / 12 / 14 + storefront waves + MVP-Ops gates above.
 
 ---
 
