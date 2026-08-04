@@ -337,6 +337,29 @@ class OrderDetailDialog extends StatelessWidget {
       total: priced.total,
     );
 
+    if (status == 'voided') {
+      final restoredLine = OrderItem(
+        menuItemId: item.menuItemId,
+        name: item.name,
+        price: item.price,
+        quantity: qty.clamp(1, item.quantity),
+        customizations: item.customizations,
+      );
+      final restoreKey =
+          'void|${liveOrder.id}|${item.cartItemKey ?? lineIndex}|$qty|$now';
+      try {
+        await InventoryLedger.applySaleRestore(
+          db: FirebaseFirestore.instance,
+          franchiseId: franchiseId,
+          orderId: liveOrder.id,
+          items: [restoredLine],
+          restoreKey: restoreKey,
+        );
+      } catch (e) {
+        debugPrint('[POS] inventory restore skipped: $e');
+      }
+    }
+
     if (context.mounted) {
       ScaffoldMessenger.of(
         context,
@@ -562,6 +585,28 @@ class OrderDetailDialog extends StatelessWidget {
             'timestamps.cancelled': now,
           },
         }, SetOptions(merge: true));
+
+    final restoreKey =
+        'refund|$orderId|${item.cartItemKey ?? lineIndex}|$q|$now';
+    try {
+      await InventoryLedger.applySaleRestore(
+        db: FirebaseFirestore.instance,
+        franchiseId: franchiseId,
+        orderId: orderId,
+        items: [
+          OrderItem(
+            menuItemId: item.menuItemId,
+            name: item.name,
+            price: item.price,
+            quantity: q,
+            customizations: item.customizations,
+          ),
+        ],
+        restoreKey: restoreKey,
+      );
+    } catch (e) {
+      debugPrint('[POS] inventory restore skipped: $e');
+    }
 
     // ignore: avoid_print
     print(

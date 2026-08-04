@@ -12,8 +12,7 @@ class MenuItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final unavailable =
-        !item.availability || item.archived || (item.hideInMenu == true);
+    final unavailable = !item.isSellable;
     final priceLabel = '\$${item.price.toStringAsFixed(2)}';
 
     return Card(

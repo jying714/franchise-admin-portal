@@ -144,6 +144,7 @@ class _MenuBrowseScreenState extends State<MenuBrowseScreen> {
           final items =
               snapshot.data!
                   .where((m) => m.hideInMenu != true && !m.archived)
+                  .where((m) => m.isSellable)
                   .toList()
                 ..sort((a, b) {
                   final ao = a.sortOrder ?? 9999;

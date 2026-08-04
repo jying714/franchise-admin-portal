@@ -242,7 +242,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
                   );
                 }
 
-                final items = snapshot.data ?? [];
+                final items =
+                    (snapshot.data ?? []).where((m) => m.isSellable).toList();
 
                 if (items.isEmpty) {
                   return EmptyStateWidget(

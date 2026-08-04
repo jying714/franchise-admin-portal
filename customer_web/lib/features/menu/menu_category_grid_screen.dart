@@ -155,6 +155,7 @@ class _MenuCategoryGridScreenState extends State<MenuCategoryGridScreen> {
 
         final items = itemSnap.data!
             .where((m) => m.hideInMenu != true && !m.archived)
+            .where((m) => m.isSellable)
             .toList();
 
         // Counts by categoryId and by display name (fallback).

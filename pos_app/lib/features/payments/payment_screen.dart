@@ -409,6 +409,20 @@ class _PaymentScreenState extends State<PaymentScreen> {
         } catch (_) {}
       }
 
+      final orderForInv = _order;
+      if (orderForInv != null) {
+        try {
+          await InventoryLedger.applySaleDecrement(
+            db: FirebaseFirestore.instance,
+            franchiseId: widget.franchiseId,
+            orderId: widget.orderId,
+            items: orderForInv.items,
+          );
+        } catch (e) {
+          debugPrint('[POS] inventory decrement skipped: $e');
+        }
+      }
+
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (e) {
@@ -543,6 +557,20 @@ class _PaymentScreenState extends State<PaymentScreen> {
           }
         } catch (_) {
           // Payment already committed; map can be corrected on refresh.
+        }
+      }
+
+      final orderForInv = _order;
+      if (orderForInv != null) {
+        try {
+          await InventoryLedger.applySaleDecrement(
+            db: FirebaseFirestore.instance,
+            franchiseId: widget.franchiseId,
+            orderId: widget.orderId,
+            items: orderForInv.items,
+          );
+        } catch (e) {
+          debugPrint('[POS] inventory decrement skipped: $e');
         }
       }
 

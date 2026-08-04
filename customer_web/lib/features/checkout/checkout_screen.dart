@@ -365,6 +365,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       await fs.addOrder(order);
       await fs.updateCart(order.copyWith(items: []));
 
+      try {
+        await shared.InventoryLedger.applySaleDecrement(
+          db: FirebaseFirestore.instance,
+          franchiseId: franchiseId,
+          orderId: orderId,
+          items: order.items,
+        );
+      } catch (e) {
+        debugPrint('[checkout] inventory decrement skipped: $e');
+      }
+
       if (!mounted) return;
       final pickupLabel = _deliveryType == 'delivery' ? 'Delivery' : 'Pickup';
       if (widget.embed && widget.onOrderPlaced != null) {

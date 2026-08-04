@@ -219,8 +219,17 @@ class MenuItem {
 
   // --- Firestore/JSON/Map Serialization ---
 
-  /// Convenience: returns true if this item is marked unavailable
-  bool get outOfStock => !availability;
+  /// Tracked inventory at zero (or missing count) → not sellable.
+  /// Untracked items never block on inventory (INV lock I2).
+  bool get isInventoryBlocked =>
+      inventoryTracked && (stockCount == null || stockCount! <= 0);
+
+  /// Unavailable flag **or** tracked stock at 0.
+  bool get outOfStock => !availability || isInventoryBlocked;
+
+  /// Order channels should use this for “can add to cart / sell”.
+  bool get isSellable =>
+      availability && !archived && hideInMenu != true && !isInventoryBlocked;
 
   /// Convenience: returns a non-null image string
   String get imageUrl => image ?? '';

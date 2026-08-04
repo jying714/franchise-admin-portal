@@ -714,11 +714,13 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                     ),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      value: session.draft.outOfStock ?? false,
+                      value: !session.draft.availability,
                       onChanged: (v) => session.updateDraft(
                           session.draft.copyWith(availability: !v)),
                       title: const Text('Out of Stock'),
-                      subtitle: const Text('Temporarily unavailable'),
+                      subtitle: const Text(
+                        'Manual unavailable flag (separate from tracked stock at 0)',
+                      ),
                     ),
 
                     const Divider(height: 32),

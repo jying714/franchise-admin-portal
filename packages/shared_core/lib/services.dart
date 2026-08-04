@@ -13,6 +13,7 @@ export 'src/core/services/franchise_subscription_service.dart';
 export 'src/core/services/invoice_service.dart';
 export 'src/core/services/payout_service.dart';
 export 'src/core/services/promo_service.dart';
+export 'src/core/services/inventory_ledger.dart';
 
 // enrichment
 export 'src/core/services/enrichment/franchise_subscription_enricher.dart';

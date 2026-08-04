@@ -140,6 +140,7 @@ class _MenuCategoryItemsScreenState extends State<MenuCategoryItemsScreen> {
         final items =
             snapshot.data!
                 .where((m) => m.hideInMenu != true && !m.archived)
+                .where((m) => m.isSellable)
                 .where((m) {
                   if (m.categoryId.trim() == widget.categoryId) return true;
                   return m.category.trim().toLowerCase() == nameLower;

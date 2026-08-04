@@ -3109,6 +3109,7 @@ class FirestoreServiceImpl implements FirestoreService {
           })
           .where((item) => item != null)
           .cast<MenuItem>()
+          .where((m) => m.isSellable)
           .toList();
 
       return list;

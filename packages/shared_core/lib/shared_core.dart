@@ -31,6 +31,7 @@ export 'src/core/providers/platform_financials_provider.dart';
 export 'src/core/services/auth_service.dart';
 export 'src/core/services/auth_service_impl.dart';
 export 'src/core/services/firestore_service.dart';
+export 'src/core/services/inventory_ledger.dart';
 export 'src/core/services/firestore_service_impl.dart';
 export 'src/core/services/franchise_subscription_service.dart';
 export 'src/core/services/franchise_feature_service.dart';

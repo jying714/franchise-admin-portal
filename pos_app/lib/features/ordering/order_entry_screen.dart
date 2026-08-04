@@ -94,13 +94,7 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
         .map((snap) {
           final items = snap.docs
               .map((d) => MenuItem.fromFirestore(d.data(), d.id))
-              .where(
-                (m) =>
-                    m.availability &&
-                    m.available &&
-                    !m.archived &&
-                    m.hideInMenu != true,
-              )
+              .where((m) => m.isSellable)
               .toList();
           items.sort((a, b) => a.name.compareTo(b.name));
           return items;

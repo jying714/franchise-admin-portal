@@ -527,6 +527,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     try {
       await firestoreService.addOrder(order);
       await firestoreService.updateCart(order.copyWith(items: []));
+
+      try {
+        await shared.InventoryLedger.applySaleDecrement(
+          db: FirebaseFirestore.instance,
+          franchiseId: franchiseId,
+          orderId: orderId,
+          items: order.items,
+        );
+      } catch (e) {
+        debugPrint('[checkout] inventory decrement skipped: $e');
+      }
+
       if (!context.mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
