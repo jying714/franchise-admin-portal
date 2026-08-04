@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// Structural Order Details (Crust / Cook / Cut, or Cook-only for sub).
-/// Presentational — parent owns [_structuralSelections] and group data.
+/// Structural Order Details — collapsed ExpansionTile with primary header
+/// and left-aligned radio options (mobile parity).
 class MenuItemOrderDetailsSection extends StatelessWidget {
   const MenuItemOrderDetailsSection({
     super.key,
@@ -11,71 +11,136 @@ class MenuItemOrderDetailsSection extends StatelessWidget {
     required this.onSelected,
   });
 
-  /// Each map: id, label, ingredientIds (List), optionLabels (Map).
   final List<Map<String, dynamic>> groups;
-
-  /// group label → selected option id
   final Map<String, String?> selections;
-
   final bool isSub;
-
-  /// (groupLabel, optionId)
   final void Function(String groupLabel, String optionId) onSelected;
+
+  String get _summary {
+    final parts = <String>[];
+    for (final g in groups) {
+      final label = (g['label'] ?? '').toString();
+      if (label.isEmpty) continue;
+      final selected = selections[label];
+      if (selected == null || selected.isEmpty) continue;
+      final labels =
+          (g['optionLabels'] as Map?)?.map(
+            (k, v) => MapEntry(k.toString(), v.toString()),
+          ) ??
+          const <String, String>{};
+      final name = labels[selected] ?? selected;
+      parts.add('$label: $name');
+    }
+    if (parts.isEmpty) {
+      return isSub
+          ? 'Choose how your sub is cooked — Regular or Crispy.'
+          : 'Customize crust, cook, and cut.';
+    }
+    return parts.join(' | ');
+  }
 
   @override
   Widget build(BuildContext context) {
     if (groups.isEmpty) return const SizedBox.shrink();
 
     final scheme = Theme.of(context).colorScheme;
+    final subtitle = isSub
+        ? 'Choose how your sub is cooked — Regular or Crispy.'
+        : 'Tap to customize crust, cook, or cut.';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 24),
-        Text('Order Details', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 4),
-        Text(
-          isSub ? 'Choose how your sub is cooked.' : 'Crust, cook, and cut.',
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: scheme.primary,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
+          child: Text(
+            'Order Details',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: scheme.onPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
-        const SizedBox(height: 12),
-        for (final g in groups) ...[
-          Text(
-            (g['label'] ?? '').toString(),
-            style: Theme.of(context).textTheme.titleSmall,
+        ExpansionTile(
+          initiallyExpanded: false,
+          tilePadding: EdgeInsets.zero,
+          title: Text(
+            _summary,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 6),
-          Builder(
-            builder: (context) {
-              final label = (g['label'] ?? '').toString();
-              final ids = (g['ingredientIds'] as List? ?? [])
-                  .map((e) => e.toString())
-                  .where((id) => id.isNotEmpty)
-                  .toList();
-              final labels =
-                  (g['optionLabels'] as Map?)?.map(
-                    (k, v) => MapEntry(k.toString(), v.toString()),
-                  ) ??
-                  const <String, String>{};
-              final selected = selections[label];
-              return Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final id in ids)
-                    ChoiceChip(
-                      label: Text(labels[id] ?? id),
-                      selected: selected == id,
-                      onSelected: (_) => onSelected(label, id),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(
+              subtitle,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+          children: [
+            for (final g in groups) ...[
+              Padding(
+                padding: const EdgeInsets.only(top: 8, bottom: 4),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    (g['label'] ?? '').toString(),
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 16),
-        ],
+                  ),
+                ),
+              ),
+              Builder(
+                builder: (context) {
+                  final label = (g['label'] ?? '').toString();
+                  final ids = (g['ingredientIds'] as List? ?? [])
+                      .map((e) => e.toString())
+                      .where((id) => id.isNotEmpty)
+                      .toList();
+                  final labels =
+                      (g['optionLabels'] as Map?)?.map(
+                        (k, v) => MapEntry(k.toString(), v.toString()),
+                      ) ??
+                      const <String, String>{};
+                  final selected = selections[label];
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final id in ids)
+                        RadioListTile<String>(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          value: id,
+                          groupValue: selected,
+                          onChanged: (v) {
+                            if (v != null) onSelected(label, v);
+                          },
+                          title: Text(
+                            labels[id] ?? id,
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ],
+        ),
       ],
     );
   }

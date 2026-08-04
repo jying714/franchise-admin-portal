@@ -14,10 +14,12 @@ class MenuCategoryItemsScreen extends StatefulWidget {
     super.key,
     required this.categoryId,
     required this.categoryName,
+    this.embed = false,
   });
 
   final String categoryId;
   final String categoryName;
+  final bool embed;
 
   @override
   State<MenuCategoryItemsScreen> createState() =>
@@ -124,59 +126,59 @@ class _MenuCategoryItemsScreenState extends State<MenuCategoryItemsScreen> {
       });
     }
 
-    return BrandingShell(
-      child: StreamBuilder<List<shared.MenuItem>>(
-        stream: fs.getMenuItems(franchiseId),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(child: Text('${snapshot.error}'));
-          }
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
+    final content = StreamBuilder<List<shared.MenuItem>>(
+      stream: fs.getMenuItems(franchiseId),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(child: Text('${snapshot.error}'));
+        }
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-          final nameLower = widget.categoryName.trim().toLowerCase();
-          final items =
-              snapshot.data!
-                  .where((m) => m.hideInMenu != true && !m.archived)
-                  .where((m) {
-                    if (m.categoryId.trim() == widget.categoryId) return true;
-                    return m.category.trim().toLowerCase() == nameLower;
-                  })
-                  .toList()
-                ..sort((a, b) {
-                  final ao = a.sortOrder ?? 9999;
-                  final bo = b.sortOrder ?? 9999;
-                  if (ao != bo) return ao.compareTo(bo);
-                  return a.name.compareTo(b.name);
-                });
+        final nameLower = widget.categoryName.trim().toLowerCase();
+        final items =
+            snapshot.data!
+                .where((m) => m.hideInMenu != true && !m.archived)
+                .where((m) {
+                  if (m.categoryId.trim() == widget.categoryId) return true;
+                  return m.category.trim().toLowerCase() == nameLower;
+                })
+                .toList()
+              ..sort((a, b) {
+                final ao = a.sortOrder ?? 9999;
+                final bo = b.sortOrder ?? 9999;
+                if (ao != bo) return ao.compareTo(bo);
+                return a.name.compareTo(b.name);
+              });
 
-          if (items.isEmpty) {
-            return Center(child: Text('No items in ${widget.categoryName}'));
-          }
+        if (items.isEmpty) {
+          return Center(child: Text('No items in ${widget.categoryName}'));
+        }
 
-          return CustomScrollView(
-            slivers: [
-              if (_opsLoaded && !_storeOpenNow)
-                SliverToBoxAdapter(
-                  child: Material(
-                    color: Theme.of(context).colorScheme.errorContainer,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      child: Text(
-                        _dayClosed
-                            ? 'Closed today. You can browse the menu; ordering resumes next open day.'
-                            : 'Currently closed. Hours today: ${_open.format(context)}–${_close.format(context)}. You can browse; checkout is blocked until open.',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onErrorContainer,
-                        ),
+        return CustomScrollView(
+          slivers: [
+            if (_opsLoaded && !_storeOpenNow)
+              SliverToBoxAdapter(
+                child: Material(
+                  color: Theme.of(context).colorScheme.errorContainer,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    child: Text(
+                      _dayClosed
+                          ? 'Closed today. You can browse the menu; ordering resumes next open day.'
+                          : 'Currently closed. Hours today: ${_open.format(context)}–${_close.format(context)}. You can browse; checkout is blocked until open.',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onErrorContainer,
                       ),
                     ),
                   ),
                 ),
+              ),
+            if (!widget.embed)
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -186,37 +188,60 @@ class _MenuCategoryItemsScreenState extends State<MenuCategoryItemsScreen> {
                   ),
                 ),
               ),
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                sliver: SliverGrid(
-                  gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: MediaQuery.sizeOf(context).width < 600
-                        ? 200.0
-                        : 240.0,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 0.75,
-                  ),
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final item = items[index];
-                    return MenuItemCard(
-                      item: item,
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => MenuItemDetailScreen(item: item),
-                          ),
-                        );
-                      },
-                    );
-                  }, childCount: items.length),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              sliver: SliverGrid(
+                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: MediaQuery.sizeOf(context).width < 600
+                      ? 200.0
+                      : 240.0,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 0.75,
                 ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final item = items[index];
+                  return MenuItemCard(
+                    item: item,
+                    onTap: () {
+                      showDialog<void>(
+                        context: context,
+                        barrierDismissible: true,
+                        builder: (dialogContext) {
+                          return Dialog(
+                            insetPadding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 24,
+                            ),
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                maxWidth: 640,
+                                maxHeight: 720,
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Material(
+                                  color: Theme.of(
+                                    dialogContext,
+                                  ).colorScheme.surface,
+                                  child: MenuItemDetailScreen(item: item),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  );
+                }, childCount: items.length),
               ),
-              const SliverToBoxAdapter(child: SizedBox(height: 32)),
-            ],
-          );
-        },
-      ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 32)),
+          ],
+        );
+      },
     );
+
+    return widget.embed ? content : BrandingShell(child: content);
   }
 }

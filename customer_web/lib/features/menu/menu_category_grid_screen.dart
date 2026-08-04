@@ -23,8 +23,14 @@ class _Cat {
 }
 
 /// Parity P0a: category-first menu entry.
+/// When [onCategorySelected] is provided the screen is treated as an embedded
+/// section (no BrandingShell, no self-navigation).
 class MenuCategoryGridScreen extends StatefulWidget {
-  const MenuCategoryGridScreen({super.key});
+  const MenuCategoryGridScreen({super.key, this.onCategorySelected});
+
+  /// If non-null, tapping a category calls this instead of pushing a route.
+  final void Function(String categoryId, String categoryName)?
+  onCategorySelected;
 
   @override
   State<MenuCategoryGridScreen> createState() => _MenuCategoryGridScreenState();
@@ -130,114 +136,111 @@ class _MenuCategoryGridScreenState extends State<MenuCategoryGridScreen> {
       });
     }
 
+    final embedded = widget.onCategorySelected != null;
+
     if (!fp.hasValidFranchise) {
-      return const BrandingShell(
-        child: Center(child: Text('No restaurant selected')),
-      );
+      final body = const Center(child: Text('No restaurant selected'));
+      return embedded ? body : BrandingShell(child: body);
     }
 
-    return BrandingShell(
-      child: StreamBuilder<List<shared.MenuItem>>(
-        stream: fs.getMenuItems(franchiseId),
-        builder: (context, itemSnap) {
-          if (itemSnap.hasError) {
-            return Center(child: Text('Menu error: ${itemSnap.error}'));
-          }
-          if (!itemSnap.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
+    final content = StreamBuilder<List<shared.MenuItem>>(
+      stream: fs.getMenuItems(franchiseId),
+      builder: (context, itemSnap) {
+        if (itemSnap.hasError) {
+          return Center(child: Text('Menu error: ${itemSnap.error}'));
+        }
+        if (!itemSnap.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-          final items = itemSnap.data!
-              .where((m) => m.hideInMenu != true && !m.archived)
-              .toList();
+        final items = itemSnap.data!
+            .where((m) => m.hideInMenu != true && !m.archived)
+            .toList();
 
-          // Counts by categoryId and by display name (fallback).
-          final byId = <String, int>{};
-          final byName = <String, int>{};
-          for (final m in items) {
-            final cid = m.categoryId.trim();
-            if (cid.isNotEmpty) {
-              byId[cid] = (byId[cid] ?? 0) + 1;
+        // Counts by categoryId and by display name (fallback).
+        final byId = <String, int>{};
+        final byName = <String, int>{};
+        for (final m in items) {
+          final cid = m.categoryId.trim();
+          if (cid.isNotEmpty) {
+            byId[cid] = (byId[cid] ?? 0) + 1;
+          }
+          final n = m.category.trim().isEmpty ? 'Menu' : m.category.trim();
+          byName[n.toLowerCase()] = (byName[n.toLowerCase()] ?? 0) + 1;
+        }
+
+        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: FirebaseFirestore.instance
+              .collection('franchises')
+              .doc(franchiseId)
+              .collection('categories')
+              .snapshots(),
+          builder: (context, catSnap) {
+            if (catSnap.hasError) {
+              return Center(child: Text('Categories error: ${catSnap.error}'));
             }
-            final n = m.category.trim().isEmpty ? 'Menu' : m.category.trim();
-            byName[n.toLowerCase()] = (byName[n.toLowerCase()] ?? 0) + 1;
-          }
+            if (!catSnap.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-            stream: FirebaseFirestore.instance
-                .collection('franchises')
-                .doc(franchiseId)
-                .collection('categories')
-                .snapshots(),
-            builder: (context, catSnap) {
-              if (catSnap.hasError) {
-                return Center(
-                  child: Text('Categories error: ${catSnap.error}'),
-                );
+            final cats = <_Cat>[];
+            for (final doc in catSnap.data!.docs) {
+              final d = doc.data();
+              final active = d['active'] != false && d['archived'] != true;
+              if (!active) continue;
+              final name = (d['name'] ?? d['title'] ?? doc.id).toString();
+              final imageUrl = (d['imageUrl'] ?? d['image'] ?? d['photoUrl'])
+                  ?.toString();
+              final sort = (d['sortOrder'] as num?)?.toInt() ?? 9999;
+              final count = (byId[doc.id] ?? 0) > 0
+                  ? byId[doc.id]!
+                  : (byName[name.toLowerCase()] ?? 0);
+              if (count <= 0) continue;
+              cats.add(
+                _Cat(
+                  id: doc.id,
+                  name: name,
+                  imageUrl: imageUrl,
+                  sortOrder: sort,
+                ),
+              );
+            }
+            cats.sort((a, b) {
+              if (a.sortOrder != b.sortOrder) {
+                return a.sortOrder.compareTo(b.sortOrder);
               }
-              if (!catSnap.hasData) {
-                return const Center(child: CircularProgressIndicator());
-              }
+              return a.name.compareTo(b.name);
+            });
 
-              final cats = <_Cat>[];
-              for (final doc in catSnap.data!.docs) {
-                final d = doc.data();
-                final active = d['active'] != false && d['archived'] != true;
-                if (!active) continue;
-                final name = (d['name'] ?? d['title'] ?? doc.id).toString();
-                final imageUrl = (d['imageUrl'] ?? d['image'] ?? d['photoUrl'])
-                    ?.toString();
-                final sort = (d['sortOrder'] as num?)?.toInt() ?? 9999;
-                final count = (byId[doc.id] ?? 0) > 0
-                    ? byId[doc.id]!
-                    : (byName[name.toLowerCase()] ?? 0);
-                if (count <= 0) continue;
-                cats.add(
-                  _Cat(
-                    id: doc.id,
-                    name: name,
-                    imageUrl: imageUrl,
-                    sortOrder: sort,
-                  ),
-                );
-              }
-              cats.sort((a, b) {
-                if (a.sortOrder != b.sortOrder) {
-                  return a.sortOrder.compareTo(b.sortOrder);
-                }
-                return a.name.compareTo(b.name);
-              });
+            if (cats.isEmpty) {
+              return const Center(child: Text('No menu categories available'));
+            }
 
-              if (cats.isEmpty) {
-                return const Center(
-                  child: Text('No menu categories available'),
-                );
-              }
-
-              return CustomScrollView(
-                slivers: [
-                  if (_opsLoaded && !_storeOpenNow)
-                    SliverToBoxAdapter(
-                      child: Material(
-                        color: Theme.of(context).colorScheme.errorContainer,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          child: Text(
-                            _dayClosed
-                                ? 'Closed today. You can browse the menu; ordering resumes next open day.'
-                                : 'Currently closed. Hours today: ${_open.format(context)}–${_close.format(context)}. You can browse; checkout is blocked until open.',
-                            style: TextStyle(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onErrorContainer,
-                            ),
+            return CustomScrollView(
+              slivers: [
+                if (_opsLoaded && !_storeOpenNow)
+                  SliverToBoxAdapter(
+                    child: Material(
+                      color: Theme.of(context).colorScheme.errorContainer,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        child: Text(
+                          _dayClosed
+                              ? 'Closed today. You can browse the menu; ordering resumes next open day.'
+                              : 'Currently closed. Hours today: ${_open.format(context)}–${_close.format(context)}. You can browse; checkout is blocked until open.',
+                          style: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onErrorContainer,
                           ),
                         ),
                       ),
                     ),
+                  ),
+                if (widget.onCategorySelected == null)
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
@@ -247,42 +250,48 @@ class _MenuCategoryGridScreenState extends State<MenuCategoryGridScreen> {
                       ),
                     ),
                   ),
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    sliver: SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithMaxCrossAxisExtent(
-                            maxCrossAxisExtent: 220,
-                            mainAxisSpacing: 12,
-                            crossAxisSpacing: 12,
-                            childAspectRatio: 0.9,
-                          ),
-                      delegate: SliverChildBuilderDelegate((context, index) {
-                        final cat = cats[index];
-                        return _CategoryCard(
-                          category: cat,
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) => MenuCategoryItemsScreen(
-                                  categoryId: cat.id,
-                                  categoryName: cat.name,
-                                ),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  sliver: SliverGrid(
+                    gridDelegate:
+                        const SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 220,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 0.9,
+                        ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final cat = cats[index];
+                      return _CategoryCard(
+                        category: cat,
+                        onTap: () {
+                          final cb = widget.onCategorySelected;
+                          if (cb != null) {
+                            cb(cat.id, cat.name);
+                            return;
+                          }
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => MenuCategoryItemsScreen(
+                                categoryId: cat.id,
+                                categoryName: cat.name,
                               ),
-                            );
-                          },
-                        );
-                      }, childCount: cats.length),
-                    ),
+                            ),
+                          );
+                        },
+                      );
+                    }, childCount: cats.length),
                   ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 32)),
-                ],
-              );
-            },
-          );
-        },
-      ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 32)),
+              ],
+            );
+          },
+        );
+      },
     );
+
+    return embedded ? content : BrandingShell(child: content);
   }
 }
 
@@ -309,7 +318,7 @@ class _CategoryCard extends StatelessWidget {
                   ? CachedNetworkImage(
                       imageUrl: url,
                       fit: BoxFit.cover,
-                      errorWidget: (_, __, ___) => ColoredBox(
+                      errorWidget: (_, _, _) => ColoredBox(
                         color: scheme.surfaceContainerHighest,
                         child: Icon(Icons.restaurant, color: scheme.primary),
                       ),

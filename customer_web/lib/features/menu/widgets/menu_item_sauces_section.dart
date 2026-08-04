@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'menu_portion_chips.dart';
+import 'portion_selector.dart';
+import 'portion_pill_toggle.dart';
 
-/// Sauces section: selected InputChips + available ActionChips + L/W/R.
-/// Presentational — parent owns state and callbacks (including 2-sauce split rules).
+/// Sauces section — collapsed ExpansionTile (mobile parity).
 class MenuItemSaucesSection extends StatelessWidget {
   const MenuItemSaucesSection({
     super.key,
@@ -24,20 +24,32 @@ class MenuItemSaucesSection extends StatelessWidget {
   final List<String> selectedIds;
   final List<String> availableIds;
   final int maxSauces;
-
-  /// (id, typeId) → display name
   final String Function(String id, String typeId) labelFor;
-
   final bool Function(String id) isDouble;
   final String Function(String id) portion;
   final bool Function(String id) isOriginallyIncluded;
   final double toppingPrice;
   final bool showPortionControls;
-
   final void Function(String id, bool value) onToggleDouble;
   final void Function(String id, String portion) onSetPortion;
   final void Function(String id) onRemove;
   final void Function(String id) onAdd;
+
+  String get _summary {
+    if (selectedIds.isEmpty) return 'None';
+    return selectedIds
+        .map((id) {
+          final bits = <String>[labelFor(id, 'sauces')];
+          if (isDouble(id)) bits.add('Double');
+          final p = portion(id);
+          if (p == 'left') bits.add('Left');
+          if (p == 'right') bits.add('Right');
+          return bits.length == 1
+              ? bits.first
+              : '${bits.first} (${bits.skip(1).join(', ')})';
+        })
+        .join(', ');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,72 +63,136 @@ class MenuItemSaucesSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 24),
-        Text('Sauces', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 4),
-        Text(
-          'Up to $maxSauces. Included sauces stay selected here (not under Current Toppings).',
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: scheme.primary,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
+          child: Text(
+            'Sauces',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: scheme.onPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
-        if (selectedIds.isNotEmpty) ...[
-          const SizedBox(height: 10),
-          Text('Selected', style: Theme.of(context).textTheme.titleSmall),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final id in selectedIds) ...[
-                InputChip(
-                  label: Text(() {
-                    final bits = <String>[labelFor(id, 'sauces')];
-                    if (isDouble(id)) bits.add('Double');
-                    final p = portion(id);
-                    if (p == 'left') bits.add('Left');
-                    if (p == 'right') bits.add('Right');
-                    return bits.length == 1
-                        ? bits.first
-                        : '${bits.first} (${bits.skip(1).join(', ')})';
-                  }()),
-                  onPressed: () => onToggleDouble(id, !isDouble(id)),
-                  onDeleted: () => onRemove(id),
-                  deleteIconColor: scheme.error,
-                ),
-                if (showPortionControls)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: MenuPortionChips(
-                      portion: portion(id),
-                      onSetPortion: (value) => onSetPortion(id, value),
-                      compact: true,
+        ExpansionTile(
+          initiallyExpanded: false,
+          tilePadding: EdgeInsets.zero,
+          title: Text(
+            _summary,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(
+              'Choose sauces; use portion for left / right / whole.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+          children: [
+            if (selectedIds.isNotEmpty) ...[
+              ...selectedIds.map((id) {
+                final doubled = isDouble(id);
+                final p = portion(id);
+                final name = labelFor(id, 'sauces');
+                return Card(
+                  margin: const EdgeInsets.symmetric(vertical: 2),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8,
+                      horizontal: 12,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                name,
+                                style: Theme.of(context).textTheme.bodyLarge,
+                              ),
+                            ),
+                            TextButton(
+                              style: TextButton.styleFrom(
+                                foregroundColor: scheme.error,
+                              ),
+                              onPressed: () => onRemove(id),
+                              child: const Text('Remove'),
+                            ),
+                          ],
+                        ),
+                        if (showPortionControls) ...[
+                          const SizedBox(height: 8),
+                          PortionSelector(
+                            portion: p,
+                            onChanged: (value) => onSetPortion(id, value),
+                          ),
+                          const SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: PortionPillToggle(
+                              isDouble: doubled,
+                              onTap: () => onToggleDouble(id, !doubled),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-              ],
+                );
+              }),
             ],
-          ),
-        ],
-        if (availableIds.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          Text('Available', style: Theme.of(context).textTheme.titleSmall),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final id in availableIds)
-                ActionChip(
-                  label: Text(() {
-                    final name = labelFor(id, 'sauces');
-                    final free = isOriginallyIncluded(id);
-                    if (free || toppingPrice <= 0) return name;
-                    return '$name (+\$${toppingPrice.toStringAsFixed(2)})';
-                  }()),
-                  onPressed: () => onAdd(id),
-                ),
+            if (availableIds.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text('Available', style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: 6),
+              ...availableIds.map((id) {
+                final name = labelFor(id, 'sauces');
+                final free = isOriginallyIncluded(id);
+                final label = (free || toppingPrice <= 0)
+                    ? name
+                    : '$name (+\$${toppingPrice.toStringAsFixed(2)})';
+                return Card(
+                  margin: const EdgeInsets.symmetric(vertical: 2),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8,
+                      horizontal: 12,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            label,
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => onAdd(id),
+                          child: Text(
+                            'Click to Add',
+                            style: TextStyle(color: scheme.primary),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
             ],
-          ),
-        ],
+          ],
+        ),
       ],
     );
   }

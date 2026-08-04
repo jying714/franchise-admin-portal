@@ -9,7 +9,6 @@ import 'package:provider/provider.dart';
 import '../cart/cart_screen.dart';
 
 // widgets
-import '../../widgets/branding_shell.dart';
 import 'widgets/menu_item_size_section.dart';
 import 'widgets/menu_item_order_details_section.dart';
 import 'widgets/menu_item_current_toppings_section.dart';
@@ -1556,220 +1555,234 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
       });
     }
 
-    return BrandingShell(
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.of(context).maybePop(),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Align(
+          alignment: Alignment.centerRight,
+          child: IconButton(
+            icon: const Icon(Icons.close),
+            tooltip: 'Close',
+            onPressed: () => Navigator.of(context).maybePop(),
+          ),
         ),
-      ],
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-        children: [
-          if (item.imageUrl.isNotEmpty)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: AspectRatio(
-                aspectRatio: 16 / 9,
-                child: CachedNetworkImage(
-                  imageUrl: item.imageUrl,
-                  fit: BoxFit.cover,
-                  errorWidget: (_, __, ___) => ColoredBox(
-                    color: scheme.surfaceContainerHighest,
-                    child: const Icon(Icons.restaurant, size: 48),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            children: [
+              if (item.imageUrl.isNotEmpty)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: CachedNetworkImage(
+                      imageUrl: item.imageUrl,
+                      fit: BoxFit.cover,
+                      errorWidget: (_, _, _) => ColoredBox(
+                        color: scheme.surfaceContainerHighest,
+                        child: const Icon(Icons.restaurant, size: 48),
+                      ),
+                    ),
                   ),
                 ),
+              const SizedBox(height: 16),
+              Text(item.name, style: Theme.of(context).textTheme.headlineSmall),
+              if (item.description.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(item.description),
+              ],
+              if (item.allergens.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Allergens: ${item.allergens.join(', ')}',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: scheme.error),
+                ),
+              ],
+              MenuItemSizeSection(
+                sizeLabels: sizes,
+                selectedSize: _selectedSize,
+                onSizeSelected: (label) =>
+                    setState(() => _selectedSize = label),
               ),
-            ),
-          const SizedBox(height: 16),
-          Text(item.name, style: Theme.of(context).textTheme.headlineSmall),
-          if (item.description.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(item.description),
-          ],
-          if (item.allergens.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              'Allergens: ${item.allergens.join(', ')}',
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: scheme.error),
-            ),
-          ],
-
-          MenuItemSizeSection(
-            sizeLabels: sizes,
-            selectedSize: _selectedSize,
-            onSizeSelected: (label) => setState(() => _selectedSize = label),
-          ),
-
-          if (_showsCurrentIngredients())
-            MenuItemCurrentToppingsSection(
-              ingredientIds: _currentIngredients,
-              displayName: _ingredientDisplayName,
-              isDouble: _getDouble,
-              portion: _getPortion,
-              showPortionControls: _showsPortionControls(),
-              onToggleDouble: _setDouble,
-              onSetPortion: _setPortion,
-              onRemove: (id) {
-                setState(() {
-                  _currentIngredients.remove(id);
-                  _isDouble.remove(id);
-                  _portion.remove(id);
-                });
-              },
-            ),
-
-          if (_isPizza() && !_isWings())
-            MenuItemAdditionalToppingsSection(
-              meatIds: _availableIdsByType('meats'),
-              veggieIds: _availableIdsByType('veggies'),
-              labelFor: _optionalLabel,
-              toppingPrice: _toppingUnitPrice(),
-              onAdd: (id) {
-                setState(() {
-                  _currentIngredients.add(id);
-                });
-              },
-            ),
-
-          if (_isPizza())
-            MenuItemCheesesSection(
-              selectedIds: _selectedCheeses.toList(),
-              availableIds: _availableCheeseIds(),
-              maxCheeses: _maxCheeses,
-              labelFor: _optionalLabel,
-              isDouble: _getDouble,
-              portion: _getPortion,
-              isOriginallyIncluded: _isOriginallyIncluded,
-              toppingPrice: _toppingUnitPrice(),
-              showPortionControls: _showsPortionControls(),
-              onToggleDouble: _setDouble,
-              onSetPortion: _setPortion,
-              onRemove: _removeCheese,
-              onAdd: _addCheese,
-            ),
-
-          if (_isPizza())
-            MenuItemSaucesSection(
-              selectedIds: _selectedSauces.toList(),
-              availableIds: _availableSauceIds(),
-              maxSauces: _maxSauces,
-              labelFor: _optionalLabel,
-              isDouble: _getDouble,
-              portion: _getPortion,
-              isOriginallyIncluded: _isOriginallyIncluded,
-              toppingPrice: _toppingUnitPrice(),
-              showPortionControls: _showsPortionControls(),
-              onToggleDouble: _setDouble,
-              onSetPortion: _setPortion,
-              onRemove: _removeSauce,
-              onAdd: _addSauce,
-            ),
-
-          if (!_isWings())
-            MenuItemOrderDetailsSection(
-              groups: _structuralGroupsForUi(),
-              selections: _structuralSelections,
-              isSub: _isSub(),
-              onSelected: (groupLabel, optionId) {
-                setState(() {
-                  _structuralSelections[groupLabel] = optionId;
-                });
-              },
-            ),
-
-          if (_isWings())
-            MenuItemWingsSauceSection(
-              optionIds: _wingSauceOptionIds(),
-              leftId: _wingPortionLeft,
-              rightId: _wingPortionRight,
-              labelFor: (id) => _wingOptionLabel('wing_sauce', id),
-              onLeftSelected: _setWingPortionLeft,
-              onRightSelected: _setWingPortionRight,
-            ),
-          if (_isWings())
-            MenuItemWingsDipsSection(
-              optionIds: _wingDipOptionIds(),
-              counts: Map<String, int>.from(_wingDipCounts),
-              freeCups: _freeDipCupsForSize(),
-              upcharge: _sideDipUpchargeForSize(),
-              maxCups: _maxWingDipCups,
-              labelFor: (id) => _wingOptionLabel('wing_dips', id),
-              onSetCount: _setWingDipCount,
-            ),
-
-          // Non-structural modifier groups only.
-          // Pizza: skip groups handled by Current / Additional / Cheeses / Sauces sections.
-          for (final group in item.effectiveModifierGroups) ...[
-            if (_isStructuralIdOrLabel(group.id) ||
-                _isStructuralIdOrLabel(group.label))
-              const SizedBox.shrink()
-            else if (_isPizza() &&
-                _isPizzaDedicatedGroup(group.id, group.label))
-              const SizedBox.shrink()
-            else if (_isWings() &&
-                _isWingsDedicatedGroup(group.id, group.label))
-              const SizedBox.shrink()
-            else ...[
-              const SizedBox(height: 20),
-              Text(group.label, style: Theme.of(context).textTheme.titleMedium),
-              Text(
-                [
-                  if (group.min > 0) 'min ${group.min}',
-                  'max ${group.max}',
-                  if (group.maxFree != null) 'max free ${group.maxFree}',
-                ].join(' · '),
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final opt in group.options)
-                    FilterChip(
-                      label: Text(() {
-                        final delta = _optionDelta(opt);
-                        if (delta != 0) {
-                          return '${opt.label} (+\$${delta.toStringAsFixed(2)})';
-                        }
-                        return opt.label;
-                      }()),
-                      selected:
-                          _selectedByGroup[group.id]?.contains(opt.id) ?? false,
-                      onSelected: (_) => _toggleOption(group, opt.id),
-                    ),
+              if (_showsCurrentIngredients())
+                MenuItemCurrentToppingsSection(
+                  ingredientIds: _currentIngredients,
+                  displayName: _ingredientDisplayName,
+                  isDouble: _getDouble,
+                  portion: _getPortion,
+                  showPortionControls: _showsPortionControls(),
+                  onToggleDouble: _setDouble,
+                  onSetPortion: _setPortion,
+                  onRemove: (id) {
+                    setState(() {
+                      _currentIngredients.remove(id);
+                      _isDouble.remove(id);
+                      _portion.remove(id);
+                    });
+                  },
+                ),
+              if (_isPizza() && !_isWings())
+                MenuItemAdditionalToppingsSection(
+                  meatIds: _availableIdsByType('meats'),
+                  veggieIds: _availableIdsByType('veggies'),
+                  labelFor: _optionalLabel,
+                  toppingPrice: _toppingUnitPrice(),
+                  onAdd: (id) {
+                    setState(() {
+                      _currentIngredients.add(id);
+                    });
+                  },
+                ),
+              if (_isPizza())
+                MenuItemCheesesSection(
+                  selectedIds: _selectedCheeses.toList(),
+                  availableIds: _availableCheeseIds(),
+                  maxCheeses: _maxCheeses,
+                  labelFor: _optionalLabel,
+                  isDouble: _getDouble,
+                  portion: _getPortion,
+                  isOriginallyIncluded: _isOriginallyIncluded,
+                  toppingPrice: _toppingUnitPrice(),
+                  showPortionControls: _showsPortionControls(),
+                  onToggleDouble: _setDouble,
+                  onSetPortion: _setPortion,
+                  onRemove: _removeCheese,
+                  onAdd: _addCheese,
+                ),
+              if (_isPizza())
+                MenuItemSaucesSection(
+                  selectedIds: _selectedSauces.toList(),
+                  availableIds: _availableSauceIds(),
+                  maxSauces: _maxSauces,
+                  labelFor: _optionalLabel,
+                  isDouble: _getDouble,
+                  portion: _getPortion,
+                  isOriginallyIncluded: _isOriginallyIncluded,
+                  toppingPrice: _toppingUnitPrice(),
+                  showPortionControls: _showsPortionControls(),
+                  onToggleDouble: _setDouble,
+                  onSetPortion: _setPortion,
+                  onRemove: _removeSauce,
+                  onAdd: _addSauce,
+                ),
+              if (!_isWings())
+                MenuItemOrderDetailsSection(
+                  groups: _structuralGroupsForUi(),
+                  selections: _structuralSelections,
+                  isSub: _isSub(),
+                  onSelected: (groupLabel, optionId) {
+                    setState(() {
+                      _structuralSelections[groupLabel] = optionId;
+                    });
+                  },
+                ),
+              if (_isWings())
+                MenuItemWingsSauceSection(
+                  optionIds: _wingSauceOptionIds(),
+                  leftId: _wingPortionLeft,
+                  rightId: _wingPortionRight,
+                  labelFor: (id) => _wingOptionLabel('wing_sauce', id),
+                  onLeftSelected: _setWingPortionLeft,
+                  onRightSelected: _setWingPortionRight,
+                ),
+              if (_isWings())
+                MenuItemWingsDipsSection(
+                  optionIds: _wingDipOptionIds(),
+                  counts: Map<String, int>.from(_wingDipCounts),
+                  freeCups: _freeDipCupsForSize(),
+                  upcharge: _sideDipUpchargeForSize(),
+                  maxCups: _maxWingDipCups,
+                  labelFor: (id) => _wingOptionLabel('wing_dips', id),
+                  onSetCount: _setWingDipCount,
+                ),
+              for (final group in item.effectiveModifierGroups) ...[
+                if (_isStructuralIdOrLabel(group.id) ||
+                    _isStructuralIdOrLabel(group.label))
+                  const SizedBox.shrink()
+                else if (_isPizza() &&
+                    _isPizzaDedicatedGroup(group.id, group.label))
+                  const SizedBox.shrink()
+                else if (_isWings() &&
+                    _isWingsDedicatedGroup(group.id, group.label))
+                  const SizedBox.shrink()
+                else ...[
+                  const SizedBox(height: 20),
+                  Text(
+                    group.label,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  Text(
+                    [
+                      if (group.min > 0) 'min ${group.min}',
+                      'max ${group.max}',
+                      if (group.maxFree != null) 'max free ${group.maxFree}',
+                    ].join(' · '),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final opt in group.options)
+                        FilterChip(
+                          label: Text(() {
+                            final delta = _optionDelta(opt);
+                            if (delta != 0) {
+                              return '${opt.label} (+\$${delta.toStringAsFixed(2)})';
+                            }
+                            return opt.label;
+                          }()),
+                          selected:
+                              _selectedByGroup[group.id]?.contains(opt.id) ??
+                              false,
+                          onSelected: (_) => _toggleOption(group, opt.id),
+                        ),
+                    ],
+                  ),
                 ],
-              ),
+              ],
+              MenuItemNotesSection(controller: _notesController),
+              const SizedBox(height: 8),
             ],
-          ],
-          MenuItemNotesSection(controller: _notesController),
-          MenuItemQtyTotalSection(
-            qty: _qty,
-            baseSizePrice: _baseSizePrice,
-            unitPrice: _unitPrice,
-            selectedSize: _selectedSize,
-            isSignedIn: FirebaseAuth.instance.currentUser != null,
-            onQtyChanged: (v) => setState(() => _qty = v),
-            onPrimaryPressed: () async {
-              final user = FirebaseAuth.instance.currentUser;
-              if (user != null) {
-                await _addToCart();
-                return;
-              }
-              final ok = await Navigator.of(context).push<bool>(
-                MaterialPageRoute(builder: (_) => const SignInScreen()),
-              );
-              if (!mounted) return;
-              if (ok == true && FirebaseAuth.instance.currentUser != null) {
-                await _addToCart();
-              }
-            },
           ),
-        ],
-      ),
+        ),
+        // Sticky footer — always visible
+        Material(
+          elevation: 8,
+          color: Theme.of(context).colorScheme.surface,
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              child: MenuItemQtyTotalSection(
+                qty: _qty,
+                baseSizePrice: _baseSizePrice,
+                unitPrice: _unitPrice,
+                selectedSize: _selectedSize,
+                isSignedIn: FirebaseAuth.instance.currentUser != null,
+                onQtyChanged: (v) => setState(() => _qty = v),
+                onPrimaryPressed: () async {
+                  final user = FirebaseAuth.instance.currentUser;
+                  if (user != null) {
+                    await _addToCart();
+                    return;
+                  }
+                  final ok = await Navigator.of(context).push<bool>(
+                    MaterialPageRoute(builder: (_) => const SignInScreen()),
+                  );
+                  if (!mounted) return;
+                  if (ok == true && FirebaseAuth.instance.currentUser != null) {
+                    await _addToCart();
+                  }
+                },
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -4,6 +4,8 @@ import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/hq_onboarding_shell_screen.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 /// HQ Owner — Design & Branding screen (v1.1).
 ///
@@ -35,9 +37,66 @@ class _DesignBrandingScreenState extends State<DesignBrandingScreen> {
   late final TextEditingController _logoUrlController;
   late final TextEditingController _primaryHexController;
   late final TextEditingController _secondaryHexController;
+  bool _uploadingLogo = false;
 
   /// FranchiseId drafts were last synced from (re-sync when picker changes).
   String? _syncedFranchiseId;
+
+  Future<void> _uploadLogo() async {
+    final fp = Provider.of<shared.FranchiseProvider>(context, listen: false);
+    final franchiseId = fp.currentFranchiseId;
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No franchise selected')),
+      );
+      return;
+    }
+
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      withData: true,
+      allowMultiple: false,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final file = result.files.first;
+    final bytes = file.bytes;
+    if (bytes == null || bytes.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not read image bytes')),
+      );
+      return;
+    }
+
+    setState(() => _uploadingLogo = true);
+    try {
+      final ext = (file.extension ?? 'png').toLowerCase();
+      final path =
+          'franchises/$franchiseId/branding/logo_${DateTime.now().millisecondsSinceEpoch}.$ext';
+      final ref = FirebaseStorage.instance.ref().child(path);
+      final contentType = ext == 'png'
+          ? 'image/png'
+          : ext == 'webp'
+              ? 'image/webp'
+              : 'image/jpeg';
+      await ref.putData(bytes, SettableMetadata(contentType: contentType));
+      final url = await ref.getDownloadURL();
+      if (!mounted) return;
+      setState(() {
+        _logoUrlController.text = url;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Logo uploaded — click Save to persist')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Upload failed: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _uploadingLogo = false);
+    }
+  }
 
   String _normalizeHex(String raw) {
     var h = raw.trim();
@@ -348,6 +407,24 @@ class _DesignBrandingScreenState extends State<DesignBrandingScreen> {
                           labelText: 'Logo URL',
                           border: OutlineInputBorder(),
                           isDense: true,
+                          helperText: 'Paste a URL or upload below',
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: (_uploadingLogo || !hasFranchise)
+                            ? null
+                            : _uploadLogo,
+                        icon: _uploadingLogo
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.upload_file, size: 18),
+                        label: Text(
+                          _uploadingLogo ? 'Uploading…' : 'Upload logo',
                         ),
                       ),
                       const SizedBox(height: 12),

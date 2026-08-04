@@ -31,7 +31,7 @@ class MenuItemCard extends StatelessWidget {
                     ? CachedNetworkImage(
                         imageUrl: item.imageUrl,
                         fit: BoxFit.cover,
-                        errorWidget: (_, __, ___) => _placeholder(scheme),
+                        errorWidget: (_, _, _) => _placeholder(scheme),
                       )
                     : _placeholder(scheme),
               ),

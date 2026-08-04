@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// Shared Left / Whole / Right portion chips.
-/// Compact mode uses L / W / R labels (cheeses & sauces).
+/// Left / Whole / Right portion control (web).
+/// Filled primary when selected to approximate mobile PortionSelector.
 class MenuPortionChips extends StatelessWidget {
   const MenuPortionChips({
     super.key,
@@ -17,50 +17,47 @@ class MenuPortionChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (compact) {
-      return Wrap(
-        spacing: 4,
-        children: [
-          ChoiceChip(
-            label: const Text('L'),
-            selected: portion == 'left',
-            onSelected: (_) => onSetPortion('left'),
-            visualDensity: VisualDensity.compact,
+    final scheme = Theme.of(context).colorScheme;
+
+    Widget chip(String value, String label) {
+      final selected = portion == value;
+      return Material(
+        color: selected ? scheme.primary : scheme.surface,
+        shape: StadiumBorder(
+          side: BorderSide(
+            color: selected ? scheme.primary : scheme.outline,
+            width: 1.5,
           ),
-          ChoiceChip(
-            label: const Text('W'),
-            selected: portion == 'whole',
-            onSelected: (_) => onSetPortion('whole'),
-            visualDensity: VisualDensity.compact,
+        ),
+        child: InkWell(
+          onTap: () => onSetPortion(value),
+          customBorder: const StadiumBorder(),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: compact ? 10 : 14,
+              vertical: compact ? 6 : 8,
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                color: selected ? scheme.onPrimary : scheme.onSurface,
+                fontWeight: selected ? FontWeight.bold : FontWeight.w500,
+                fontSize: compact ? 12 : 13,
+              ),
+            ),
           ),
-          ChoiceChip(
-            label: const Text('R'),
-            selected: portion == 'right',
-            onSelected: (_) => onSetPortion('right'),
-            visualDensity: VisualDensity.compact,
-          ),
-        ],
+        ),
       );
     }
 
-    return Wrap(
-      spacing: 6,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        ChoiceChip(
-          label: const Text('Left'),
-          selected: portion == 'left',
-          onSelected: (_) => onSetPortion('left'),
-        ),
-        ChoiceChip(
-          label: const Text('Whole'),
-          selected: portion == 'whole',
-          onSelected: (_) => onSetPortion('whole'),
-        ),
-        ChoiceChip(
-          label: const Text('Right'),
-          selected: portion == 'right',
-          onSelected: (_) => onSetPortion('right'),
-        ),
+        chip('left', compact ? 'L' : 'Left'),
+        const SizedBox(width: 6),
+        chip('whole', compact ? 'W' : 'Whole'),
+        const SizedBox(width: 6),
+        chip('right', compact ? 'R' : 'Right'),
       ],
     );
   }

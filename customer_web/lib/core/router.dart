@@ -6,6 +6,7 @@ import 'package:shared_core/shared_core.dart' as shared;
 import '../widgets/branding_shell.dart';
 import 'franchise_bind.dart';
 import '../features/home/storefront_home_screen.dart';
+import '../widgets/storefront_shell.dart';
 
 /// Phase 1 router: path bind only.
 /// Hostname auto-bind hooks in later; do not invent domain schema here.
@@ -176,6 +177,6 @@ class _FranchiseGateState extends State<_FranchiseGate> {
       );
     }
 
-    return const StorefrontHomeScreen();
+    return const StorefrontShell();
   }
 }

@@ -7,6 +7,8 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 /// Restaurant settings → Website tab (hq-restaurant-settings-v1 S3).
 /// Live: storefront URL + QR. Content fields are local draft stubs until storefront doc save.
@@ -30,6 +32,7 @@ class _WebsiteSettingsPanelState extends State<WebsiteSettingsPanel> {
   bool _saving = false;
   String? _syncedFranchiseId;
   String? _loadError;
+  bool _uploadingHero = false;
 
   @override
   void dispose() {
@@ -50,6 +53,63 @@ class _WebsiteSettingsPanelState extends State<WebsiteSettingsPanel> {
     if (_syncedFranchiseId == id) return;
     _syncedFranchiseId = id;
     _load(id);
+  }
+
+  Future<void> _uploadHeroImage() async {
+    final fp = Provider.of<shared.FranchiseProvider>(context, listen: false);
+    final franchiseId = fp.franchiseId.trim();
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No franchise selected')),
+      );
+      return;
+    }
+
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      withData: true,
+      allowMultiple: false,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final file = result.files.first;
+    final bytes = file.bytes;
+    if (bytes == null || bytes.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not read image bytes')),
+      );
+      return;
+    }
+
+    setState(() => _uploadingHero = true);
+    try {
+      final ext = (file.extension ?? 'jpg').toLowerCase();
+      final path =
+          'franchises/$franchiseId/storefront/hero_${DateTime.now().millisecondsSinceEpoch}.$ext';
+      final ref = FirebaseStorage.instance.ref().child(path);
+      final contentType = ext == 'png'
+          ? 'image/png'
+          : ext == 'webp'
+              ? 'image/webp'
+              : 'image/jpeg';
+      await ref.putData(bytes, SettableMetadata(contentType: contentType));
+      final url = await ref.getDownloadURL();
+      if (!mounted) return;
+      setState(() {
+        _heroUrl.text = url;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Hero image uploaded — click Save to persist')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Upload failed: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _uploadingHero = false);
+    }
   }
 
   Future<void> _load(String franchiseId) async {
@@ -263,7 +323,34 @@ class _WebsiteSettingsPanelState extends State<WebsiteSettingsPanel> {
             labelText: 'Hero image URL',
             border: OutlineInputBorder(),
             isDense: true,
+            helperText: 'Paste a URL or upload below',
           ),
+        ),
+        const SizedBox(height: 8),
+        if (_heroUrl.text.trim().isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                _heroUrl.text.trim(),
+                height: 120,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
+            ),
+          ),
+        OutlinedButton.icon(
+          onPressed: (_uploadingHero || !canLink) ? null : _uploadHeroImage,
+          icon: _uploadingHero
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.upload_file, size: 18),
+          label: Text(_uploadingHero ? 'Uploading…' : 'Upload hero image'),
         ),
         const SizedBox(height: 12),
         TextField(

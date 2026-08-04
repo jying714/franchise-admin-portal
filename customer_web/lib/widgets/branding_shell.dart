@@ -26,8 +26,13 @@ ThemeData themeFromFranchise(shared.FranchiseProvider fp) {
     fallback: const Color(0xFFFFD700),
   );
 
+  // Parchment cream — pairs with Dough Boys red/green without competing.
+  const scaffoldBg = Color(0xFFFAF7F2);
+
   return ThemeData(
     useMaterial3: true,
+    scaffoldBackgroundColor: scaffoldBg,
+    canvasColor: scaffoldBg,
     colorScheme: ColorScheme.light(
       primary: primary,
       onPrimary: Colors.white,
@@ -35,6 +40,7 @@ ThemeData themeFromFranchise(shared.FranchiseProvider fp) {
       onSecondary: Colors.black87,
       surface: Colors.white,
       onSurface: Colors.black87,
+      surfaceContainerLowest: scaffoldBg,
     ),
     appBarTheme: AppBarTheme(
       backgroundColor: primary,
@@ -75,7 +81,7 @@ class BrandingShell extends StatelessWidget {
                   height: 28,
                   width: 28,
                   fit: BoxFit.cover,
-                  errorWidget: (_, __, ___) =>
+                  errorWidget: (_, _, _) =>
                       const Icon(Icons.storefront, size: 24),
                 ),
               ),

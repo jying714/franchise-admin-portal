@@ -14,7 +14,11 @@ $outputFile = Join-Path $PSScriptRoot "project_schema.txt"
 $foldersToScan = @(
     "mobile_app",
     "web-app",
-    "packages/shared_core"
+    "packages/shared_core",
+    "customer_web",
+    "pos_app",
+    "docs",
+    "orchestrator"
 )
 
 $skipFolders = @(

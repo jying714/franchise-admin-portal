@@ -5,8 +5,8 @@ import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
-/// Restaurant settings → Contact tab (hq-restaurant-settings-v1 S4).
-/// Persists public contact fields on franchises/{id} (merge).
+/// Restaurant settings → Contact tab.
+/// Persists structured address map + public phone/email/map on franchises/{id}.
 class ContactSettingsPanel extends StatefulWidget {
   const ContactSettingsPanel({super.key});
 
@@ -14,8 +14,15 @@ class ContactSettingsPanel extends StatefulWidget {
   State<ContactSettingsPanel> createState() => _ContactSettingsPanelState();
 }
 
-class _ContactSettingsPanelState extends State<ContactSettingsPanel> {
-  final _address = TextEditingController();
+class _ContactSettingsPanelState extends State<ContactSettingsPanel>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  final _street = TextEditingController();
+  final _city = TextEditingController();
+  final _state = TextEditingController();
+  final _zip = TextEditingController();
   final _phone = TextEditingController();
   final _email = TextEditingController();
   final _mapUrl = TextEditingController();
@@ -27,7 +34,10 @@ class _ContactSettingsPanelState extends State<ContactSettingsPanel> {
 
   @override
   void dispose() {
-    _address.dispose();
+    _street.dispose();
+    _city.dispose();
+    _state.dispose();
+    _zip.dispose();
     _phone.dispose();
     _email.dispose();
     _mapUrl.dispose();
@@ -45,7 +55,15 @@ class _ContactSettingsPanelState extends State<ContactSettingsPanel> {
     _load(id);
   }
 
+  void _applyAddressMap(Map<String, dynamic> addr) {
+    _street.text = (addr['street'] ?? '').toString();
+    _city.text = (addr['city'] ?? '').toString();
+    _state.text = (addr['state'] ?? '').toString();
+    _zip.text = (addr['zip'] ?? addr['postalCode'] ?? '').toString();
+  }
+
   Future<void> _load(String franchiseId) async {
+    if (!mounted) return;
     setState(() {
       _loading = true;
       _loadError = null;
@@ -55,25 +73,34 @@ class _ContactSettingsPanelState extends State<ContactSettingsPanel> {
           .collection('franchises')
           .doc(franchiseId)
           .get();
+      if (!mounted) return;
+
       final data = snap.data() ?? {};
-      // Prefer explicit public* keys; fall back to common legacy keys.
-      _address.text = (data['publicAddress'] ??
-              data['address'] ??
-              data['franchiseAddress'] ??
-              '')
-          .toString();
+      final rawAddress = data['address'];
+      if (rawAddress is Map) {
+        _applyAddressMap(Map<String, dynamic>.from(rawAddress));
+      } else {
+        _street.text = '';
+        _city.text = '';
+        _state.text = '';
+        _zip.text = '';
+      }
+
       _phone.text =
-          (data['publicPhone'] ?? data['phone'] ?? data['franchisePhone'] ?? '')
-              .toString();
-      _email.text = (data['publicEmail'] ?? data['email'] ?? '').toString();
-      _mapUrl.text = (data['mapEmbedUrl'] ?? data['mapUrl'] ?? '').toString();
+          '${data['publicPhone'] ?? data['contactPhone'] ?? data['phone'] ?? data['franchisePhone'] ?? ''}';
+      _email.text =
+          '${data['publicEmail'] ?? data['contactEmail'] ?? data['email'] ?? ''}';
+      _mapUrl.text = '${data['mapEmbedUrl'] ?? data['mapUrl'] ?? ''}';
     } catch (e) {
+      if (!mounted) return;
       _loadError = '$e';
     }
     if (mounted) setState(() => _loading = false);
   }
 
   Future<void> _save() async {
+    if (!mounted) return;
+
     final fp = Provider.of<shared.FranchiseProvider>(context, listen: false);
     final franchiseId = fp.franchiseId.trim();
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
@@ -83,16 +110,32 @@ class _ContactSettingsPanelState extends State<ContactSettingsPanel> {
       return;
     }
 
+    // Capture before any await / setState so dispose cannot race reads.
+    final street = _street.text.trim();
+    final city = _city.text.trim();
+    final state = _state.text.trim();
+    final zip = _zip.text.trim();
+    final phone = _phone.text.trim();
+    final email = _email.text.trim();
+    final mapUrl = _mapUrl.text.trim();
+
     setState(() => _saving = true);
     try {
       await FirebaseFirestore.instance
           .collection('franchises')
           .doc(franchiseId)
           .set({
-        'publicAddress': _address.text.trim(),
-        'publicPhone': _phone.text.trim(),
-        'publicEmail': _email.text.trim(),
-        'mapEmbedUrl': _mapUrl.text.trim(),
+        'address': {
+          'street': street,
+          'city': city,
+          'state': state,
+          'zip': zip,
+        },
+        'publicPhone': phone,
+        'publicEmail': email,
+        'contactPhone': phone,
+        'contactEmail': email,
+        'mapEmbedUrl': mapUrl,
         'updatedAt': DateTime.now().toIso8601String(),
       }, SetOptions(merge: true));
 
@@ -112,6 +155,7 @@ class _ContactSettingsPanelState extends State<ContactSettingsPanel> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final theme = Theme.of(context);
     final fp = Provider.of<shared.FranchiseProvider>(context, listen: true);
     final hasFranchise =
@@ -126,7 +170,7 @@ class _ContactSettingsPanelState extends State<ContactSettingsPanel> {
       children: [
         Text(
           hasFranchise
-              ? 'Public contact for website footer, contact page, and receipts.'
+              ? 'Public contact for website footer, contact page, and receipts. Address is stored as street / city / state / zip on the franchise document.'
               : 'Select a franchise to edit contact.',
           style: theme.textTheme.bodyMedium?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
@@ -141,17 +185,56 @@ class _ContactSettingsPanelState extends State<ContactSettingsPanel> {
         ],
         const SizedBox(height: 16),
         TextField(
-          controller: _address,
-          maxLines: 2,
+          controller: _street,
+          textCapitalization: TextCapitalization.words,
           decoration: const InputDecoration(
-            labelText: 'Public address',
+            labelText: 'Street',
             border: OutlineInputBorder(),
             isDense: true,
           ),
         ),
         const SizedBox(height: 12),
         TextField(
+          controller: _city,
+          textCapitalization: TextCapitalization.words,
+          decoration: const InputDecoration(
+            labelText: 'City',
+            border: OutlineInputBorder(),
+            isDense: true,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _state,
+                textCapitalization: TextCapitalization.characters,
+                decoration: const InputDecoration(
+                  labelText: 'State',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextField(
+                controller: _zip,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'ZIP',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        TextField(
           controller: _phone,
+          keyboardType: TextInputType.phone,
           decoration: const InputDecoration(
             labelText: 'Public phone',
             border: OutlineInputBorder(),

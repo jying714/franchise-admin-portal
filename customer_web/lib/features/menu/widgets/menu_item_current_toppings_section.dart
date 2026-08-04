@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'menu_portion_chips.dart';
+import 'portion_selector.dart';
+import 'portion_pill_toggle.dart';
 
-/// Current Toppings list: display name, Double, portion L/W/R, Remove.
-/// Presentational — parent owns state and callbacks.
+/// Current Toppings list (mobile parity layout).
+/// Name + Remove on first row; circular portion + Regular/Double pill on second.
 class MenuItemCurrentToppingsSection extends StatelessWidget {
   const MenuItemCurrentToppingsSection({
     super.key,
@@ -17,17 +18,10 @@ class MenuItemCurrentToppingsSection extends StatelessWidget {
   });
 
   final Set<String> ingredientIds;
-
-  /// id → display label
   final String Function(String id) displayName;
-
   final bool Function(String id) isDouble;
-
-  /// id → 'whole' | 'left' | 'right'
   final String Function(String id) portion;
-
   final bool showPortionControls;
-
   final void Function(String id, bool value) onToggleDouble;
   final void Function(String id, String portion) onSetPortion;
   final void Function(String id) onRemove;
@@ -40,9 +34,20 @@ class MenuItemCurrentToppingsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 24),
-        Text(
-          'Current Toppings',
-          style: Theme.of(context).textTheme.titleMedium,
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: scheme.primary,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
+          child: Text(
+            'Current Toppings',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: scheme.onPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
         const SizedBox(height: 8),
         if (ingredientIds.isEmpty)
@@ -58,31 +63,27 @@ class MenuItemCurrentToppingsSection extends StatelessWidget {
             final doubled = isDouble(id);
             final p = portion(id);
             final display = displayName(id);
-            final titleBits = <String>[display];
-            if (doubled) titleBits.add('Double');
-            if (p == 'left') titleBits.add('Left');
-            if (p == 'right') titleBits.add('Right');
 
             return Card(
-              margin: const EdgeInsets.symmetric(vertical: 4),
+              margin: const EdgeInsets.symmetric(vertical: 2),
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 8,
+                  horizontal: 12,
+                ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Label row
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Expanded(
                           child: Text(
-                            titleBits.length == 1
-                                ? display
-                                : '${titleBits.first} (${titleBits.skip(1).join(', ')})',
-                            style: Theme.of(context).textTheme.titleSmall,
+                            display,
+                            style: Theme.of(context).textTheme.bodyLarge,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        TextButton(
-                          onPressed: () => onToggleDouble(id, !doubled),
-                          child: Text(doubled ? 'Single' : 'Double'),
                         ),
                         TextButton(
                           style: TextButton.styleFrom(
@@ -93,11 +94,20 @@ class MenuItemCurrentToppingsSection extends StatelessWidget {
                         ),
                       ],
                     ),
+                    // Portion + amount directly under the label
                     if (showPortionControls) ...[
-                      const SizedBox(height: 4),
-                      MenuPortionChips(
+                      const SizedBox(height: 8),
+                      PortionSelector(
                         portion: p,
-                        onSetPortion: (value) => onSetPortion(id, value),
+                        onChanged: (value) => onSetPortion(id, value),
+                      ),
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: PortionPillToggle(
+                          isDouble: doubled,
+                          onTap: () => onToggleDouble(id, !doubled),
+                        ),
                       ),
                     ],
                   ],
