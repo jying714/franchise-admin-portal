@@ -5,7 +5,7 @@ import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 // ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html show window;
+import 'dart:html' as html;
 
 /// LAB.5 — hours worked per employee for a date range.
 class StaffHoursSummaryScreen extends StatefulWidget {
@@ -149,6 +149,106 @@ class _StaffHoursSummaryScreenState extends State<StaffHoursSummaryScreen> {
     return '${_fmtDate(d)} $h:$m';
   }
 
+  String _escapeHtml(String s) {
+    return s
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;');
+  }
+
+  void _printTimesheetHtml(_EmployeeHours row) {
+    if (!kIsWeb) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Print is supported on web only')),
+      );
+      return;
+    }
+
+    final franchiseName =
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .currentAppName;
+    final title = franchiseName.isNotEmpty ? franchiseName : 'Timesheet';
+    final sorted = List<shared.TimeEntry>.from(row.entries)
+      ..sort((a, b) => a.clockInAt.compareTo(b.clockInAt));
+
+    final payLine = row.hourlyPay != null
+        ? ' · ~\$${(row.hours * row.hourlyPay!).toStringAsFixed(2)}'
+        : '';
+    final range =
+        '${_fmtDate(_rangeStart)} → ${_fmtDate(_rangeEnd.subtract(const Duration(days: 1)))}';
+
+    final rowHtml = StringBuffer();
+    for (final e in sorted) {
+      final out = e.clockOutAt != null ? _fmtDateTime(e.clockOutAt!) : 'OPEN';
+      final openMark = e.isOpen ? ' (open)' : '';
+      rowHtml.writeln(
+        '<tr>'
+        '<td>${_escapeHtml(_fmtDateTime(e.clockInAt))}</td>'
+        '<td>${_escapeHtml(out)}$openMark</td>'
+        '<td>${_fmtHours(e.workedHours)}</td>'
+        '</tr>',
+      );
+    }
+
+    final doc = '''
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Timesheet — ${_escapeHtml(row.staffName)}</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 24px; color: #111; }
+    h1 { margin: 0 0 4px; font-size: 22px; }
+    h2 { margin: 0 0 8px; font-size: 18px; font-weight: 600; }
+    .meta { color: #444; margin-bottom: 12px; }
+    .total { font-weight: 700; margin: 12px 0 16px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #ccc; }
+    th { border-bottom: 2px solid #333; }
+  </style>
+</head>
+<body>
+  <h1>${_escapeHtml(title)}</h1>
+  <h2>${_escapeHtml(row.staffName)}</h2>
+  <div class="meta">${_escapeHtml(range)}</div>
+  <div class="total">Total: ${_fmtHours(row.hours)} h$payLine</div>
+  <table>
+    <thead>
+      <tr><th>Clock in</th><th>Clock out</th><th>Hours</th></tr>
+    </thead>
+    <tbody>
+      $rowHtml
+    </tbody>
+  </table>
+  <script>
+    window.onload = function () {
+      window.focus();
+      window.print();
+    };
+  </script>
+</body>
+</html>
+''';
+
+    final blob = html.Blob([doc], 'text/html');
+    final url = html.Url.createObjectUrlFromBlob(blob);
+    final opened = html.window.open(url, '_blank');
+    if (opened == null) {
+      html.Url.revokeObjectUrl(url);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pop-up blocked — allow pop-ups for print'),
+        ),
+      );
+      return;
+    }
+    // HTML onload calls window.print(); revoke after a delay.
+    Future<void>.delayed(const Duration(seconds: 60), () {
+      html.Url.revokeObjectUrl(url);
+    });
+  }
+
   Future<void> _printTimesheet(_EmployeeHours row) async {
     final franchiseName =
         Provider.of<shared.FranchiseProvider>(context, listen: false)
@@ -169,17 +269,7 @@ class _StaffHoursSummaryScreenState extends State<StaffHoursSummaryScreen> {
               ),
               actions: [
                 FilledButton.icon(
-                  onPressed: () {
-                    if (kIsWeb) {
-                      html.window.print();
-                    } else {
-                      ScaffoldMessenger.of(ctx).showSnackBar(
-                        const SnackBar(
-                          content: Text('Use browser Print (Ctrl+P) on web'),
-                        ),
-                      );
-                    }
-                  },
+                  onPressed: () => _printTimesheetHtml(row),
                   icon: const Icon(Icons.print, size: 18),
                   label: const Text('Print'),
                 ),
