@@ -48,6 +48,8 @@ export 'src/core/models/report.dart';
 export 'src/core/models/restaurant_type.dart';
 export 'src/core/models/size_template.dart';
 export 'src/core/models/staff.dart';
+export 'src/core/models/shift.dart';
+export 'src/core/models/time_entry.dart';
 export 'src/core/models/driver.dart';
 export 'src/core/models/waitress.dart';
 export 'src/core/models/pos_settings.dart';

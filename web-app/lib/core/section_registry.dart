@@ -9,6 +9,9 @@ import 'package:franchise_admin_portal/admin/orders/order_management_screen.dart
 import 'package:franchise_admin_portal/admin/feedback/feedback_management_screen.dart';
 import 'package:franchise_admin_portal/admin/promo/promo_management_screen.dart';
 import 'package:franchise_admin_portal/admin/staff/staff_access_screen.dart';
+import 'package:franchise_admin_portal/admin/staff/pos_staff_roster_screen.dart';
+import 'package:franchise_admin_portal/admin/staff/staff_schedule_screen.dart';
+import 'package:franchise_admin_portal/admin/staff/staff_hours_summary_screen.dart';
 import 'package:franchise_admin_portal/admin/chat/chat_management_screen.dart';
 // Menu item editor lives under HQ onboarding copy after Phase 4 removal of Admin onboarding tree.
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/menu_item_editor_screen.dart';
@@ -82,17 +85,34 @@ final List<shared.DashboardSection> sectionRegistry = [
   ),
   shared.DashboardSection(
     key: 'staffAccess',
-    title: 'Staff',
-    icon: Icons.people_outline,
-    builder: (context) => const Scaffold(
-      body: Center(
-        child: Text(
-          'Staff management is available in full Admin mode only.\n\n(Admin-only feature)',
-          textAlign: TextAlign.center,
-        ),
-      ),
-    ),
+    title: 'Portal users',
+    icon: Icons.manage_accounts_outlined,
+    builder: (_) => const StaffAccessScreen(),
     sidebarOrder: 8,
+    showInSidebar: true,
+  ),
+  shared.DashboardSection(
+    key: 'posStaffRoster',
+    title: 'Station staff',
+    icon: Icons.badge_outlined,
+    builder: (_) => const PosStaffRosterScreen(),
+    sidebarOrder: 9,
+    showInSidebar: true,
+  ),
+  shared.DashboardSection(
+    key: 'staffSchedule',
+    title: 'Schedule',
+    icon: Icons.event_available_outlined,
+    builder: (_) => const StaffScheduleScreen(),
+    sidebarOrder: 10,
+    showInSidebar: true,
+  ),
+  shared.DashboardSection(
+    key: 'staffHours',
+    title: 'Hours',
+    icon: Icons.hourglass_bottom_outlined,
+    builder: (_) => const StaffHoursSummaryScreen(),
+    sidebarOrder: 11,
     showInSidebar: true,
   ),
   shared.DashboardSection(

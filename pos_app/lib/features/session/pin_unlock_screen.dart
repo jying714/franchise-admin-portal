@@ -23,6 +23,7 @@ class PinUnlockScreen extends StatefulWidget {
 class _PinUnlockScreenState extends State<PinUnlockScreen> {
   final _pinController = TextEditingController();
   final _posFs = PosFirestoreService();
+  final _labor = LaborFirestoreService();
   final _pinFocus = FocusNode();
 
   bool _busy = false;
@@ -43,6 +44,19 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
     super.dispose();
   }
 
+  Future<Staff?> _matchStaffByPin(String pin) async {
+    final staffList = await _posFs.streamStaff(widget.franchiseId).first;
+    for (final staff in staffList) {
+      if (staff.status != 'active') continue;
+      if (!staff.posEnabled) continue;
+      if (staff.pinHash == null || staff.pinHash!.isEmpty) continue;
+      if (PinHash.verify(pin, staff.pinHash)) {
+        return staff;
+      }
+    }
+    return null;
+  }
+
   Future<void> _submit() async {
     final pin = _pinController.text.trim();
 
@@ -57,18 +71,7 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
     });
 
     try {
-      final staffList = await _posFs.streamStaff(widget.franchiseId).first;
-      Staff? matched;
-
-      for (final staff in staffList) {
-        if (staff.status != 'active') continue;
-        if (!staff.posEnabled) continue;
-        if (staff.pinHash == null || staff.pinHash!.isEmpty) continue;
-        if (PinHash.verify(pin, staff.pinHash)) {
-          matched = staff;
-          break;
-        }
-      }
+      final matched = await _matchStaffByPin(pin);
 
       if (matched == null) {
         setState(() => _error = 'Invalid PIN');
@@ -90,6 +93,70 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
       widget.onUnlocked?.call();
     } catch (_) {
       setState(() => _error = 'Unlock failed');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _clock({required bool clockIn}) async {
+    final pin = _pinController.text.trim();
+    if (pin.isEmpty) {
+      setState(() => _error = 'Enter PIN');
+      return;
+    }
+
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+
+    try {
+      final matched = await _matchStaffByPin(pin);
+      if (matched == null) {
+        setState(() => _error = 'Invalid PIN');
+        _pinController.clear();
+        _pinFocus.requestFocus();
+        return;
+      }
+
+      if (clockIn) {
+        final open = await _labor.getOpenEntryForStaff(
+          widget.franchiseId,
+          matched.id,
+        );
+        if (open != null) {
+          setState(() => _error = 'Already clocked in');
+          return;
+        }
+        await _labor.clockIn(
+          franchiseId: widget.franchiseId,
+          staffId: matched.id,
+          staffName: matched.name,
+          source: 'pos',
+          actedByStaffId: matched.id,
+        );
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('${matched.name} clocked in')));
+      } else {
+        await _labor.clockOut(
+          franchiseId: widget.franchiseId,
+          staffId: matched.id,
+          actedByStaffId: matched.id,
+        );
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('${matched.name} clocked out')));
+      }
+
+      _pinController.clear();
+      _pinFocus.requestFocus();
+    } on StateError catch (e) {
+      setState(() => _error = e.message);
+    } catch (_) {
+      setState(() => _error = clockIn ? 'Clock in failed' : 'Clock out failed');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -162,6 +229,26 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Text('Unlock'),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _busy ? null : () => _clock(clockIn: true),
+                          child: const Text('Clock in'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _busy
+                              ? null
+                              : () => _clock(clockIn: false),
+                          child: const Text('Clock out'),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
