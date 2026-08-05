@@ -1,82 +1,59 @@
 # MVP-Ops Staff & Labor v1 — Owner.com cutover gate
 
-**Status:** **Locked for planning** (2026-08-03) — **greenfield** product surface; required before **hard** swap off Owner.com  
+**Status:** **COMPLETE** (2026-08-04) — merged to **main**  
 **Authority:** STATUS · HANDOFF · Doughboys operator requirement · this plan  
-**Note:** Roster/PIN pieces exist for POS; **schedule, clock, hours, print = new development**
+**Surfaces:** Admin (roster, schedule, hours) · POS (clock in/out via PIN)
 
 ---
 
 ## 1. Problem
 
-Managers need to **schedule staff**, **clock in/out**, see **hours**, and **print** schedule / per-employee work paperwork. Owner.com (or spreadsheets) covers this today; FranchiseHQ has **no** full labor module yet.
+Managers need to **schedule staff**, **clock in/out**, see **hours**, and **print** schedule / per-employee paperwork.
 
 ---
 
-## 2. Product minimum (v1) — mandatory
+## 2. Product minimum (v1) — delivered
 
-| Capability | v1 requirement |
-|------------|----------------|
-| **Roster** | Staff list, roles, active; reuse POS auth/PIN where possible |
-| **Schedule** | Create shifts (day/time/role), assign employees, week view |
-| **Print schedule** | Competent printable / PDF weekly schedule |
-| **Clock in/out** | **Mandatory** — staff can clock in and out (POS and/or staff entry point) |
-| **Hours summary** | **Mandatory** — hours worked per employee in a date range |
-| **Paperwork** | Per-employee summary suitable to print (shifts + hours) |
-| **Pay context (light)** | Optional wage rate × hours for **estimate** only — not full payroll/tax engine |
-| **Metrics (light)** | Total hours by day/role; basic labor snapshot |
-
----
-
-## 3. Locks
-
-| ID | Lock |
-|----|------|
-| L1 | Franchise-scoped staff and shifts |
-| L2 | Clock events are append-only with manager edit/audit later if needed |
-| L3 | Schedule print + hours summary ship in v1 (not “later”) |
-| L4 | Not a payroll provider — no tax filing, W-2, direct deposit in v1 |
-| L5 | Tips allocation **out** of v1 unless already trivial |
-| L6 | Permissions: manager vs staff (staff clock + view own hours; manager schedule all) |
+| Capability | v1 delivery |
+|------------|-------------|
+| **Roster** | Admin **Station staff** → `franchises/{id}/staff` + shared `PinHash` |
+| **Schedule** | Admin **Schedule** week editor (shifts collection) |
+| **Print schedule** | Week print from Schedule screen |
+| **Clock in/out** | POS unlock screen **Clock in / Clock out** |
+| **Hours summary** | Admin **Hours** date-range totals |
+| **Paperwork** | Per-employee timesheet HTML print |
+| **Pay context (light)** | Optional `hourlyPay` × hours estimate on Hours |
 
 ---
 
-## 4. Platform matrix
+## 3. Schema / services
 
-| Surface | v1 responsibility |
-|---------|-------------------|
-| **HQ / Admin** | Schedule editor, roster, hours reports, print/PDF |
-| **POS** | Clock in/out (primary for station staff); manager view optional |
-| **Mobile** | Optional staff clock later; not required if POS clock is solid |
-| **Shared / CF** | Shift + time-entry collections; report queries |
-
----
-
-## 5. Work breakdown (high level)
-
-| # | Task |
-|---|------|
-| LAB.1 | Schema: staff profile extensions, shifts, time_entries |
-| LAB.2 | HQ week schedule UI + assign |
-| LAB.3 | Print/PDF schedule |
-| LAB.4 | Clock in/out on POS (PIN-scoped user) |
-| LAB.5 | Hours summary report (range, per employee) |
-| LAB.6 | Per-employee printable timesheet-style summary |
-| LAB.7 | Light metrics (hours totals) |
-| LAB.8 | Optional wage rate field + estimated pay column |
+| Path | Purpose |
+|------|---------|
+| `franchises/{id}/staff/{staffId}` | Roster + `pinHash` + `posEnabled` |
+| `franchises/{id}/shifts/{id}` | Scheduled shifts |
+| `franchises/{id}/time_entries/{id}` | Clock punches |
+| `LaborFirestoreService` | Shifts + clock + range queries |
+| `PinHash` (shared_core) | `v1:salt:sha256` |
 
 ---
 
-## 6. Acceptance
+## 4. Acceptance
 
-- [ ] Manager builds a week schedule and prints it  
-- [ ] Employee clocks in and out on POS  
-- [ ] Hours summary matches clock events for a date range  
-- [ ] Per-employee paperwork printable  
-- [ ] Staff cannot edit others’ punches (manager can correct)  
+- [x] Manager builds a week schedule and prints it  
+- [x] Employee clocks in and out on POS  
+- [x] Hours summary matches clock events for a date range  
+- [x] Per-employee paperwork printable  
+- [ ] Staff cannot edit others’ punches (manager can correct) — **partial**: no staff self-service edit UI; punches are service-written  
+
+### Residual hardening
+
+- Replace `isPosStation` email smoke gate with **`stationFranchise` custom claim**  
+- Deploy rules after claim cutover  
 
 ---
 
-## 7. Explicit non-goals v1
+## 5. Explicit non-goals v1 (still out)
 
 - Full payroll, tax, benefits  
 - Advanced forecasting / labor % auto-scheduling AI  
@@ -84,4 +61,4 @@ Managers need to **schedule staff**, **clock in/out**, see **hours**, and **prin
 
 ---
 
-**Cutover:** Staff/labor v1 (including **clock + hours summary + print**) is a **hard Owner.com swap gate** alongside inventory v1.
+**Cutover:** Staff/labor v1 gate **satisfied**. Soft parallel burn-in is the next operational step.
