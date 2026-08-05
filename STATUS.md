@@ -1,9 +1,8 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: August 3, 2026 (~00:45 CDT — MVP-Ops inventory + staff/labor cutover gates locked)  
+**Last Updated**: August 4, 2026 (~23:30 CDT — inventory + labor cutover gates closed on main)  
 **Hardware**: MINISFORUM AI X1 Pro-470  
-**Branch (active work)**: **`main`**  
-**Main**: HQ · customer_web parity · POS software pilot · mobile  
+**Branch**: **`main`** (up to date with completed ops + storefront shell work)  
 **Firebase**: `doughboyspizzeria-2b3d2`  
 **Storefront**: https://franchise-storefront.web.app  
 **Admin/HQ**: franchisehq.io
@@ -17,25 +16,32 @@
 | Area | State |
 |------|--------|
 | Order path (web/mobile/POS software) | **On main** |
-| Storefront shell Wave 1 | **Locked — next guest-facing build** |
+| Storefront shell Wave 1 | **COMPLETE on main** (in-place menu/cart/checkout, floating bar, customize dialog) |
 | Home composition engine Wave 2 | **Deferred** |
-| **Inventory v1 (MVP-Ops)** | **Locked plan — Owner.com hard cutover gate** |
-| **Staff/labor v1 (MVP-Ops)** | **Locked plan — greenfield; cutover gate** |
+| **Inventory v1 (MVP-Ops)** | **COMPLETE on main** — cutover gate satisfied |
+| **Staff/labor v1 (MVP-Ops)** | **COMPLETE on main** — cutover gate satisfied |
 | POS hardware · iOS Mac | **In transit** |
+| Soft parallel / MVP burn-in | **Next** — manager validation before hard Owner.com off |
 
 ---
 
 ## Owner.com cutover gates (Doughboys)
 
-**Soft release:** POS parallel with current terminal/Owner.com OK while gaps exist.  
-**Hard swap** (manager bar) requires:
+**Soft release:** POS parallel with current terminal/Owner.com while burn-in runs.  
+**Hard swap** (manager bar) requires both gates below — **now implemented**:
 
-| Gate | Plan | Minimum |
-|------|------|---------|
-| **Inventory** | `docs/plans/mvp-ops-inventory-v1.md` | Enabled item/ingredient qty; 0 → not sellable all channels; sale decrement; void restore; HQ adjust |
-| **Staff/labor** | `docs/plans/mvp-ops-staff-labor-v1.md` | Schedule + **print**; **clock in/out**; **hours summary**; per-employee paperwork |
+| Gate | Plan | Status |
+|------|------|--------|
+| **Inventory** | `docs/plans/mvp-ops-inventory-v1.md` | **COMPLETE** — `MenuItem.isSellable` / channel filters; `InventoryLedger` paid decrement + void/refund restore; HQ inventory fields |
+| **Staff/labor** | `docs/plans/mvp-ops-staff-labor-v1.md` | **COMPLETE** — Admin roster + PIN; week schedule + print; POS clock in/out; hours summary + timesheet print |
 
-Order/pay/ticket already largely satisfied for soft parallel.
+Order/pay/ticket already on main for soft parallel.
+
+### Residual (not blocking soft parallel)
+
+- Replace MVP `pos-station@doughboys.local` rules email gate with real **`stationFranchise` custom claims**
+- Deploy/confirm **firestore.rules** on production project after every rules change
+- Manager burn-in checklist (stock 86, clock, hours, one full web order)
 
 ---
 
@@ -43,27 +49,39 @@ Order/pay/ticket already largely satisfied for soft parallel.
 
 | Wave | Plan | State |
 |------|------|--------|
-| 1 Shell + nested UX + section home | `docs/plans/customer-web-storefront-shell-v1.md` | Next guest track |
+| 1 Shell + nested UX + section home | `docs/plans/customer-web-storefront-shell-v1.md` | **COMPLETE on main** |
 | 2 Composition engine / HQ studio | `docs/plans/home-page-composition-engine-v1.md` | Deferred |
 
 ---
 
-## customer_web parity core
+## customer_web
 
-On **main**: pizza/wings customize, cart edit via `cartItemKey`, checkout delivery + `customerPhone`.
+On **main**: `StorefrontShell` + in-place categories/items/cart/checkout/confirm; mobile-parity customize dialog; cream theme; hero/logo from HQ; `store_ops` footer; structured HQ contact address.
 
 ---
 
-## Next product focus (parallel tracks)
+## Admin labor surfaces (sidebar)
 
-| Track | Focus |
-|-------|--------|
-| **A – Guest** | Storefront shell Wave 1 |
-| **B – Ops cutover** | Inventory v1 → Staff/labor v1 (schedule, clock, hours, print) |
-| **C – Hardware** | Terminals + iOS when devices arrive |
-| **D – Growth** | Promos, push/SMS, loyalty, upsells — after soft stability |
+| Section | Role |
+|---------|------|
+| Portal users | App logins / roles (`StaffAccessScreen`) |
+| Station staff | POS roster + PIN (`franchises/{id}/staff`) |
+| Schedule | Week shifts + print |
+| Hours | Range summary + per-employee timesheet print |
 
-**Decision locks:** 11 / 12 / 14 + storefront waves + MVP-Ops gates above.
+---
+
+## Next product focus (MVP release path)
+
+| Priority | Focus |
+|----------|--------|
+| **1 – Soft release** | Deploy rules + web/POS builds; Doughboys manager burn-in |
+| **2 – Claims** | `stationFranchise` on station Auth user; remove email smoke clause |
+| **3 – Hardware** | Terminals + iOS when devices arrive |
+| **4 – Growth** | Promos, push/SMS, loyalty, upsells — after soft stability |
+| **5 – Wave 2** | Home composition engine (deferred) |
+
+**Decision locks:** 11 / 12 / 14 + storefront Wave 1 + inventory + labor gates closed.
 
 ---
 
