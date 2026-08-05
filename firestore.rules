@@ -31,8 +31,11 @@ service cloud.firestore {
     }
 
     function isPosStation(franchiseId) {
-      return isSignedIn() &&
-             request.auth.token.stationFranchise == franchiseId;
+      return isSignedIn() && (
+        request.auth.token.stationFranchise == franchiseId ||
+        // MVP smoke: station email until custom claims are set on this user
+        request.auth.token.email == 'pos-station@doughboys.local'
+      );
     }
 
     // === PUBLIC CUSTOMER READS ===
@@ -126,9 +129,17 @@ service cloud.firestore {
       // when signed in and posEnabled (PIN verify client-side).
       // Do not allow list for random signed-in customers.
       match /staff/{staffId} {
-        allow get: if isHqOwner() || isFranchiseOwner(franchiseId) ||
-          (isSignedIn() && resource.data.get('posEnabled', false) == true);
-        allow list, create, update, delete: if isHqOwner() || isFranchiseOwner(franchiseId);
+        // POS must list to match PIN client-side; station claim scoped to franchise.
+        allow get, list: if isHqOwner() || isFranchiseOwner(franchiseId) ||
+          isPosStation(franchiseId);
+        allow create, update, delete: if isHqOwner() || isFranchiseOwner(franchiseId);
+      }
+      match /time_entries/{entryId} {
+        allow read, write: if isHqOwner() || isFranchiseOwner(franchiseId) ||
+          isPosStation(franchiseId);
+      }
+      match /shifts/{shiftId} {
+        allow read, write: if isHqOwner() || isFranchiseOwner(franchiseId);
       }
       match /drivers/{driverId} {
         allow read, write: if isHqOwner() || isFranchiseOwner(franchiseId);

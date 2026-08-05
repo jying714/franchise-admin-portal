@@ -41,17 +41,16 @@ class AdminDashboardScreen extends StatefulWidget {
 }
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
-  late final List<shared.DashboardSection> _sections;
-  late final List<shared.DashboardSection> _sidebarSections;
   int _selectedIndex = 0;
   bool _showMaintenanceBanner = false;
   bool _initializedFromKey = false;
 
+  List<shared.DashboardSection> get _sections => getAllDashboardSections();
+  List<shared.DashboardSection> get _sidebarSections => getSidebarSections();
+
   @override
   void initState() {
     super.initState();
-    _sections = getAllDashboardSections();
-    _sidebarSections = getSidebarSections();
 
     if (widget.initialSectionKey != null) {
       final index =

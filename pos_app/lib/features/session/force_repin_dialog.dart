@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart';
 
-import '../../core/utils/pin_hash.dart';
 import '../../providers/pin_session_provider.dart';
 
 /// Fresh PIN check for elevated actions without locking the station session.

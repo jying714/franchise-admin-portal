@@ -40,6 +40,10 @@ class _PosStaffRosterScreenState extends State<PosStaffRosterScreen> {
         ? existing!.id
         : DateTime.now().millisecondsSinceEpoch.toString();
 
+    final String? pinHash = result.newPin != null && result.newPin!.isNotEmpty
+        ? shared.PinHash.hashPin(result.newPin!)
+        : existing?.pinHash;
+
     final staff = shared.Staff(
       id: id,
       name: result.name,
@@ -50,7 +54,7 @@ class _PosStaffRosterScreenState extends State<PosStaffRosterScreen> {
       permissions: existing?.permissions ?? const <String>[],
       franchiseId: fid,
       hourlyPay: result.hourlyPay,
-      pinHash: existing?.pinHash,
+      pinHash: pinHash,
       posEnabled: result.posEnabled,
     );
 
@@ -214,6 +218,9 @@ class _StaffDraft {
   final bool active;
   final bool posEnabled;
 
+  /// Null = leave existing pinHash unchanged; non-null = replace.
+  final String? newPin;
+
   _StaffDraft({
     required this.name,
     required this.email,
@@ -222,6 +229,7 @@ class _StaffDraft {
     required this.hourlyPay,
     required this.active,
     required this.posEnabled,
+    this.newPin,
   });
 }
 
@@ -241,6 +249,8 @@ class _StaffEditorDialogState extends State<_StaffEditorDialog> {
   late final TextEditingController _email;
   late final TextEditingController _phone;
   late final TextEditingController _pay;
+  late final TextEditingController _pin;
+  late final TextEditingController _pinConfirm;
   late String _role;
   late bool _active;
   late bool _posEnabled;
@@ -255,6 +265,8 @@ class _StaffEditorDialogState extends State<_StaffEditorDialog> {
     _pay = TextEditingController(
       text: e?.hourlyPay != null ? e!.hourlyPay!.toStringAsFixed(2) : '',
     );
+    _pin = TextEditingController();
+    _pinConfirm = TextEditingController();
     _role = e?.role ?? 'cashier';
     if (!_roles.contains(_role)) {
       _role = 'cashier';
@@ -269,6 +281,8 @@ class _StaffEditorDialogState extends State<_StaffEditorDialog> {
     _email.dispose();
     _phone.dispose();
     _pay.dispose();
+    _pin.dispose();
+    _pinConfirm.dispose();
     super.dispose();
   }
 
@@ -356,6 +370,47 @@ class _StaffEditorDialogState extends State<_StaffEditorDialog> {
                 value: _posEnabled,
                 onChanged: (v) => setState(() => _posEnabled = v),
               ),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  widget.existing?.pinHash != null &&
+                          widget.existing!.pinHash!.isNotEmpty
+                      ? 'PIN is set — enter a new PIN only to change it'
+                      : 'Set a numeric PIN for station unlock / clock',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _pin,
+                obscureText: true,
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(8),
+                ],
+                decoration: const InputDecoration(
+                  labelText: 'PIN (optional)',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _pinConfirm,
+                obscureText: true,
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(8),
+                ],
+                decoration: const InputDecoration(
+                  labelText: 'Confirm PIN',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+              ),
             ],
           ),
         ),
@@ -382,6 +437,25 @@ class _StaffEditorDialogState extends State<_StaffEditorDialog> {
               );
               return;
             }
+            final pin = _pin.text.trim();
+            final pinConfirm = _pinConfirm.text.trim();
+            if (pin.isNotEmpty || pinConfirm.isNotEmpty) {
+              if (pin.length < 4) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content: Text('PIN must be at least 4 digits')),
+                );
+                return;
+              }
+              if (pin != pinConfirm) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content: Text('PIN confirmation does not match')),
+                );
+                return;
+              }
+            }
+
             Navigator.pop(
               context,
               _StaffDraft(
@@ -392,6 +466,7 @@ class _StaffEditorDialogState extends State<_StaffEditorDialog> {
                 hourlyPay: pay,
                 active: _active,
                 posEnabled: _posEnabled,
+                newPin: pin.isEmpty ? null : pin,
               ),
             );
           },

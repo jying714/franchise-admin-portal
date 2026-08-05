@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart';
 
 import '../../core/constants/pos_permissions.dart';
-import '../../core/utils/pin_hash.dart';
 import '../../providers/pin_session_provider.dart';
 
 /// Assign a delivery driver by verifying **that driver's** PIN.

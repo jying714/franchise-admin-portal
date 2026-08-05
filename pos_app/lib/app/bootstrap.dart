@@ -27,7 +27,10 @@ class PosBootstrap {
   /// Anonymous is MVP smoke only — replace with station/custom claims later.
   static Future<void> ensureStationAuth() async {
     final auth = FirebaseAuth.instance;
-    if (auth.currentUser != null) return;
+    if (auth.currentUser != null) {
+      await auth.currentUser!.getIdToken(true);
+      return;
+    }
 
     const email = String.fromEnvironment(
       'STATION_AUTH_EMAIL',
@@ -47,6 +50,8 @@ class PosBootstrap {
     }
 
     await auth.signInWithEmailAndPassword(email: email, password: password);
+    // Force claims/email onto the token used by Firestore rules.
+    await auth.currentUser?.getIdToken(true);
   }
 
   /// Bound franchise for this station. No silent default tenant.

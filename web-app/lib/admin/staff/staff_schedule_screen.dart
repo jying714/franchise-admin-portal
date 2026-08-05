@@ -1,7 +1,11 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/config/design_tokens.dart';
+
+// ignore: avoid_web_libraries_in_flutter
+import 'dart:html' as html show window;
 
 /// LAB.2 — week schedule editor (HQ). Assign staff to shifts via LaborFirestoreService.
 class StaffScheduleScreen extends StatefulWidget {
@@ -142,6 +146,139 @@ class _StaffScheduleScreenState extends State<StaffScheduleScreen> {
     }
   }
 
+  Future<void> _openPrintWeek() async {
+    final fid = _franchiseId;
+    if (fid.isEmpty || fid == 'unknown') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Select a franchise first')),
+      );
+      return;
+    }
+
+    List<shared.Shift> shifts;
+    try {
+      shifts = await _labor.getShiftsInRange(
+        fid,
+        rangeStart: _weekStart,
+        rangeEnd: _weekEnd,
+      );
+      shifts = shifts.where((s) => s.status != 'cancelled').toList();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not load shifts: $e')),
+      );
+      return;
+    }
+    if (!mounted) return;
+
+    final days = List.generate(7, (i) => _weekStart.add(Duration(days: i)));
+    final franchiseName =
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .currentAppName;
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        return Dialog.fullscreen(
+          child: Scaffold(
+            appBar: AppBar(
+              title: const Text('Print schedule'),
+              leading: IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.pop(ctx),
+              ),
+              actions: [
+                FilledButton.icon(
+                  onPressed: () {
+                    if (kIsWeb) {
+                      html.window.print();
+                    } else {
+                      ScaffoldMessenger.of(ctx).showSnackBar(
+                        const SnackBar(
+                          content: Text('Use browser Print (Ctrl+P) on web'),
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.print, size: 18),
+                  label: const Text('Print'),
+                ),
+                const SizedBox(width: 12),
+              ],
+            ),
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: DefaultTextStyle(
+                style: Theme.of(ctx).textTheme.bodyMedium!,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      franchiseName.isNotEmpty
+                          ? franchiseName
+                          : 'Staff schedule',
+                      style: Theme.of(ctx).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Week of ${_fmtDay(_weekStart)} – ${_fmtDay(_weekStart.add(const Duration(days: 6)))}',
+                      style: Theme.of(ctx).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 20),
+                    for (final day in days) ...[
+                      Text(
+                        _fmtDay(day),
+                        style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                      const SizedBox(height: 6),
+                      Builder(
+                        builder: (_) {
+                          final dayEnd = day.add(const Duration(days: 1));
+                          final dayShifts = shifts
+                              .where(
+                                (s) =>
+                                    !s.startAt.isBefore(day) &&
+                                    s.startAt.isBefore(dayEnd),
+                              )
+                              .toList()
+                            ..sort((a, b) => a.startAt.compareTo(b.startAt));
+                          if (dayShifts.isEmpty) {
+                            return const Padding(
+                              padding: EdgeInsets.only(bottom: 16),
+                              child: Text('  — no shifts —'),
+                            );
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                for (final s in dayShifts)
+                                  Text(
+                                    '  ${_fmtTime(s.startAt)}–${_fmtTime(s.endAt)}  '
+                                    '${s.staffName}  (${s.role})',
+                                  ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -175,6 +312,11 @@ class _StaffScheduleScreenState extends State<StaffScheduleScreen> {
             onPressed: () =>
                 setState(() => _weekStart = _mondayOf(DateTime.now())),
             icon: const Icon(Icons.today_outlined),
+          ),
+          IconButton(
+            tooltip: 'Print week',
+            onPressed: _openPrintWeek,
+            icon: const Icon(Icons.print_outlined),
           ),
           const SizedBox(width: 8),
         ],

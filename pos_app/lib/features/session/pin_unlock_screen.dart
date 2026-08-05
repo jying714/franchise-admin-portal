@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart';
 
-import '../../core/utils/pin_hash.dart';
 import '../../providers/pin_session_provider.dart';
 
 class PinUnlockScreen extends StatefulWidget {
@@ -46,13 +45,24 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
 
   Future<Staff?> _matchStaffByPin(String pin) async {
     final staffList = await _posFs.streamStaff(widget.franchiseId).first;
+    if (staffList.isEmpty) {
+      throw StateError(
+        'No staff loaded (check POS rules / stationFranchise claim)',
+      );
+    }
+
+    var withPin = 0;
     for (final staff in staffList) {
-      if (staff.status != 'active') continue;
+      if (staff.status.toLowerCase() != 'active') continue;
       if (!staff.posEnabled) continue;
       if (staff.pinHash == null || staff.pinHash!.isEmpty) continue;
+      withPin++;
       if (PinHash.verify(pin, staff.pinHash)) {
         return staff;
       }
+    }
+    if (withPin == 0) {
+      throw StateError('No active POS staff has a PIN set');
     }
     return null;
   }
@@ -91,8 +101,10 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
       session.unlock(matched);
       _pinController.clear();
       widget.onUnlocked?.call();
-    } catch (_) {
-      setState(() => _error = 'Unlock failed');
+    } on StateError catch (e) {
+      setState(() => _error = e.message);
+    } catch (e) {
+      setState(() => _error = 'Unlock failed: $e');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -155,8 +167,10 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
       _pinFocus.requestFocus();
     } on StateError catch (e) {
       setState(() => _error = e.message);
-    } catch (_) {
-      setState(() => _error = clockIn ? 'Clock in failed' : 'Clock out failed');
+    } catch (e) {
+      setState(() {
+        _error = clockIn ? 'Clock in failed: $e' : 'Clock out failed: $e';
+      });
     } finally {
       if (mounted) setState(() => _busy = false);
     }

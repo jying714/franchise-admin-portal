@@ -127,7 +127,7 @@ final List<shared.DashboardSection> sectionRegistry = [
         ),
       ),
     ),
-    sidebarOrder: 10,
+    sidebarOrder: 12,
     showInSidebar: true,
   ),
   shared.DashboardSection(
@@ -135,7 +135,7 @@ final List<shared.DashboardSection> sectionRegistry = [
     title: 'Menu Item Editor',
     icon: Icons.edit_note_rounded,
     builder: (_) => const MenuItemEditorScreen(),
-    sidebarOrder: 11,
+    sidebarOrder: 99,
     showInSidebar: false,
   ),
 ];
