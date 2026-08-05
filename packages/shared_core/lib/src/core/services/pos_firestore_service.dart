@@ -55,6 +55,19 @@ class PosFirestoreService {
     return Staff.fromFirestore(doc.data()!, doc.id);
   }
 
+  /// One-shot staff list from server (PIN match must not use stale cache).
+  Future<List<Staff>> getStaffList(
+    String franchiseId, {
+    bool fromServer = true,
+  }) async {
+    final snap = await _staffCol(franchiseId).get(
+      fromServer
+          ? const GetOptions(source: Source.server)
+          : const GetOptions(source: Source.serverAndCache),
+    );
+    return snap.docs.map((d) => Staff.fromFirestore(d.data(), d.id)).toList();
+  }
+
   Future<void> saveStaff(String franchiseId, Staff staff) async {
     await _staffCol(franchiseId).doc(staff.id).set(
           staff.toFirestore(),

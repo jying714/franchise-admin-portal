@@ -1,7 +1,11 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/config/design_tokens.dart';
+
+// ignore: avoid_web_libraries_in_flutter
+import 'dart:html' as html show window;
 
 /// LAB.5 — hours worked per employee for a date range.
 class StaffHoursSummaryScreen extends StatefulWidget {
@@ -109,12 +113,14 @@ class _StaffHoursSummaryScreenState extends State<StaffHoursSummaryScreen> {
             openPunches: e.isOpen ? 1 : 0,
             hours: hours,
             hourlyPay: pay,
+            entries: [e],
           );
         } else {
           map[e.staffId] = existing.copyWith(
             punches: existing.punches + 1,
             openPunches: existing.openPunches + (e.isOpen ? 1 : 0),
             hours: existing.hours + hours,
+            entries: [...existing.entries, e],
           );
         }
       }
@@ -135,6 +141,98 @@ class _StaffHoursSummaryScreenState extends State<StaffHoursSummaryScreen> {
         _rows = const [];
       });
     }
+  }
+
+  String _fmtDateTime(DateTime d) {
+    final h = d.hour.toString().padLeft(2, '0');
+    final m = d.minute.toString().padLeft(2, '0');
+    return '${_fmtDate(d)} $h:$m';
+  }
+
+  Future<void> _printTimesheet(_EmployeeHours row) async {
+    final franchiseName =
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .currentAppName;
+    final sorted = List<shared.TimeEntry>.from(row.entries)
+      ..sort((a, b) => a.clockInAt.compareTo(b.clockInAt));
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        return Dialog.fullscreen(
+          child: Scaffold(
+            appBar: AppBar(
+              title: Text('Timesheet — ${row.staffName}'),
+              leading: IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.pop(ctx),
+              ),
+              actions: [
+                FilledButton.icon(
+                  onPressed: () {
+                    if (kIsWeb) {
+                      html.window.print();
+                    } else {
+                      ScaffoldMessenger.of(ctx).showSnackBar(
+                        const SnackBar(
+                          content: Text('Use browser Print (Ctrl+P) on web'),
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.print, size: 18),
+                  label: const Text('Print'),
+                ),
+                const SizedBox(width: 12),
+              ],
+            ),
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    franchiseName.isNotEmpty ? franchiseName : 'Timesheet',
+                    style: Theme.of(ctx).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    row.staffName,
+                    style: Theme.of(ctx).textTheme.titleLarge,
+                  ),
+                  Text(
+                    '${_fmtDate(_rangeStart)} → ${_fmtDate(_rangeEnd.subtract(const Duration(days: 1)))}',
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Total: ${_fmtHours(row.hours)} h'
+                    '${row.hourlyPay != null ? '  ·  ~\$${(row.hours * row.hourlyPay!).toStringAsFixed(2)}' : ''}',
+                    style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Divider(),
+                  for (final e in sorted) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Text(
+                        '${_fmtDateTime(e.clockInAt)} → '
+                        '${e.clockOutAt != null ? _fmtDateTime(e.clockOutAt!) : "OPEN"}'
+                        '  ·  ${_fmtHours(e.workedHours)} h'
+                        '${e.isOpen ? " (open)" : ""}',
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -225,23 +323,36 @@ class _StaffHoursSummaryScreenState extends State<StaffHoursSummaryScreen> {
                                   '\$${r.hourlyPay!.toStringAsFixed(2)}/hr',
                               ].join(' · '),
                             ),
-                            trailing: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.end,
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text(
-                                  '${_fmtHours(r.hours)} h',
-                                  style: theme.textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                if (est != null)
-                                  Text(
-                                    '~\$${est.toStringAsFixed(2)}',
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: theme.colorScheme.onSurfaceVariant,
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      '${_fmtHours(r.hours)} h',
+                                      style:
+                                          theme.textTheme.titleSmall?.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                      ),
                                     ),
-                                  ),
+                                    if (est != null)
+                                      Text(
+                                        '~\$${est.toStringAsFixed(2)}',
+                                        style:
+                                            theme.textTheme.bodySmall?.copyWith(
+                                          color: theme
+                                              .colorScheme.onSurfaceVariant,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                IconButton(
+                                  tooltip: 'Print timesheet',
+                                  icon: const Icon(Icons.print_outlined),
+                                  onPressed: () => _printTimesheet(r),
+                                ),
                               ],
                             ),
                           );
@@ -288,6 +399,7 @@ class _EmployeeHours {
   final int openPunches;
   final double hours;
   final double? hourlyPay;
+  final List<shared.TimeEntry> entries;
 
   const _EmployeeHours({
     required this.staffId,
@@ -296,12 +408,14 @@ class _EmployeeHours {
     required this.openPunches,
     required this.hours,
     this.hourlyPay,
+    this.entries = const [],
   });
 
   _EmployeeHours copyWith({
     int? punches,
     int? openPunches,
     double? hours,
+    List<shared.TimeEntry>? entries,
   }) {
     return _EmployeeHours(
       staffId: staffId,
@@ -310,6 +424,7 @@ class _EmployeeHours {
       openPunches: openPunches ?? this.openPunches,
       hours: hours ?? this.hours,
       hourlyPay: hourlyPay,
+      entries: entries ?? this.entries,
     );
   }
 }

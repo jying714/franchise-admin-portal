@@ -43,28 +43,36 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
     super.dispose();
   }
 
-  Future<Staff?> _matchStaffByPin(String pin) async {
-    final staffList = await _posFs.streamStaff(widget.franchiseId).first;
+  Future<Staff> _matchStaffByPin(String pin) async {
+    final staffList = await _posFs.getStaffList(
+      widget.franchiseId,
+      fromServer: true,
+    );
     if (staffList.isEmpty) {
       throw StateError(
-        'No staff loaded (check POS rules / stationFranchise claim)',
+        'No staff loaded for ${widget.franchiseId} (rules / claims)',
       );
     }
 
-    var withPin = 0;
+    final checkedNames = <String>[];
     for (final staff in staffList) {
       if (staff.status.toLowerCase() != 'active') continue;
       if (!staff.posEnabled) continue;
-      if (staff.pinHash == null || staff.pinHash!.isEmpty) continue;
-      withPin++;
-      if (PinHash.verify(pin, staff.pinHash)) {
+      final hash = staff.pinHash?.trim();
+      if (hash == null || hash.isEmpty) continue;
+      checkedNames.add(staff.name);
+      if (PinHash.verify(pin, hash)) {
         return staff;
       }
     }
-    if (withPin == 0) {
-      throw StateError('No active POS staff has a PIN set');
+    if (checkedNames.isEmpty) {
+      throw StateError(
+        'No active POS staff has a PIN set (${staffList.length} staff loaded)',
+      );
     }
-    return null;
+    throw StateError(
+      'Invalid PIN (checked ${checkedNames.length}: ${checkedNames.join(", ")})',
+    );
   }
 
   Future<void> _submit() async {
@@ -82,13 +90,6 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
 
     try {
       final matched = await _matchStaffByPin(pin);
-
-      if (matched == null) {
-        setState(() => _error = 'Invalid PIN');
-        _pinController.clear();
-        _pinFocus.requestFocus();
-        return;
-      }
 
       if (!mounted) return;
       final session = Provider.of<PinSessionProvider>(context, listen: false);
@@ -124,12 +125,6 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
 
     try {
       final matched = await _matchStaffByPin(pin);
-      if (matched == null) {
-        setState(() => _error = 'Invalid PIN');
-        _pinController.clear();
-        _pinFocus.requestFocus();
-        return;
-      }
 
       if (clockIn) {
         final open = await _labor.getOpenEntryForStaff(
