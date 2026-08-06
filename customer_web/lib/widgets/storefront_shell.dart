@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 
 import '../features/auth/sign_in_screen.dart';
-import '../features/home/storefront_home_screen.dart';
+import '../features/storefront/storefront_landing.dart';
 import '../features/orders/order_history_screen.dart';
 
 /// Wave 1 shell: floating slim top bar + nested navigator body.
@@ -55,7 +55,7 @@ class _StorefrontShellState extends State<StorefrontShell> {
             onGenerateInitialRoutes: (navigator, initialRoute) {
               return [
                 MaterialPageRoute<void>(
-                  builder: (_) => const StorefrontHomeScreen(),
+                  builder: (_) => const StorefrontLanding(),
                   settings: const RouteSettings(name: '/'),
                 ),
               ];
@@ -67,124 +67,120 @@ class _StorefrontShellState extends State<StorefrontShell> {
           SafeArea(
             bottom: false,
             child: Align(
-              alignment: Alignment.topCenter,
+              alignment: Alignment.topRight,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                child: FractionallySizedBox(
-                  widthFactor: 0.33,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      minWidth: 280,
-                      maxWidth: 420,
-                    ),
-                    child: Material(
-                      elevation: 3,
-                      borderRadius: BorderRadius.circular(28),
-                      color: scheme.surface.withValues(alpha: 0.96),
-                      child: SizedBox(
-                        height: 44,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Row(
-                            children: [
-                              if (logoUrl != null && logoUrl.isNotEmpty) ...[
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(4),
-                                  child: CachedNetworkImage(
-                                    imageUrl: logoUrl,
-                                    height: 28,
-                                    width: 28,
-                                    fit: BoxFit.cover,
-                                    errorWidget: (_, _, _) =>
-                                        const Icon(Icons.storefront, size: 22),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                              ],
-                              Flexible(
-                                child: Text(
-                                  name,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.titleSmall,
+                padding: const EdgeInsets.fromLTRB(12, 8, 16, 0),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minWidth: 280,
+                    maxWidth: 420,
+                  ),
+                  child: Material(
+                    elevation: 3,
+                    borderRadius: BorderRadius.circular(28),
+                    color: scheme.surface.withValues(alpha: 0.96),
+                    child: SizedBox(
+                      height: 44,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Row(
+                          children: [
+                            if (logoUrl != null && logoUrl.isNotEmpty) ...[
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: CachedNetworkImage(
+                                  imageUrl: logoUrl,
+                                  height: 28,
+                                  width: 28,
+                                  fit: BoxFit.cover,
+                                  errorWidget: (_, _, _) =>
+                                      const Icon(Icons.storefront, size: 22),
                                 ),
                               ),
-                              const Spacer(),
-                              TextButton(
-                                onPressed: _scrollToMenu,
-                                child: const Text('Order now'),
-                              ),
-                              Consumer<User?>(
-                                builder: (context, user, _) {
-                                  if (user == null) {
-                                    return IconButton(
-                                      tooltip: 'Sign in',
-                                      icon: const Icon(Icons.person_outline),
-                                      iconSize: 22,
-                                      onPressed: () {
-                                        Navigator.of(
-                                          context,
-                                          rootNavigator: true,
-                                        ).push(
-                                          MaterialPageRoute<void>(
-                                            builder: (_) =>
-                                                const SignInScreen(),
-                                          ),
-                                        );
-                                      },
-                                    );
-                                  }
-                                  return PopupMenuButton<String>(
-                                    tooltip: 'Account',
-                                    onSelected: (value) async {
-                                      if (value == 'orders') {
-                                        _navKey.currentState?.push(
-                                          MaterialPageRoute<void>(
-                                            builder: (_) =>
-                                                const OrderHistoryScreen(),
-                                          ),
-                                        );
-                                      } else if (value == 'signOut') {
-                                        await FirebaseAuth.instance.signOut();
-                                        if (!context.mounted) return;
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text('Signed out'),
-                                          ),
-                                        );
-                                      }
-                                    },
-                                    itemBuilder: (context) => [
-                                      PopupMenuItem<String>(
-                                        enabled: false,
-                                        child: Text(
-                                          user.email ?? 'Signed in',
-                                          style: Theme.of(
-                                            context,
-                                          ).textTheme.bodySmall,
-                                        ),
-                                      ),
-                                      const PopupMenuItem<String>(
-                                        value: 'orders',
-                                        child: Text('My orders'),
-                                      ),
-                                      const PopupMenuItem<String>(
-                                        value: 'signOut',
-                                        child: Text('Sign out'),
-                                      ),
-                                    ],
-                                    child: const Padding(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 4,
-                                      ),
-                                      child: Icon(Icons.person, size: 22),
-                                    ),
-                                  );
-                                },
-                              ),
+                              const SizedBox(width: 8),
                             ],
-                          ),
+                            Flexible(
+                              child: Text(
+                                name,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.titleSmall,
+                              ),
+                            ),
+                            const Spacer(),
+                            TextButton(
+                              onPressed: _scrollToMenu,
+                              child: const Text('Order now'),
+                            ),
+                            Consumer<User?>(
+                              builder: (context, user, _) {
+                                if (user == null) {
+                                  return IconButton(
+                                    tooltip: 'Sign in',
+                                    icon: const Icon(Icons.person_outline),
+                                    iconSize: 22,
+                                    onPressed: () {
+                                      Navigator.of(
+                                        context,
+                                        rootNavigator: true,
+                                      ).push(
+                                        MaterialPageRoute<void>(
+                                          builder: (_) => const SignInScreen(),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                }
+                                return PopupMenuButton<String>(
+                                  tooltip: 'Account',
+                                  onSelected: (value) async {
+                                    if (value == 'orders') {
+                                      _navKey.currentState?.push(
+                                        MaterialPageRoute<void>(
+                                          builder: (_) =>
+                                              const OrderHistoryScreen(),
+                                        ),
+                                      );
+                                    } else if (value == 'signOut') {
+                                      await FirebaseAuth.instance.signOut();
+                                      if (!context.mounted) return;
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Signed out'),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  itemBuilder: (context) => [
+                                    PopupMenuItem<String>(
+                                      enabled: false,
+                                      child: Text(
+                                        user.email ?? 'Signed in',
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall,
+                                      ),
+                                    ),
+                                    const PopupMenuItem<String>(
+                                      value: 'orders',
+                                      child: Text('My orders'),
+                                    ),
+                                    const PopupMenuItem<String>(
+                                      value: 'signOut',
+                                      child: Text('Sign out'),
+                                    ),
+                                  ],
+                                  child: const Padding(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                    ),
+                                    child: Icon(Icons.person, size: 22),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
                         ),
                       ),
                     ),
