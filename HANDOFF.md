@@ -1,7 +1,7 @@
 # HANDOFF.md — Agent Context & Project Status
 
-**Last Updated**: August 4, 2026 (~23:30 CDT — inventory + labor COMPLETE)  
-**Active branch**: **`main`**  
+**Last Updated**: August 5, 2026 (~22:50 CDT)  
+**Active branch**: **`main`** (Modern template may live on `feat/customer-web-template-modern-v1` until merge)  
 **Repo**: https://github.com/jying714/franchise-admin-portal  
 **Local path**: `C:\\projects\\franchise-admin-portal`  
 **Firebase**: `doughboyspizzeria-2b3d2`  
@@ -13,16 +13,19 @@ Prefer **STATUS.md + this handoff + `docs/plans/*`** over agent memory.
 
 ## 1. Where we are
 
-**main:** Order path + storefront shell Wave 1 + inventory v1 + staff/labor v1 + POS software pilot.
+**main:** Order path + storefront shell Wave 1 + inventory v1 + staff/labor v1 + station claims + POS clock gates.
 
-**Operator (Doughboys):** Soft parallel POS vs Owner.com is the **next** operational step. **Hard swap** gates (inventory + labor) are **implemented** — remaining work is burn-in, claims hardening, and hardware.
+**Modern template:** Full landing (hero, Featured strip, category menu parity, cart/checkout, footer) + HQ `templateId` picker. Resolver: `StorefrontLanding` → default vs `ModernStorefrontHome`.
 
-| Plan | Role | State |
-|------|------|--------|
-| `docs/plans/mvp-ops-inventory-v1.md` | Qty when enabled; 0 = 86 all channels | **COMPLETE** |
-| `docs/plans/mvp-ops-staff-labor-v1.md` | Schedule, print, clock, hours | **COMPLETE** |
-| `docs/plans/customer-web-storefront-shell-v1.md` | Guest shell | **COMPLETE** |
-| `docs/plans/home-page-composition-engine-v1.md` | HQ home studio | Deferred |
+**Operator:** Soft parallel / burn-in is the next operational step. Cutover gates implemented.
+
+| Plan | State |
+|------|--------|
+| `docs/plans/mvp-ops-inventory-v1.md` | **COMPLETE** |
+| `docs/plans/mvp-ops-staff-labor-v1.md` | **COMPLETE** |
+| `docs/plans/customer-web-storefront-shell-v1.md` | **COMPLETE** |
+| `docs/plans/customer-web-template-modern-v1.md` | **COMPLETE** |
+| `docs/plans/home-page-composition-engine-v1.md` | Deferred |
 
 ---
 
@@ -30,14 +33,13 @@ Prefer **STATUS.md + this handoff + `docs/plans/*`** over agent memory.
 
 | Surface | Path |
 |---------|------|
-| Storefront shell / home | `customer_web/lib/widgets/storefront_shell.dart` · `features/home/storefront_home_screen.dart` |
-| Customize / cart / checkout | `customer_web/lib/features/menu|cart|checkout/` |
-| Inventory ledger | `packages/shared_core/.../inventory_ledger.dart` · `MenuItem.isSellable` |
-| Labor models/service | `shift.dart` · `time_entry.dart` · `labor_firestore_service.dart` · `pin_hash.dart` |
-| Admin staff | `web-app/lib/admin/staff/` (roster, schedule, hours) |
-| POS clock | `pos_app/lib/features/session/pin_unlock_screen.dart` |
-| POS | `pos_app/` |
-| HQ settings | `web-app/lib/admin/hq_owner/` |
+| Template resolver | `customer_web/lib/features/storefront/storefront_landing.dart` |
+| Modern landing | `customer_web/lib/features/storefront/templates/modern/modern_storefront_home.dart` |
+| Default home / shell | `features/home/storefront_home_screen.dart` · `widgets/storefront_shell.dart` |
+| HQ Website / templateId | `web-app/lib/admin/hq_owner/screens/website_settings_panel.dart` |
+| Inventory | `MenuItem.isSellable` · InventoryLedger |
+| Labor | `labor_firestore_service.dart` · Admin `staff/` · POS `pin_unlock_screen.dart` |
+| PinHash | `packages/shared_core/.../pin_hash.dart` |
 
 ```powershell
 cd C:\projects\franchise-admin-portal
@@ -50,22 +52,22 @@ git pull origin main
 ## 3. Locks
 
 - Hard Owner.com cutover ≠ soft parallel  
-- Inventory: opt-in qty only; zero blocks sell-through (`isSellable`)  
-- Labor: Admin schedule + POS clock + hours/timesheet print shipped  
-- Station Auth: prefer `stationFranchise` claim; email smoke gate is temporary  
-- Storefront Wave 2 studio deferred  
-- Growth (loyalty, push, upsells) after soft stability  
+- Inventory: opt-in qty; zero blocks sell-through  
+- Labor: Admin schedule + POS clock + hours/timesheet  
+- Unlock requires open punch; off-shift clock-in needs manager PIN  
+- `isPosStation` uses `stationFranchise` claim only  
+- Modern is optional via `templateId`; default layout unchanged  
+- Growth after soft stability  
 
 ---
 
-## 4. Next coding / ops focus
+## 4. Next focus
 
-1. **Push/deploy** production rules + web hosting if not already.  
-2. **Station claims** — set `stationFranchise` on station user; drop email clause from `isPosStation`.  
-3. **Manager burn-in** — 86 item, clock week, print schedule/timesheet, full guest order.  
-4. **Hardware** when devices arrive.  
-5. **Growth** only after soft stability.
+1. Merge Modern feature branch if still open.  
+2. Manager burn-in checklist.  
+3. Soft parallel → hard cutover on sign-off.  
+4. No Wave 2 / loyalty until soft is stable.
 
 ---
 
-**Bottom line:** Guest shell + inventory + labor are on **main**. MVP path = soft parallel burn-in → hard Owner.com off when manager signs off.
+**Bottom line:** Ops gates + Modern template shipped. MVP path = burn-in → soft parallel → hard Owner.com off.
