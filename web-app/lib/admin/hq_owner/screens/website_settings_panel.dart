@@ -34,6 +34,9 @@ class _WebsiteSettingsPanelState extends State<WebsiteSettingsPanel> {
   String? _loadError;
   bool _uploadingHero = false;
 
+  /// config/storefront.templateId — default | modern
+  String _templateId = 'default';
+
   @override
   void dispose() {
     _heroUrl.dispose();
@@ -130,6 +133,9 @@ class _WebsiteSettingsPanelState extends State<WebsiteSettingsPanel> {
       _subheadline.text = (data['heroSubheadline'] ?? '').toString();
       _photoUrl.text = (data['storefrontPhotoUrl'] ?? '').toString();
       _story.text = (data['storyBody'] ?? '').toString();
+      final rawTemplate = (data['templateId'] ?? 'default').toString().trim();
+      _templateId =
+          rawTemplate.toLowerCase() == 'modern' ? 'modern' : 'default';
     } catch (e) {
       _loadError = '$e';
     }
@@ -159,6 +165,7 @@ class _WebsiteSettingsPanelState extends State<WebsiteSettingsPanel> {
         'heroSubheadline': _subheadline.text.trim(),
         'storefrontPhotoUrl': _photoUrl.text.trim(),
         'storyBody': _story.text.trim(),
+        'templateId': _templateId,
         'updatedAt': DateTime.now().toIso8601String(),
       }, SetOptions(merge: true));
 
@@ -307,6 +314,36 @@ class _WebsiteSettingsPanelState extends State<WebsiteSettingsPanel> {
           'Stored at franchises/{id}/config/storefront for customer_web.',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 12),
+        InputDecorator(
+          decoration: const InputDecoration(
+            labelText: 'Storefront template',
+            border: OutlineInputBorder(),
+            isDense: true,
+            helperText:
+                'Default = current plain layout. Modern = Pizzon-style landing.',
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              isExpanded: true,
+              value: _templateId,
+              items: const [
+                DropdownMenuItem(
+                  value: 'default',
+                  child: Text('Default'),
+                ),
+                DropdownMenuItem(
+                  value: 'modern',
+                  child: Text('Modern'),
+                ),
+              ],
+              onChanged: (v) {
+                if (v == null) return;
+                setState(() => _templateId = v);
+              },
+            ),
           ),
         ),
         if (_loadError != null) ...[

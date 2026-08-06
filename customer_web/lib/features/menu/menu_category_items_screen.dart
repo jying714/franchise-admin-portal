@@ -172,6 +172,7 @@ class _MenuCategoryItemsScreenState extends State<MenuCategoryItemsScreen> {
                       _dayClosed
                           ? 'Closed today. You can browse the menu; ordering resumes next open day.'
                           : 'Currently closed. Hours today: ${_open.format(context)}–${_close.format(context)}. You can browse; checkout is blocked until open.',
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onErrorContainer,
                       ),
