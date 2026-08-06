@@ -40,11 +40,16 @@ class LaborFirestoreService {
     String franchiseId, {
     required DateTime rangeStart,
     required DateTime rangeEnd,
+    bool fromServer = false,
   }) async {
     final snap = await _shiftsCol(franchiseId)
         .where('startAt', isGreaterThanOrEqualTo: rangeStart.toIso8601String())
         .where('startAt', isLessThan: rangeEnd.toIso8601String())
-        .get();
+        .get(
+          fromServer
+              ? const GetOptions(source: Source.server)
+              : const GetOptions(source: Source.serverAndCache),
+        );
     final list =
         snap.docs.map((d) => Shift.fromFirestore(d.data(), d.id)).toList();
     list.sort((a, b) => a.startAt.compareTo(b.startAt));
@@ -73,6 +78,37 @@ class LaborFirestoreService {
 
   Future<void> deleteShift(String franchiseId, String shiftId) async {
     await _shiftsCol(franchiseId).doc(shiftId).delete();
+  }
+
+  /// Active scheduled shift covering [at] for [staffId], with optional grace.
+  /// Always reads shifts from the server so POS sees HQ schedule edits live.
+  Future<Shift?> findCurrentShiftForStaff(
+    String franchiseId,
+    String staffId, {
+    DateTime? at,
+    Duration grace = const Duration(minutes: 15),
+  }) async {
+    final now = at ?? DateTime.now();
+    final dayStart = DateTime(now.year, now.month, now.day)
+        .subtract(const Duration(days: 1));
+    final dayEnd =
+        DateTime(now.year, now.month, now.day).add(const Duration(days: 2));
+    final shifts = await getShiftsInRange(
+      franchiseId,
+      rangeStart: dayStart,
+      rangeEnd: dayEnd,
+      fromServer: true,
+    );
+    for (final s in shifts) {
+      if (s.staffId != staffId) continue;
+      if (s.status.toLowerCase() == 'cancelled') continue;
+      final windowStart = s.startAt.subtract(grace);
+      final windowEnd = s.endAt.add(grace);
+      if (!now.isBefore(windowStart) && now.isBefore(windowEnd)) {
+        return s;
+      }
+    }
+    return null;
   }
 
   // --- Time entries (POS clock) ---

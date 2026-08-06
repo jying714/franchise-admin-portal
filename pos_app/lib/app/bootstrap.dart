@@ -28,7 +28,12 @@ class PosBootstrap {
   static Future<void> ensureStationAuth() async {
     final auth = FirebaseAuth.instance;
     if (auth.currentUser != null) {
-      await auth.currentUser!.getIdToken(true);
+      final token = await auth.currentUser!.getIdTokenResult(true);
+      // ignore: avoid_print
+      print(
+        '[POS] station claims stationFranchise='
+        '${token.claims?['stationFranchise']} email=${token.claims?['email']}',
+      );
       return;
     }
 
@@ -52,6 +57,12 @@ class PosBootstrap {
     await auth.signInWithEmailAndPassword(email: email, password: password);
     // Force claims/email onto the token used by Firestore rules.
     await auth.currentUser?.getIdToken(true);
+    await auth.currentUser!.getIdToken(true);
+    final token = await auth.currentUser?.getIdTokenResult(true);
+    print(
+      '[POS] station claims stationFranchise='
+      '${token?.claims?['stationFranchise']} email=${token?.claims?['email']}',
+    );
   }
 
   /// Bound franchise for this station. No silent default tenant.
