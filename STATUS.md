@@ -1,8 +1,8 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: August 5, 2026 (~22:50 CDT)  
+**Last Updated**: August 6, 2026 (~20:40 CDT)  
 **Hardware**: MINISFORUM AI X1 Pro-470  
-**Branch**: **`main`** (feature work: `feat/customer-web-template-modern-v1` for Modern template if not yet merged)  
+**Branch**: **`main`**  
 **Firebase**: `doughboyspizzeria-2b3d2`  
 **Storefront**: https://franchise-storefront.web.app  
 **Admin/HQ**: franchisehq.io
@@ -17,14 +17,15 @@
 |------|--------|
 | Order path (web/mobile/POS software) | **On main** |
 | Storefront shell Wave 1 | **COMPLETE** |
-| **Modern storefront template** | **COMPLETE** (`templateId: modern`) — hero, Featured, category→items→cart→checkout, footer, HQ picker |
+| **Modern storefront template** | **COMPLETE** |
+| **Modern polish** | **COMPLETE** — cart side sheet + badge, branded menu/cart lines, in-shell checkout scroll, story band + HQ story photo upload, Featured 4-across |
 | Home composition engine Wave 2 | **Deferred** |
 | **Inventory v1 (MVP-Ops)** | **COMPLETE on main** |
 | **Staff/labor v1 (MVP-Ops)** | **COMPLETE on main** |
-| Station `stationFranchise` claims | **COMPLETE** (email smoke gate removed) |
-| POS clock gates | **COMPLETE** — unlock requires clock-in; off-shift needs manager override; live schedule server read |
+| Station `stationFranchise` claims | **COMPLETE** |
+| POS clock gates | **COMPLETE** — unlock requires clock-in; off-shift manager override; server schedule read |
 | POS hardware · iOS Mac | **In transit** |
-| Soft parallel / manager burn-in | **Active** — ops validation before hard Owner.com off |
+| Soft parallel / manager burn-in | **Active** |
 
 ---
 
@@ -44,11 +45,11 @@ Soft parallel OK. Hard swap after manager burn-in sign-off.
 | `config/storefront.templateId` | Layout |
 |--------------------------------|--------|
 | `default` (or missing) | Plain MVP `StorefrontHomeScreen` |
-| `modern` | Pizzon-inspired Modern landing + full order path |
+| `modern` | Modern landing + full order path + branded chrome |
 
-HQ: Restaurant settings → Website → **Storefront template** dropdown.
-
-Authority: `docs/plans/customer-web-template-modern-v1.md`
+HQ: Restaurant settings → Website → **Storefront template**.  
+Cart: shell **side sheet** (`StorefrontShell.openCartSheet`); checkout in-shell.  
+Authority: `docs/plans/customer-web-template-modern-v1.md` · `customer_web/README.md`
 
 ---
 

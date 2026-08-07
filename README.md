@@ -1,68 +1,110 @@
-# Doughboys Pizzeria — Franchise Platform
+# Franchise Admin Portal — Multi-tenant restaurant SaaS
 
-**Monorepo** for **Web Admin Portal** + **Mobile Customer App** + **Shared Core**.
+Flutter **monorepo** for franchise-scoped ordering and ops: HQ/Admin web, customer web + mobile, and station POS.
 
-- **Web**: `franchisehq.io` — Admin dashboard (Flutter Web)
-- **Mobile**: Customer ordering app (Flutter Android/iOS, one published binary)
-- **Backend**: Firebase (Firestore, Auth, Functions, Hosting)
-- **Shared Core**: Single source of truth for models, providers, configs, and services
+| Surface | Path | URL / notes |
+|---------|------|-------------|
+| **Admin / HQ** | `web-app/` | franchisehq.io |
+| **Customer storefront** | `customer_web/` | https://franchise-storefront.web.app · `/f/{franchiseId}` |
+| **Customer mobile** | `mobile_app/` | Android / iOS |
+| **Station POS** | `pos_app/` | Android pilot; station claims |
+| **Shared domain** | `packages/shared_core/` | Models, Firestore services, branding |
+| **Orchestrator** | `orchestrator/` | Local multi-agent (proposal-only) |
 
----
-
-## Current Status (July 20, 2026)
-
-**P2 – White-Label & Scalability: COMPLETE**  
-**P2.5 – Web-App Cleanup Sprint: COMPLETE**  
-**Config Unification: COMPLETE** (All configs now in `shared_core`)
-
-### Major Achievements
-- Critical auth handoff & persistent spinner resolved
-- FranchiseProvider + shared_core unification complete
-- Large-scale cleanup of duplicated code, models, and UI issues
-- `hq_owner` dashboard functional with correct franchise resolution
-- Core ordering flow stable and device-tested
-- All config files (`app_config`, `feature_config`, `branding_config`, `design_tokens`, `ui_config`) unified into `shared_core`
-- Dynamic theming and hybrid single/multi-location foundations in place
-
-**Next Phase**: Phase 0 (Infrastructure & Documentation) → **Phase 1: Core Config Scoping & Dynamic Branding** (Firestore per-franchise config)
+**Backend:** Firebase (Auth, Firestore, Functions, Hosting, Storage)  
+**Repo:** https://github.com/jying714/franchise-admin-portal  
+**Primary branch:** `main`
 
 ---
 
-## Project Structure
-franchise_platform/
-├── shared_core/          # Single source of truth (models, providers, configs)
-├── web-app/              # Admin dashboards (Flutter Web)
-├── mobile_app/           # Customer ordering app (Android + iOS)
-├── docs/                 # Architecture and documentation
-├── prompts/              # AI agent prompts (when multi-agent active)
+## Current status (August 6, 2026)
+
+Prefer **`STATUS.md`** and **`HANDOFF.md`** for the live checklist.
+
+**On main (high level):**
+
+- Franchise-scoped config & live branding  
+- HQ onboarding, Design & Branding, menu modifier system  
+- Stripe Connect checkout (web/mobile)  
+- **customer_web** shell + **Modern** template (optional `templateId`) + cart side sheet  
+- **Inventory v1** + **Staff/labor v1** (Admin schedule/hours; POS clock + PIN)  
+- Station `stationFranchise` claims hardening  
+- Soft release / **manager burn-in** before hard Owner.com cutover  
+
+**Deferred:** Home composition Wave 2, growth (promos/push/loyalty), POS hardware in transit.
+
+---
+
+## Project structure
+
+```text
+franchise-admin-portal/
+├── packages/shared_core/     # Single source of domain models & services
+├── web-app/                  # HQ Owner + Admin (Flutter web)
+├── customer_web/             # Public storefront (Flutter web)
+├── mobile_app/               # Customer app
+├── pos_app/                  # Counter station POS
+├── orchestrator/             # Local agent CLI (proposal-only)
+├── docs/                     # Architecture, plans, slices
+├── STATUS.md                 # Live “what’s done”
+├── HANDOFF.md                # Session handoff
 └── ROADMAP.md
+```
 
-## Key Architecture Documents
-- `ARCHITECTURE.md` — Overall system design
-- `docs/architecture/firestore-per-franchise-config.md` ← **Authoritative Config & Firestore Schema**
-- `DASHBOARDS.md` — Dashboard roles and flows
-- `MOBILE_DYNAMIC.md` — Dynamic mobile UI strategy
-- `ROADMAP.md` — Current priorities and milestones
-- `AGENT_SYSTEM.md` — Multi-agent governance
+---
 
-## Quick Start
-```bash
+## App READMEs
+
+| Package | Doc |
+|---------|-----|
+| Storefront | [`customer_web/README.md`](customer_web/README.md) |
+| POS | [`pos_app/README.md`](pos_app/README.md) |
+| Admin/HQ | [`web-app/README.md`](web-app/README.md) |
+| Mobile | [`mobile_app/README.md`](mobile_app/README.md) |
+| Shared core | [`packages/shared_core/README.md`](packages/shared_core/README.md) |
+| Agents | [`orchestrator/README.md`](orchestrator/README.md) |
+
+---
+
+## Architecture docs
+
+- `docs/architecture/firestore-per-franchise-config.md` — per-franchise config  
+- `docs/DASHBOARDS.md` · `docs/MOBILE_DYNAMIC.md` · `docs/DECISIONS.md`  
+- `docs/plans/*` — inventory, labor, storefront shell, Modern template  
+- `AGENT_SYSTEM.md` · `orchestrator/SCOPE_CARD.md` — agent safety  
+
+---
+
+## Quick start
+
+```powershell
 git clone https://github.com/jying714/franchise-admin-portal.git
-cd franchise_platform
+cd franchise-admin-portal
+git checkout main
+git pull origin main
 
-# Web Admin Portal
-cd web-app
-flutter clean && flutter pub get && flutter gen-l10n
-flutter run -d chrome
+# Admin
+cd web-app && flutter pub get && flutter run -d chrome
 
-# Mobile App
-cd ../mobile_app
-flutter clean && flutter pub get && flutter gen-l10n
-flutter run
-Development Approach
+# Storefront
+cd ..\customer_web && flutter pub get
+flutter run -d chrome --dart-define=STRIPE_PK=pk_test_...
+# open /f/{franchiseId}
 
-Multi-agent AI system (on MINISFORUM AI X1 Pro-470) for accelerated progress
-Strict human review on every PR (especially payments, security, architecture, config)
-Small, iterative changes with clear documentation
+# POS (Android preferred)
+cd ..\pos_app && flutter pub get
+flutter run -d <device> `
+  --dart-define=STATION_FRANCHISE_ID=... `
+  --dart-define=STATION_AUTH_EMAIL=... `
+  --dart-define=STATION_AUTH_PASSWORD=...
+```
 
-Last Updated: July 20, 2026
+---
+
+## Development approach
+
+- Franchise-scoped data; `shared_core` is the domain source of truth  
+- Local multi-agent orchestrator is **proposal-only** (human merge gate)  
+- Small iterative changes; STATUS/HANDOFF updated after significant sessions  
+
+**Last updated:** August 6, 2026

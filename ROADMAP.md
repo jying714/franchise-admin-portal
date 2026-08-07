@@ -1,6 +1,6 @@
 # Doughboys Pizzeria Franchise Platform — Roadmap
 
-**Last Updated**: August 5, 2026 (~22:50 CDT)  
+**Last Updated**: August 6, 2026 (~20:40 CDT)  
 **Current focus**: **Manager burn-in / soft release**  
 **Active branch**: **`main`**
 
@@ -13,9 +13,9 @@ Multi-tenant white-label Flutter platform: web + mobile + counter station, franc
 ## Completed (high level)
 
 - HQ, Admin, menu M1–M5, mobile tokens, Stripe Connect, POS software pilot  
-- customer_web order parity + **storefront shell Wave 1**  
-- **Modern storefront template** (`templateId`) + HQ Website picker  
-- HQ contact structured address; website hero/logo upload  
+- customer_web order parity + storefront shell Wave 1  
+- **Modern storefront template** + **polish** (side-sheet cart, branded menu/cart, story band, HQ picker/uploads)  
+- HQ contact structured address; website hero + story photo upload  
 - **Inventory v1** — isSellable, channel 86, paid decrement, void restore  
 - **Staff/labor v1** — roster/PIN, schedule+print, POS clock, hours+timesheet  
 - **Station claims** — `stationFranchise`; clock-in gates + manager override  
@@ -27,8 +27,7 @@ Multi-tenant white-label Flutter platform: web + mobile + counter station, franc
 | Epic | Status |
 |------|--------|
 | Soft release / burn-in | **Active** |
-| Storefront shell Wave 1 | **COMPLETE** |
-| Modern template | **COMPLETE** |
+| Storefront shell + Modern | **COMPLETE** |
 | Inventory v1 | **COMPLETE** |
 | Staff/labor v1 | **COMPLETE** |
 | Home composition Wave 2 | **Deferred** |
@@ -57,4 +56,4 @@ Multi-tenant white-label Flutter platform: web + mobile + counter station, franc
 
 ## How to use
 
-Agents: STATUS + HANDOFF + closed `docs/plans/*`.
+Agents: STATUS + HANDOFF + closed `docs/plans/*` + app READMEs.
