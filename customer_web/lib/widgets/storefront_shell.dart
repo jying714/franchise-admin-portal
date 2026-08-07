@@ -17,6 +17,9 @@ class StorefrontShell extends StatefulWidget {
   /// Home attaches this key to the Menu section so Order now / Order online can scroll to it.
   static final GlobalKey menuSectionKey = GlobalKey();
 
+  /// Landing attaches this to the checkout band so cart-sheet Checkout can scroll it on-screen.
+  static final GlobalKey checkoutSectionKey = GlobalKey();
+
   /// Opens the cart side sheet from any descendant (Modern menu, etc.).
   static final GlobalKey<ScaffoldState> scaffoldKey =
       GlobalKey<ScaffoldState>();
@@ -27,6 +30,25 @@ class StorefrontShell extends StatefulWidget {
 
   static void closeCartSheet() {
     scaffoldKey.currentState?.closeEndDrawer();
+  }
+
+  /// Set by the active landing (default or Modern) while mounted.
+  static VoidCallback? onRequestCheckout;
+
+  /// Cart sheet Checkout: close drawer, then show in-shell checkout.
+  static void requestCheckout() {
+    closeCartSheet();
+    onRequestCheckout?.call();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctx = checkoutSectionKey.currentContext;
+      if (ctx == null) return;
+      Scrollable.ensureVisible(
+        ctx,
+        duration: const Duration(milliseconds: 450),
+        curve: Curves.easeInOut,
+        alignment: 0.05,
+      );
+    });
   }
 
   @override
@@ -95,7 +117,13 @@ class _StorefrontShellState extends State<StorefrontShell> {
                   ),
                 ),
               ),
-              const Expanded(child: CartScreen(embed: true)),
+              Expanded(
+                child: CartScreen(
+                  embed: true,
+                  branded: true,
+                  onCheckout: StorefrontShell.requestCheckout,
+                ),
+              ),
             ],
           ),
         ),

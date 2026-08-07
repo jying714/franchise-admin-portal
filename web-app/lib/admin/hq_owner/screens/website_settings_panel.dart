@@ -33,6 +33,7 @@ class _WebsiteSettingsPanelState extends State<WebsiteSettingsPanel> {
   String? _syncedFranchiseId;
   String? _loadError;
   bool _uploadingHero = false;
+  bool _uploadingPhoto = false;
 
   /// config/storefront.templateId — default | modern
   String _templateId = 'default';
@@ -112,6 +113,64 @@ class _WebsiteSettingsPanelState extends State<WebsiteSettingsPanel> {
       );
     } finally {
       if (mounted) setState(() => _uploadingHero = false);
+    }
+  }
+
+  Future<void> _uploadStoryPhoto() async {
+    final fp = Provider.of<shared.FranchiseProvider>(context, listen: false);
+    final franchiseId = fp.franchiseId.trim();
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No franchise selected')),
+      );
+      return;
+    }
+
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      withData: true,
+      allowMultiple: false,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final file = result.files.first;
+    final bytes = file.bytes;
+    if (bytes == null || bytes.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not read image bytes')),
+      );
+      return;
+    }
+
+    setState(() => _uploadingPhoto = true);
+    try {
+      final ext = (file.extension ?? 'jpg').toLowerCase();
+      final path =
+          'franchises/$franchiseId/storefront/story_${DateTime.now().millisecondsSinceEpoch}.$ext';
+      final ref = FirebaseStorage.instance.ref().child(path);
+      final contentType = ext == 'png'
+          ? 'image/png'
+          : ext == 'webp'
+              ? 'image/webp'
+              : 'image/jpeg';
+      await ref.putData(bytes, SettableMetadata(contentType: contentType));
+      final url = await ref.getDownloadURL();
+      if (!mounted) return;
+      setState(() {
+        _photoUrl.text = url;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Story photo uploaded — click Save to persist'),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Upload failed: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _uploadingPhoto = false);
     }
   }
 
@@ -411,9 +470,38 @@ class _WebsiteSettingsPanelState extends State<WebsiteSettingsPanel> {
         TextField(
           controller: _photoUrl,
           decoration: const InputDecoration(
-            labelText: 'Storefront photo URL',
+            labelText: 'Our story photo URL',
             border: OutlineInputBorder(),
             isDense: true,
+            helperText: 'Used on Modern template story band — paste or upload',
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (_photoUrl.text.trim().isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                _photoUrl.text.trim(),
+                height: 120,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
+            ),
+          ),
+        OutlinedButton.icon(
+          onPressed: (_uploadingPhoto || !canLink) ? null : _uploadStoryPhoto,
+          icon: _uploadingPhoto
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.upload_file, size: 18),
+          label: Text(
+            _uploadingPhoto ? 'Uploading…' : 'Upload story photo',
           ),
         ),
         const SizedBox(height: 12),

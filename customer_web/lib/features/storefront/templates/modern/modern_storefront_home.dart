@@ -24,6 +24,8 @@ class _ModernStorefrontHomeState extends State<ModernStorefrontHome> {
   String? _heroImageUrl;
   String? _headline;
   String? _subheadline;
+  String? _storyBody;
+  String? _storefrontPhotoUrl;
   String? _loadError;
   String? _loadedForId;
   List<shared.MenuItem> _featured = const [];
@@ -39,6 +41,28 @@ class _ModernStorefrontHomeState extends State<ModernStorefrontHome> {
   String? _confirmOrderId;
   double _confirmTotal = 0;
   String _confirmPickupLabel = 'Pickup';
+
+  @override
+  void initState() {
+    super.initState();
+    StorefrontShell.onRequestCheckout = _openCheckoutFromShell;
+  }
+
+  @override
+  void dispose() {
+    if (StorefrontShell.onRequestCheckout == _openCheckoutFromShell) {
+      StorefrontShell.onRequestCheckout = null;
+    }
+    super.dispose();
+  }
+
+  void _openCheckoutFromShell() {
+    if (!mounted) return;
+    setState(() {
+      _showingCheckout = true;
+      _showingConfirmation = false;
+    });
+  }
 
   @override
   void didChangeDependencies() {
@@ -111,13 +135,15 @@ class _ModernStorefrontHomeState extends State<ModernStorefrontHome> {
               if (ao != bo) return ao.compareTo(bo);
               return a.name.compareTo(b.name);
             });
-      final limited = featured.length > 8 ? featured.sublist(0, 8) : featured;
+      final limited = featured.length > 4 ? featured.sublist(0, 4) : featured;
 
       if (!mounted) return;
       setState(() {
         _heroImageUrl = data['heroImageUrl']?.toString();
         _headline = data['heroHeadline']?.toString();
         _subheadline = data['heroSubheadline']?.toString();
+        _storyBody = data['storyBody']?.toString();
+        _storefrontPhotoUrl = data['storefrontPhotoUrl']?.toString();
         _featured = limited;
         _footerPhone = phone;
         _footerAddress = address;
@@ -395,11 +421,8 @@ class _ModernStorefrontHomeState extends State<ModernStorefrontHome> {
                       LayoutBuilder(
                         builder: (context, constraints) {
                           final w = constraints.maxWidth;
-                          final cross = w >= 900
-                              ? 4
-                              : w >= 600
-                              ? 3
-                              : 2;
+                          // Desktop/tablet: 4 across; phone: 2
+                          final cross = w >= 700 ? 4 : 2;
                           return GridView.builder(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
@@ -428,12 +451,119 @@ class _ModernStorefrontHomeState extends State<ModernStorefrontHome> {
             ),
           ),
         ),
+        // —— Story / hours (restaurant band) ——
+        if ((_storyBody != null && _storyBody!.trim().isNotEmpty) ||
+            _footerHoursLabel != null)
+          SliverToBoxAdapter(
+            child: Container(
+              width: double.infinity,
+              color: const Color(0xFFFFF8F0),
+              padding: const EdgeInsets.fromLTRB(24, 40, 24, 40),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1100),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final wide = constraints.maxWidth >= 720;
+                      final photo = _storefrontPhotoUrl?.trim() ?? '';
+                      final storyText = _storyBody?.trim() ?? '';
+                      final copy = Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: primary,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Our story',
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xFF1A1A1A),
+                                ),
+                          ),
+                          if (_footerHoursLabel != null) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              _footerHoursLabel!,
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(
+                                    color: primary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                            ),
+                          ],
+                          if (storyText.isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            Text(
+                              storyText,
+                              style: Theme.of(context).textTheme.bodyLarge
+                                  ?.copyWith(
+                                    color: const Color(0xFF5C5C5C),
+                                    height: 1.5,
+                                  ),
+                            ),
+                          ],
+                        ],
+                      );
+                      if (!wide || photo.isEmpty) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (photo.isNotEmpty) ...[
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: CachedNetworkImage(
+                                  imageUrl: photo,
+                                  height: 220,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorWidget: (_, __, ___) =>
+                                      const SizedBox.shrink(),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                            ],
+                            copy,
+                          ],
+                        );
+                      }
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: CachedNetworkImage(
+                                imageUrl: photo,
+                                height: 260,
+                                fit: BoxFit.cover,
+                                errorWidget: (_, __, ___) =>
+                                    const SizedBox.shrink(),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 32),
+                          Expanded(child: copy),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+
         // —— Full menu (Order Now scrolls here) ——
-        // Category grid → items → cart → checkout (parity with default)
-        // ignore: prefer_const_constructors — key is static GlobalKey
-        // ---
         SliverToBoxAdapter(
-          key: StorefrontShell.menuSectionKey,
+          key: _showingCheckout
+              ? StorefrontShell.checkoutSectionKey
+              : StorefrontShell.menuSectionKey,
           child: Container(
             width: double.infinity,
             color: const Color(0xFFFFF8F0),

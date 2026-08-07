@@ -43,6 +43,28 @@ class _StorefrontHomeScreenState extends State<StorefrontHomeScreen> {
   String _confirmPickupLabel = 'Pickup';
 
   @override
+  void initState() {
+    super.initState();
+    StorefrontShell.onRequestCheckout = _openCheckoutFromShell;
+  }
+
+  @override
+  void dispose() {
+    if (StorefrontShell.onRequestCheckout == _openCheckoutFromShell) {
+      StorefrontShell.onRequestCheckout = null;
+    }
+    super.dispose();
+  }
+
+  void _openCheckoutFromShell() {
+    if (!mounted) return;
+    setState(() {
+      _showingCheckout = true;
+      _showingConfirmation = false;
+    });
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final id = Provider.of<shared.FranchiseProvider>(
@@ -430,7 +452,9 @@ class _StorefrontHomeScreenState extends State<StorefrontHomeScreen> {
 
         // —— Menu section (key for Order now / Order online scroll) ——
         SliverToBoxAdapter(
-          key: StorefrontShell.menuSectionKey,
+          key: _showingCheckout
+              ? StorefrontShell.checkoutSectionKey
+              : StorefrontShell.menuSectionKey,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 24, 8, 8),
             child: Row(

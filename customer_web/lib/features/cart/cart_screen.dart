@@ -10,13 +10,21 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../menu/menu_item_detail_screen.dart';
 
 class CartScreen extends StatelessWidget {
-  const CartScreen({super.key, this.embed = false, this.onCheckout});
+  const CartScreen({
+    super.key,
+    this.embed = false,
+    this.onCheckout,
+    this.branded = false,
+  });
 
   /// When true, mounted inside storefront home section (no route pop on close).
   final bool embed;
 
   /// When set (home embed), Checkout swaps section instead of Navigator.push.
   final VoidCallback? onCheckout;
+
+  /// Modern sheet chrome: rounded cards + qty pill (franchise primary).
+  final bool branded;
 
   Future<void> _editCartLine(
     BuildContext context, {
@@ -186,6 +194,248 @@ class CartScreen extends StatelessWidget {
                 subtotal += line.price * line.quantity;
               }
 
+              final primary = Theme.of(context).colorScheme.primary;
+
+              Future<void> setQty(int index, int quantity) async {
+                final line = items[index];
+                if (quantity < 1) return;
+                final next = List<shared.OrderItem>.from(items);
+                next[index] = line.copyWith(quantity: quantity);
+                final sub = next.fold<double>(
+                  0,
+                  (s, i) => s + i.price * i.quantity,
+                );
+                await fs.updateCart(
+                  cart!.copyWith(
+                    items: next,
+                    subtotal: sub,
+                    total:
+                        sub + (cart.tax) + (cart.deliveryFee) - (cart.discount),
+                  ),
+                );
+              }
+
+              Future<void> removeLine(int index) async {
+                final line = items[index];
+                final key = line.cartItemKey;
+                if (key == null || key.isEmpty) {
+                  final next = List<shared.OrderItem>.from(items)
+                    ..removeAt(index);
+                  final sub = next.fold<double>(
+                    0,
+                    (s, i) => s + i.price * i.quantity,
+                  );
+                  await fs.updateCart(
+                    cart!.copyWith(
+                      items: next,
+                      subtotal: sub,
+                      total:
+                          sub +
+                          (cart.tax) +
+                          (cart.deliveryFee) -
+                          (cart.discount),
+                    ),
+                  );
+                  return;
+                }
+                await fs.removeFromCart(
+                  user.uid,
+                  key,
+                  franchiseId: franchiseId,
+                );
+              }
+
+              Widget lineTile(int index) {
+                final line = items[index];
+                final summary = lineCustomizationSummary(line);
+                if (!branded) {
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(line.name),
+                    subtitle: Text(
+                      [
+                        '\$${line.price.toStringAsFixed(2)} each',
+                        summary,
+                      ].where((s) => s.isNotEmpty).join('\n'),
+                    ),
+                    isThreeLine: true,
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip: 'Edit',
+                          icon: const Icon(Icons.edit_outlined),
+                          onPressed: () => _editCartLine(
+                            context,
+                            line: line,
+                            franchiseId: franchiseId,
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Decrease',
+                          icon: const Icon(Icons.remove_circle_outline),
+                          onPressed: line.quantity <= 1
+                              ? null
+                              : () => setQty(index, line.quantity - 1),
+                        ),
+                        Text(
+                          '${line.quantity}',
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        IconButton(
+                          tooltip: 'Increase',
+                          icon: const Icon(Icons.add_circle_outline),
+                          onPressed: () => setQty(index, line.quantity + 1),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '\$${(line.price * line.quantity).toStringAsFixed(2)}',
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        IconButton(
+                          tooltip: 'Remove',
+                          icon: const Icon(Icons.delete_outline),
+                          onPressed: () => removeLine(index),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFEEEEEE)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: primary.withValues(alpha: 0.08),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    line.name,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleSmall
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w700,
+                                          color: const Color(0xFF1A1A1A),
+                                        ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '\$${line.price.toStringAsFixed(2)} each',
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          color: const Color(0xFF6B6B6B),
+                                        ),
+                                  ),
+                                  if (summary.isNotEmpty) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      summary,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: const Color(0xFF8A8A8A),
+                                            height: 1.3,
+                                          ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            Text(
+                              '\$${(line.price * line.quantity).toStringAsFixed(2)}',
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    color: primary,
+                                  ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF5F5F5),
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    visualDensity: VisualDensity.compact,
+                                    tooltip: 'Decrease',
+                                    icon: const Icon(Icons.remove, size: 18),
+                                    onPressed: line.quantity <= 1
+                                        ? null
+                                        : () =>
+                                              setQty(index, line.quantity - 1),
+                                  ),
+                                  Text(
+                                    '${line.quantity}',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleSmall
+                                        ?.copyWith(fontWeight: FontWeight.w700),
+                                  ),
+                                  IconButton(
+                                    visualDensity: VisualDensity.compact,
+                                    tooltip: 'Increase',
+                                    icon: const Icon(Icons.add, size: 18),
+                                    onPressed: () =>
+                                        setQty(index, line.quantity + 1),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Spacer(),
+                            TextButton(
+                              onPressed: () => _editCartLine(
+                                context,
+                                line: line,
+                                franchiseId: franchiseId,
+                              ),
+                              child: const Text('Edit'),
+                            ),
+                            IconButton(
+                              tooltip: 'Remove',
+                              icon: Icon(
+                                Icons.delete_outline,
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                              onPressed: () => removeLine(index),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
               return Align(
                 alignment: Alignment.topCenter,
                 child: ConstrainedBox(
@@ -196,147 +446,25 @@ class CartScreen extends StatelessWidget {
                         child: ListView.separated(
                           padding: const EdgeInsets.all(16),
                           itemCount: items.length,
-                          separatorBuilder: (_, __) => const Divider(),
-                          itemBuilder: (context, index) {
-                            final line = items[index];
-                            return ListTile(
-                              contentPadding: EdgeInsets.zero,
-                              title: Text(line.name),
-                              subtitle: Text(
-                                [
-                                  '\$${line.price.toStringAsFixed(2)} each',
-                                  lineCustomizationSummary(line),
-                                ].where((s) => s.isNotEmpty).join('\n'),
-                              ),
-                              isThreeLine: true,
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    tooltip: 'Edit',
-                                    icon: const Icon(Icons.edit_outlined),
-                                    onPressed: () => _editCartLine(
-                                      context,
-                                      line: line,
-                                      franchiseId: franchiseId,
-                                    ),
-                                  ),
-                                  IconButton(
-                                    tooltip: 'Decrease',
-                                    icon: const Icon(
-                                      Icons.remove_circle_outline,
-                                    ),
-                                    onPressed: line.quantity <= 1
-                                        ? null
-                                        : () async {
-                                            final next =
-                                                List<shared.OrderItem>.from(
-                                                  items,
-                                                );
-                                            final q = line.quantity - 1;
-                                            next[index] = line.copyWith(
-                                              quantity: q,
-                                            );
-                                            final sub = next.fold<double>(
-                                              0,
-                                              (s, i) =>
-                                                  s + i.price * i.quantity,
-                                            );
-                                            await fs.updateCart(
-                                              cart!.copyWith(
-                                                items: next,
-                                                subtotal: sub,
-                                                total:
-                                                    sub +
-                                                    (cart.tax) +
-                                                    (cart.deliveryFee) -
-                                                    (cart.discount),
-                                              ),
-                                            );
-                                          },
-                                  ),
-                                  Text(
-                                    '${line.quantity}',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.titleSmall,
-                                  ),
-                                  IconButton(
-                                    tooltip: 'Increase',
-                                    icon: const Icon(Icons.add_circle_outline),
-                                    onPressed: () async {
-                                      final next = List<shared.OrderItem>.from(
-                                        items,
-                                      );
-                                      next[index] = line.copyWith(
-                                        quantity: line.quantity + 1,
-                                      );
-                                      final sub = next.fold<double>(
-                                        0,
-                                        (s, i) => s + i.price * i.quantity,
-                                      );
-                                      await fs.updateCart(
-                                        cart!.copyWith(
-                                          items: next,
-                                          subtotal: sub,
-                                          total:
-                                              sub +
-                                              (cart.tax) +
-                                              (cart.deliveryFee) -
-                                              (cart.discount),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '\$${(line.price * line.quantity).toStringAsFixed(2)}',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.titleSmall,
-                                  ),
-                                  IconButton(
-                                    tooltip: 'Remove',
-                                    icon: const Icon(Icons.delete_outline),
-                                    onPressed: () async {
-                                      final key = line.cartItemKey;
-                                      if (key == null || key.isEmpty) {
-                                        final next =
-                                            List<shared.OrderItem>.from(items)
-                                              ..removeAt(index);
-                                        final sub = next.fold<double>(
-                                          0,
-                                          (s, i) => s + i.price * i.quantity,
-                                        );
-                                        await fs.updateCart(
-                                          cart!.copyWith(
-                                            items: next,
-                                            subtotal: sub,
-                                            total:
-                                                sub +
-                                                (cart.tax) +
-                                                (cart.deliveryFee) -
-                                                (cart.discount),
-                                          ),
-                                        );
-                                        return;
-                                      }
-                                      await fs.removeFromCart(
-                                        user.uid,
-                                        key,
-                                        franchiseId: franchiseId,
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
+                          separatorBuilder: (_, __) => branded
+                              ? const SizedBox.shrink()
+                              : const Divider(),
+                          itemBuilder: (context, index) => lineTile(index),
                         ),
                       ),
                       Material(
-                        elevation: 4,
-                        child: Padding(
+                        elevation: branded ? 0 : 4,
+                        color: branded ? Colors.white : null,
+                        child: Container(
+                          decoration: branded
+                              ? BoxDecoration(
+                                  border: Border(
+                                    top: BorderSide(
+                                      color: const Color(0xFFEEEEEE),
+                                    ),
+                                  ),
+                                )
+                              : null,
                           padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -345,16 +473,25 @@ class CartScreen extends StatelessWidget {
                                 children: [
                                   Text(
                                     'Subtotal',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.titleMedium,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          fontWeight: branded
+                                              ? FontWeight.w700
+                                              : null,
+                                        ),
                                   ),
                                   const Spacer(),
                                   Text(
                                     '\$${subtotal.toStringAsFixed(2)}',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.titleMedium,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w800,
+                                          color: branded ? primary : null,
+                                        ),
                                   ),
                                 ],
                               ),
@@ -371,6 +508,20 @@ class CartScreen extends StatelessWidget {
                                     ),
                                   );
                                 },
+                                style: branded
+                                    ? FilledButton.styleFrom(
+                                        backgroundColor: primary,
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 14,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            28,
+                                          ),
+                                        ),
+                                      )
+                                    : null,
                                 child: const Text('Checkout'),
                               ),
                             ],
