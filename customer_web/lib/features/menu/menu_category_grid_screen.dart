@@ -26,11 +26,18 @@ class _Cat {
 /// When [onCategorySelected] is provided the screen is treated as an embedded
 /// section (no BrandingShell, no self-navigation).
 class MenuCategoryGridScreen extends StatefulWidget {
-  const MenuCategoryGridScreen({super.key, this.onCategorySelected});
+  const MenuCategoryGridScreen({
+    super.key,
+    this.onCategorySelected,
+    this.branded = false,
+  });
 
   /// If non-null, tapping a category calls this instead of pushing a route.
   final void Function(String categoryId, String categoryName)?
   onCategorySelected;
+
+  /// When true (Modern template), use franchise-primary card chrome.
+  final bool branded;
 
   @override
   State<MenuCategoryGridScreen> createState() => _MenuCategoryGridScreenState();
@@ -266,6 +273,7 @@ class _MenuCategoryGridScreenState extends State<MenuCategoryGridScreen> {
                       final cat = cats[index];
                       return _CategoryCard(
                         category: cat,
+                        branded: widget.branded,
                         onTap: () {
                           final cb = widget.onCategorySelected;
                           if (cb != null) {
@@ -298,50 +306,123 @@ class _MenuCategoryGridScreenState extends State<MenuCategoryGridScreen> {
 }
 
 class _CategoryCard extends StatelessWidget {
-  const _CategoryCard({required this.category, required this.onTap});
+  const _CategoryCard({
+    required this.category,
+    required this.onTap,
+    this.branded = false,
+  });
 
   final _Cat category;
   final VoidCallback onTap;
+  final bool branded;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final primary = scheme.primary;
     final url = category.imageUrl?.trim() ?? '';
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
+    if (!branded) {
+      return Card(
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: url.isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: url,
+                        fit: BoxFit.cover,
+                        errorWidget: (_, _, _) => ColoredBox(
+                          color: scheme.surfaceContainerHighest,
+                          child: Icon(Icons.restaurant, color: primary),
+                        ),
+                      )
+                    : ColoredBox(
+                        color: scheme.surfaceContainerHighest,
+                        child: Icon(Icons.restaurant, color: primary),
+                      ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(10),
+                child: Text(
+                  category.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Material(
+      color: Colors.white,
+      elevation: 0,
+      borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: onTap,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: url.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: url,
-                      fit: BoxFit.cover,
-                      errorWidget: (_, _, _) => ColoredBox(
-                        color: scheme.surfaceContainerHighest,
-                        child: Icon(Icons.restaurant, color: scheme.primary),
-                      ),
-                    )
-                  : ColoredBox(
-                      color: scheme.surfaceContainerHighest,
-                      child: Icon(Icons.restaurant, color: scheme.primary),
-                    ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(10),
-              child: Text(
-                category.name,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+        borderRadius: BorderRadius.circular(20),
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFEEEEEE)),
+            boxShadow: [
+              BoxShadow(
+                color: primary.withValues(alpha: 0.12),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
               ),
-            ),
-          ],
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(20),
+                  ),
+                  child: url.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: url,
+                          fit: BoxFit.cover,
+                          errorWidget: (_, _, _) => ColoredBox(
+                            color: primary.withValues(alpha: 0.1),
+                            child: Icon(Icons.restaurant, color: primary),
+                          ),
+                        )
+                      : ColoredBox(
+                          color: primary.withValues(alpha: 0.1),
+                          child: Icon(
+                            Icons.restaurant,
+                            color: primary,
+                            size: 40,
+                          ),
+                        ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                child: Text(
+                  category.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1A1A1A),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

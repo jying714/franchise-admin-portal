@@ -4,8 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-
 import '../features/auth/sign_in_screen.dart';
+import '../features/cart/cart_screen.dart';
 import '../features/storefront/storefront_landing.dart';
 import '../features/orders/order_history_screen.dart';
 
@@ -17,15 +17,24 @@ class StorefrontShell extends StatefulWidget {
   /// Home attaches this key to the Menu section so Order now / Order online can scroll to it.
   static final GlobalKey menuSectionKey = GlobalKey();
 
+  /// Opens the cart side sheet from any descendant (Modern menu, etc.).
+  static final GlobalKey<ScaffoldState> scaffoldKey =
+      GlobalKey<ScaffoldState>();
+
+  static void openCartSheet() {
+    scaffoldKey.currentState?.openEndDrawer();
+  }
+
+  static void closeCartSheet() {
+    scaffoldKey.currentState?.closeEndDrawer();
+  }
+
   @override
   State<StorefrontShell> createState() => _StorefrontShellState();
 }
 
 class _StorefrontShellState extends State<StorefrontShell> {
   final GlobalKey<NavigatorState> _navKey = GlobalKey<NavigatorState>();
-
-  /// Home registers this so the floating "Order now" can scroll to the menu.
-  static final GlobalKey menuSectionKey = GlobalKey();
 
   void _scrollToMenu() {
     final ctx = StorefrontShell.menuSectionKey.currentContext;
@@ -44,9 +53,53 @@ class _StorefrontShellState extends State<StorefrontShell> {
     final name = fp.currentAppName;
     final logoUrl = fp.currentLogoUrl;
     final scheme = Theme.of(context).colorScheme;
+    final user = context.watch<User?>();
+    final fs = Provider.of<shared.FirestoreService>(context, listen: false);
+    final franchiseId = fp.currentFranchiseId;
+    final primary = scheme.primary;
 
     return Scaffold(
-      // No AppBar — floating bar overlays the body
+      key: StorefrontShell.scaffoldKey,
+      // Cart side sheet (Pizzon-style end panel; franchise primary accent)
+      endDrawer: Drawer(
+        width: 420,
+        child: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Material(
+                color: primary,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        tooltip: 'Close',
+                        icon: Icon(
+                          Icons.close,
+                          color: Theme.of(context).colorScheme.onPrimary,
+                        ),
+                        onPressed: StorefrontShell.closeCartSheet,
+                      ),
+                      Expanded(
+                        child: Text(
+                          'Your cart',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const Expanded(child: CartScreen(embed: true)),
+            ],
+          ),
+        ),
+      ),
       body: Stack(
         children: [
           // Main content (home under nested navigator)
@@ -110,6 +163,39 @@ class _StorefrontShellState extends State<StorefrontShell> {
                             TextButton(
                               onPressed: _scrollToMenu,
                               child: const Text('Order now'),
+                            ),
+                            StreamBuilder<shared.Order?>(
+                              stream:
+                                  (user == null ||
+                                      franchiseId.isEmpty ||
+                                      franchiseId == 'unknown')
+                                  ? null
+                                  : fs.getCart(
+                                      user.uid,
+                                      franchiseId: franchiseId,
+                                    ),
+                              builder: (context, snap) {
+                                final count =
+                                    snap.data?.items.fold<int>(
+                                      0,
+                                      (s, i) => s + i.quantity,
+                                    ) ??
+                                    0;
+                                return IconButton(
+                                  tooltip: 'Cart',
+                                  onPressed: StorefrontShell.openCartSheet,
+                                  icon: Badge(
+                                    isLabelVisible: count > 0,
+                                    label: Text('$count'),
+                                    backgroundColor: primary,
+                                    child: Icon(
+                                      Icons.shopping_cart_outlined,
+                                      size: 22,
+                                      color: scheme.onSurface,
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                             Consumer<User?>(
                               builder: (context, user, _) {

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import '../../widgets/storefront_shell.dart';
-import '../cart/cart_screen.dart';
 import '../checkout/checkout_screen.dart';
 import '../menu/menu_category_grid_screen.dart';
 import '../menu/menu_category_items_screen.dart';
@@ -37,7 +36,6 @@ class _StorefrontHomeScreenState extends State<StorefrontHomeScreen> {
   // In-place menu section state
   String? _selectedCategoryId;
   String? _selectedCategoryName;
-  bool _showingCart = false;
   bool _showingCheckout = false;
   bool _showingConfirmation = false;
   String? _confirmOrderId;
@@ -165,6 +163,8 @@ class _StorefrontHomeScreenState extends State<StorefrontHomeScreen> {
     setState(() {
       _selectedCategoryId = id;
       _selectedCategoryName = name;
+      _showingCheckout = false;
+      _showingConfirmation = false;
     });
   }
 
@@ -172,41 +172,13 @@ class _StorefrontHomeScreenState extends State<StorefrontHomeScreen> {
     setState(() {
       _selectedCategoryId = null;
       _selectedCategoryName = null;
-      _showingCart = false;
       _showingCheckout = false;
       _showingConfirmation = false;
     });
   }
 
   void _openCart() {
-    setState(() {
-      _showingCart = true;
-      _showingCheckout = false;
-      _showingConfirmation = false;
-    });
-  }
-
-  void _closeCart() {
-    setState(() {
-      _showingCart = false;
-      _showingCheckout = false;
-    });
-  }
-
-  void _openCheckout() {
-    setState(() {
-      _showingCart = false;
-      _showingCheckout = true;
-      _showingConfirmation = false;
-    });
-  }
-
-  void _closeCheckout() {
-    setState(() {
-      _showingCheckout = false;
-      _showingCart = true;
-      _showingConfirmation = false;
-    });
+    StorefrontShell.openCartSheet();
   }
 
   void _showOrderConfirmation({
@@ -215,7 +187,6 @@ class _StorefrontHomeScreenState extends State<StorefrontHomeScreen> {
     required String pickupLabel,
   }) {
     setState(() {
-      _showingCart = false;
       _showingCheckout = false;
       _showingConfirmation = true;
       _confirmOrderId = orderId;
@@ -226,12 +197,24 @@ class _StorefrontHomeScreenState extends State<StorefrontHomeScreen> {
 
   void _backToMenuFromConfirm() {
     setState(() {
-      _showingCart = false;
       _showingCheckout = false;
       _showingConfirmation = false;
       _selectedCategoryId = null;
       _selectedCategoryName = null;
       _confirmOrderId = null;
+    });
+  }
+
+  void _openCheckout() {
+    setState(() {
+      _showingCheckout = true;
+      _showingConfirmation = false;
+    });
+  }
+
+  void _closeCheckout() {
+    setState(() {
+      _showingCheckout = false;
     });
   }
 
@@ -461,7 +444,7 @@ class _StorefrontHomeScreenState extends State<StorefrontHomeScreen> {
                   ),
                 ] else if (_showingCheckout) ...[
                   IconButton(
-                    tooltip: 'Back to cart',
+                    tooltip: 'Back to menu',
                     icon: const Icon(Icons.arrow_back),
                     onPressed: _closeCheckout,
                   ),
@@ -469,19 +452,6 @@ class _StorefrontHomeScreenState extends State<StorefrontHomeScreen> {
                   Expanded(
                     child: Text(
                       'Checkout',
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                  ),
-                ] else if (_showingCart) ...[
-                  IconButton(
-                    tooltip: 'Back to menu',
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: _closeCart,
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      'Cart',
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                   ),
@@ -577,13 +547,6 @@ class _StorefrontHomeScreenState extends State<StorefrontHomeScreen> {
                       );
                     },
               ),
-            ),
-          )
-        else if (_showingCart)
-          SliverToBoxAdapter(
-            child: SizedBox(
-              height: 600,
-              child: CartScreen(embed: true, onCheckout: _openCheckout),
             ),
           )
         else if (_selectedCategoryId == null)

@@ -1,4 +1,5 @@
 // customer_web/lib/features/menu/menu_category_items_screen.dart
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -15,11 +16,13 @@ class MenuCategoryItemsScreen extends StatefulWidget {
     required this.categoryId,
     required this.categoryName,
     this.embed = false,
+    this.branded = false,
   });
 
   final String categoryId;
   final String categoryName;
   final bool embed;
+  final bool branded;
 
   @override
   State<MenuCategoryItemsScreen> createState() =>
@@ -203,37 +206,133 @@ class _MenuCategoryItemsScreenState extends State<MenuCategoryItemsScreen> {
                 ),
                 delegate: SliverChildBuilderDelegate((context, index) {
                   final item = items[index];
-                  return MenuItemCard(
-                    item: item,
-                    onTap: () {
-                      showDialog<void>(
-                        context: context,
-                        barrierDismissible: true,
-                        builder: (dialogContext) {
-                          return Dialog(
-                            insetPadding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 24,
+
+                  void openDetail() {
+                    showDialog<void>(
+                      context: context,
+                      barrierDismissible: true,
+                      builder: (dialogContext) {
+                        return Dialog(
+                          insetPadding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 24,
+                          ),
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(
+                              maxWidth: 640,
+                              maxHeight: 720,
                             ),
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(
-                                maxWidth: 640,
-                                maxHeight: 720,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Material(
+                                color: Theme.of(
+                                  dialogContext,
+                                ).colorScheme.surface,
+                                child: MenuItemDetailScreen(item: item),
                               ),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  }
+
+                  if (!widget.branded) {
+                    return MenuItemCard(item: item, onTap: openDetail);
+                  }
+
+                  final primary = Theme.of(context).colorScheme.primary;
+                  final imageUrl = item.imageUrl.trim();
+                  return Material(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(20),
+                      onTap: openDetail,
+                      child: Ink(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: const Color(0xFFEEEEEE)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: primary.withValues(alpha: 0.12),
+                              blurRadius: 16,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(
+                              flex: 5,
                               child: ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Material(
-                                  color: Theme.of(
-                                    dialogContext,
-                                  ).colorScheme.surface,
-                                  child: MenuItemDetailScreen(item: item),
+                                borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(20),
+                                ),
+                                child: imageUrl.isEmpty
+                                    ? ColoredBox(
+                                        color: primary.withValues(alpha: 0.1),
+                                        child: Icon(
+                                          Icons.restaurant,
+                                          color: primary,
+                                        ),
+                                      )
+                                    : CachedNetworkImage(
+                                        imageUrl: imageUrl,
+                                        fit: BoxFit.cover,
+                                        errorWidget: (_, __, ___) => ColoredBox(
+                                          color: primary.withValues(alpha: 0.1),
+                                          child: Icon(
+                                            Icons.restaurant,
+                                            color: primary,
+                                          ),
+                                        ),
+                                      ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 4,
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  12,
+                                  10,
+                                  12,
+                                  12,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item.name,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                    ),
+                                    const Spacer(),
+                                    Text(
+                                      '\$${item.price.toStringAsFixed(2)}',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w800,
+                                            color: primary,
+                                          ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
-                          );
-                        },
-                      );
-                    },
+                          ],
+                        ),
+                      ),
+                    ),
                   );
                 }, childCount: items.length),
               ),
