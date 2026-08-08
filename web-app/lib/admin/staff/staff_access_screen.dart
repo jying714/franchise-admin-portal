@@ -227,7 +227,17 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
                   Provider.of<shared.FranchiseProvider>(context, listen: false)
                       .franchiseId;
               try {
-                await service.removeStaffUser(user.id);
+                final franchiseId = Provider.of<shared.FranchiseProvider>(
+                        context,
+                        listen: false)
+                    .franchiseId;
+                await service.removeStaffUser(user.id,
+                    franchiseId: franchiseId);
+                if (!context.mounted) return;
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Portal access removed')),
+                );
                 if (!context.mounted) return;
                 Navigator.of(context).pop();
               } catch (e, stack) {

@@ -804,10 +804,16 @@ class FirestoreServiceImpl implements FirestoreService {
       for (final d in s.docs) {
         final data = d.data() as Map<String, dynamic>;
         final user = app_user.User.fromFirestore(data, d.id);
+        if (!user.isActive) continue;
         final roles = user.roles.map((r) => r.toLowerCase()).toSet();
-        if (roles.any(portalRoles.contains)) {
-          users.add(user);
-        }
+        if (!roles.any(portalRoles.contains)) continue;
+        // Defense in depth if arrayRemove lagged
+        final ids = (data['franchiseIds'] as List?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            const <String>[];
+        if (!ids.contains(franchiseId)) continue;
+        users.add(user);
       }
       users.sort(
         (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
@@ -847,17 +853,30 @@ class FirestoreServiceImpl implements FirestoreService {
   }
 
   @override
-  Future<void> removeStaffUser(String userId) async {
+  Future<void> removeStaffUser(String userId, {String? franchiseId}) async {
     try {
-      await _db.collection('users').doc(userId).update({'isActive': false});
+      final ref = _db.collection('users').doc(userId);
+      final patch = <String, dynamic>{
+        'isActive': false,
+        'updatedAt': firestore.FieldValue.serverTimestamp(),
+      };
+      final fid = franchiseId?.trim();
+      if (fid != null && fid.isNotEmpty) {
+        patch['franchiseIds'] = firestore.FieldValue.arrayRemove([fid]);
+      }
+      await ref.update(patch);
     } catch (e, stack) {
       await ErrorLogger.log(
         message: 'Failed to removeStaffUser',
         source: 'FirestoreServiceImpl',
         severity: 'error',
         stack: stack.toString(),
-        contextData: {'userId': userId},
+        contextData: {
+          'userId': userId,
+          if (franchiseId != null) 'franchiseId': franchiseId,
+        },
       );
+      rethrow;
     }
   }
 

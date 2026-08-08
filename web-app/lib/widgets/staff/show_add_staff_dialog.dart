@@ -2,6 +2,8 @@
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
 
 class AddStaffDialog extends StatefulWidget {
   final AppLocalizations loc;
@@ -15,7 +17,7 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
   final _formKey = GlobalKey<FormState>();
   String _name = '';
   String _email = '';
-  String _role = 'staff';
+  String _role = 'manager';
 
   @override
   Widget build(BuildContext context) {
@@ -114,32 +116,88 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
             foregroundColor: colorScheme.onPrimary,
           ),
           onPressed: () async {
-            if (_formKey.currentState!.validate()) {
-              _formKey.currentState!.save();
-              try {
-                await service.addStaffUser(
-                  name: _name,
-                  email: _email,
-                  roles: [_role],
-                  franchiseIds: [franchiseId],
-                );
-                if (!mounted) return;
-                Navigator.of(context).pop();
-              } catch (e, stack) {
-                shared.ErrorLogger.log(
-                  message: e.toString(),
-                  stack: stack.toString(),
-                  source: 'staff_access_screen',
-                  severity: 'error',
-                  contextData: {
-                    'franchiseId': franchiseId,
-                    'name': _name,
-                    'email': _email,
-                    'role': _role,
-                    'operation': 'add_staff',
-                  },
-                );
-              }
+            if (!_formKey.currentState!.validate()) return;
+            _formKey.currentState!.save();
+
+            final fid = (franchiseId ?? '').trim();
+            if (fid.isEmpty || fid == 'unknown') {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Select a franchise first')),
+              );
+              return;
+            }
+
+            final inviterId =
+                Provider.of<shared.AdminUserProvider>(context, listen: false)
+                        .user
+                        ?.id ??
+                    '';
+
+            try {
+              final token = FirebaseFirestore.instance
+                  .collection('franchisee_invitations')
+                  .doc()
+                  .id;
+
+              await FirebaseFirestore.instance
+                  .collection('franchisee_invitations')
+                  .doc(token)
+                  .set({
+                'email': _email.trim().toLowerCase(),
+                'name': _name.trim(),
+                'role': _role,
+                'roles': [_role],
+                'franchiseId': fid,
+                'franchiseIds': [fid],
+                'inviterUserId': inviterId,
+                'status': 'pending',
+                'token': token,
+                'inviteType': 'portal_staff',
+                'createdAt': FieldValue.serverTimestamp(),
+                'lastSentAt': FieldValue.serverTimestamp(),
+              });
+
+              // Same hash query style InviteAcceptScreen already parses.
+              final acceptUrl =
+                  '${Uri.base.origin}/#/invite-accept?token=$token';
+
+              if (!mounted) return;
+              Navigator.of(context).pop();
+
+              await Clipboard.setData(ClipboardData(text: acceptUrl));
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Invite created for $_email. Accept link copied.',
+                  ),
+                  action: SnackBarAction(
+                    label: 'Copy again',
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: acceptUrl));
+                    },
+                  ),
+                  duration: const Duration(seconds: 8),
+                ),
+              );
+            } catch (e, stack) {
+              shared.ErrorLogger.log(
+                message: e.toString(),
+                stack: stack.toString(),
+                source: 'show_add_staff_dialog',
+                severity: 'error',
+                contextData: {
+                  'franchiseId': fid,
+                  'name': _name,
+                  'email': _email,
+                  'role': _role,
+                  'operation': 'create_portal_invite',
+                },
+              );
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Invite failed: $e')),
+              );
             }
           },
           child: Text(loc.staffAddButton),

@@ -7,6 +7,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'dart:html' as html;
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class InviteAcceptScreen extends StatefulWidget {
   final String? inviteToken;
@@ -61,6 +62,92 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
         _error = "No invitation token in the URL.";
       });
     }
+  }
+
+  Future<void> _acceptPortalStaffInvite({
+    required String token,
+    required fb_auth.User currentUser,
+    required String inviteEmail,
+  }) async {
+    final authEmail = (currentUser.email ?? '').trim().toLowerCase();
+    final expected = inviteEmail.trim().toLowerCase();
+    if (authEmail.isEmpty || authEmail != expected) {
+      throw StateError(
+        'Sign in with the invited email ($expected) to accept.',
+      );
+    }
+
+    final data = _inviteData ?? const <String, dynamic>{};
+    final franchiseId = (data['franchiseId'] as String?)?.trim() ?? '';
+    if (franchiseId.isEmpty) {
+      throw StateError('Invitation is missing franchiseId.');
+    }
+
+    final role = (data['role'] as String?)?.trim();
+    final rolesRaw = data['roles'];
+    final roles = <String>[];
+    if (rolesRaw is List) {
+      for (final r in rolesRaw) {
+        final s = r.toString().trim();
+        if (s.isNotEmpty) roles.add(s);
+      }
+    }
+    if (role != null && role.isNotEmpty && !roles.contains(role)) {
+      roles.add(role);
+    }
+    if (roles.isEmpty) {
+      roles.add('manager');
+    }
+
+    final displayName = (data['name'] as String?)?.trim() ?? '';
+    final uid = currentUser.uid;
+    final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
+    final inviteRef = FirebaseFirestore.instance
+        .collection('franchisee_invitations')
+        .doc(token);
+
+    await FirebaseFirestore.instance.runTransaction((tx) async {
+      final inviteSnap = await tx.get(inviteRef);
+      if (!inviteSnap.exists) {
+        throw StateError('Invitation not found.');
+      }
+      final inv = inviteSnap.data() ?? {};
+      final status = (inv['status'] as String?)?.trim() ?? '';
+      if (status == 'accepted') {
+        return;
+      }
+      if (status == 'revoked' || status == 'expired') {
+        throw StateError('Invitation is $status.');
+      }
+
+      tx.set(
+        userRef,
+        {
+          'id': uid,
+          'email': expected,
+          if (displayName.isNotEmpty) 'name': displayName,
+          // arrayUnion so existing "customer" is kept and "manager" is added
+          'roles': FieldValue.arrayUnion(roles),
+          'franchiseIds': FieldValue.arrayUnion([franchiseId]),
+          'defaultFranchise': franchiseId,
+          'isActive': true,
+          'status': 'active',
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+
+      tx.set(
+        inviteRef,
+        {
+          'status': 'accepted',
+          'acceptedAt': FieldValue.serverTimestamp(),
+          'acceptedByUserId': uid,
+          'invitedUserId': uid,
+        },
+        SetOptions(merge: true),
+      );
+    });
   }
 
   Future<void> _fetchInvite(String token) async {
@@ -154,7 +241,30 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
         return;
       }
 
-      // Call cloud function to mark as accepted
+      final inviteType = (_inviteData?['inviteType'] as String?)?.trim() ?? '';
+      final isPortalStaff = inviteType == 'portal_staff';
+
+      if (isPortalStaff) {
+        await _acceptPortalStaffInvite(
+          token: _effectiveToken!,
+          currentUser: currentUser,
+          inviteEmail: inviteEmail,
+        );
+        if (!mounted) return;
+        setState(() => _accepted = true);
+        // Land on app root / login shell — not franchisee onboarding.
+        await _acceptPortalStaffInvite(
+          token: _effectiveToken!,
+          currentUser: currentUser,
+          inviteEmail: inviteEmail,
+        );
+        if (!mounted) return;
+        setState(() => _accepted = true);
+        Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+        return;
+      }
+
+      // Franchisee path (unchanged)
       await Provider.of<shared.FirestoreService>(context, listen: false)
           .callAcceptInvitationFunction(_effectiveToken!);
 

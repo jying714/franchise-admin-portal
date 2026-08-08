@@ -214,7 +214,7 @@ abstract class FirestoreService {
       String? phone,
       required List<String> roles,
       required List<String> franchiseIds});
-  Future<void> removeStaffUser(String userId);
+  Future<void> removeStaffUser(String userId, {String? franchiseId});
 
   // === FRANCHISE LIST HELPERS ===
   Future<List<FranchiseInfo>> fetchFranchiseList();

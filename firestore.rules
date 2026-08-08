@@ -23,11 +23,25 @@ service cloud.firestore {
       return hasAnyRole(['hq_owner', 'platform_owner', 'developer']);
     }
 
+    // Portal managers: membership lives on users/{uid}, not only custom claims.
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function userHasFranchise(franchiseId) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && userDoc().keys().hasAny(['franchiseIds'])
+        && userDoc().franchiseIds is list
+        && userDoc().franchiseIds.hasAny([franchiseId]);
+    }
+
     function isFranchiseOwner(franchiseId) {
-      return isHqOwner() ||
-             request.auth.token.defaultFranchise == franchiseId ||
-             (request.auth.token.franchiseIds is list &&
-              request.auth.token.franchiseIds.hasAny([franchiseId]));
+      return isHqOwner()
+        || request.auth.token.defaultFranchise == franchiseId
+        || (request.auth.token.franchiseIds is list
+            && request.auth.token.franchiseIds.hasAny([franchiseId]))
+        || userHasFranchise(franchiseId);
     }
 
     function isPosStation(franchiseId) {
@@ -57,7 +71,30 @@ service cloud.firestore {
 
     // === USERS ===
     match /users/{userId} {
-      allow read, write: if request.auth.uid == userId || isHqOwner();
+      allow read: if request.auth.uid == userId
+                  || isHqOwner()
+                  || (
+                       resource.data.franchiseIds is list
+                       && isSignedIn()
+                       && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+                       && userDoc().keys().hasAny(['franchiseIds'])
+                       && userDoc().franchiseIds is list
+                       && resource.data.franchiseIds.hasAny(userDoc().franchiseIds)
+                     );
+      allow create: if request.auth.uid == userId || isHqOwner();
+      allow update: if request.auth.uid == userId
+                    || isHqOwner()
+                    || (
+                         resource.data.franchiseIds is list
+                         && (
+                              (request.auth.token.franchiseIds is list
+                               && resource.data.franchiseIds.hasAny(
+                                    request.auth.token.franchiseIds))
+                              || userHasFranchise(
+                                   resource.data.franchiseIds[0])
+                            )
+                       );
+      allow delete: if isHqOwner();
 
     match /franchise_profiles/{franchiseId} {
       allow read, write: if request.auth.uid == userId || isHqOwner();
@@ -186,10 +223,26 @@ service cloud.firestore {
     // Client list/stream/update/cancel from Platform Owner / HQ / Developer.
     // Creates are performed by Cloud Function (Admin SDK) and bypass rules.
     match /franchisee_invitations/{invitationId} {
-      allow read: if isHqOwner();
-      allow update, delete: if isHqOwner();
-      // No client create — inviteAndSetRole writes via Admin SDK.
-    }
+  // Token == doc id; unguessable link. Needed so accept page can load while signed out.
+  allow get: if true;
+  allow list: if isHqOwner();
+
+  allow create: if isHqOwner()
+                && request.resource.data.keys().hasAll([
+                     'email', 'status', 'token', 'franchiseId'
+                   ])
+                && request.resource.data.status == 'pending'
+                && request.resource.data.inviteType == 'portal_staff';
+
+  allow update: if isHqOwner()
+                || (isSignedIn()
+                    && resource.data.email is string
+                    && resource.data.email == request.auth.token.email
+                    && resource.data.status == 'pending'
+                    && request.resource.data.status == 'accepted');
+
+  allow delete: if isHqOwner();
+}
 
     // === ALERTS ===
     match /alerts/{doc} {
