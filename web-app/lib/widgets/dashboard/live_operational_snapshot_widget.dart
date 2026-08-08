@@ -1,27 +1,10 @@
-﻿// File: lib/admin/dashboard/widgets/live_operational_snapshot_widget.dart
-//
-// PURPOSE:
-// Displays real-time operational metrics for the currently selected franchise.
-// Controlled by the `liveSnapshotEnabled` flag in `FranchiseFeatureProvider`.
-// Data is streamed from Firestore in near real time.
-//
-// AUTHOR:
-// Auto-generated with production-readiness, logging, and maintainability in mind.
-//
-// DEPENDENCIES:
-// - franchise_provider.dart (for franchiseId context)
-// - error_logger.dart (for robust logging)
-// - cloud_firestore.dart
-// - provider.dart (for context.watch)
-
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 
 class LiveOperationalSnapshotWidget extends StatelessWidget {
   final String franchiseId;
-  final bool expanded; // Controls layout size
+  final bool expanded;
 
   const LiveOperationalSnapshotWidget({
     Key? key,
@@ -29,17 +12,68 @@ class LiveOperationalSnapshotWidget extends StatelessWidget {
     required this.expanded,
   }) : super(key: key);
 
-  /// Firestore stream to watch active, completed, and in_kitchen orders
+  /// Live orders for ops board. Prefer status filter aligned with real writes;
+  /// fall back handled in metrics if docs arrive with other statuses.
   Stream<QuerySnapshot<Map<String, dynamic>>> _liveOpsStream() {
-    debugPrint(
-        '[LiveOperationalSnapshotWidget] Starting stream for franchiseId: $franchiseId');
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        franchiseId == 'test' ||
+        franchiseId == 'default') {
+      return const Stream.empty();
+    }
     return FirebaseFirestore.instance
         .collection('franchises')
         .doc(franchiseId)
         .collection('orders')
-        .where('status',
-            whereIn: ['active', 'completed', 'in_kitchen']).snapshots();
+        .orderBy('timestamp', descending: true)
+        .limit(150)
+        .snapshots();
   }
+
+  DateTime? _asDateTime(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is Timestamp) return raw.toDate();
+    if (raw is DateTime) return raw;
+    if (raw is String && raw.trim().isNotEmpty) {
+      return DateTime.tryParse(raw.trim());
+    }
+    return null;
+  }
+
+  DateTime? _orderTime(Map<String, dynamic> data) {
+    final primary = _asDateTime(data['timestamp']);
+    if (primary != null) return primary;
+    final tsMap = data['timestamps'];
+    if (tsMap is Map) {
+      for (final key in [
+        'paid',
+        'created',
+        'sent_to_kitchen',
+        'open',
+        'completed',
+      ]) {
+        final t = _asDateTime(tsMap[key]);
+        if (t != null) return t;
+      }
+    }
+    return _asDateTime(data['createdAt']);
+  }
+
+  String _statusOf(Map<String, dynamic> data) {
+    return (data['status'] as String?)?.toLowerCase().trim() ?? '';
+  }
+
+  bool _isKitchen(String status) =>
+      status == 'sent_to_kitchen' || status == 'in_kitchen';
+
+  bool _isOpenBoard(String status) =>
+      status == 'open' ||
+      status == 'sent_to_kitchen' ||
+      status == 'in_kitchen' ||
+      status == 'placed';
+
+  bool _isCompleted(String status) =>
+      status == 'completed' || status == 'closed';
 
   @override
   Widget build(BuildContext context) {
@@ -47,18 +81,6 @@ class LiveOperationalSnapshotWidget extends StatelessWidget {
       stream: _liveOpsStream(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          final errorStr = snapshot.error.toString();
-          if (errorStr.contains('FAILED_PRECONDITION') &&
-              errorStr.contains('index')) {
-            final linkMatch =
-                RegExp(r'https:\/\/console\.firebase\.google\.com\/[^\s]+')
-                    .firstMatch(errorStr);
-            if (linkMatch != null) {
-              debugPrint(
-                  '[LiveOperationalSnapshotWidget] Firestore index required: ${linkMatch.group(0)}');
-            }
-          }
-
           shared.ErrorLogger.log(
             message: 'Live ops snapshot stream error',
             stack: snapshot.error.toString(),
@@ -66,9 +88,16 @@ class LiveOperationalSnapshotWidget extends StatelessWidget {
             severity: 'error',
             contextData: {'franchiseId': franchiseId},
           );
-          return const Center(
-            child: Text('Error loading live metrics.',
-                style: TextStyle(color: Colors.red)),
+          return Card(
+            elevation: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                'Live metrics unavailable',
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+                textAlign: TextAlign.center,
+              ),
+            ),
           );
         }
 
@@ -77,126 +106,123 @@ class LiveOperationalSnapshotWidget extends StatelessWidget {
         }
 
         final docs = snapshot.data!.docs;
-        debugPrint(
-            '[LiveOperationalSnapshotWidget] Received ${docs.length} order documents.');
-
         final now = DateTime.now();
         final oneHourAgo = now.subtract(const Duration(hours: 1));
         final todayStart = DateTime(now.year, now.month, now.day);
 
-        try {
-          // --- Safe Metric calculations ---
-          final activeOrders =
-              docs.where((d) => d['status'] == 'active').length;
+        var activeOrders = 0;
+        var recentOrders = 0;
+        var kitchenTickets = 0;
+        var kitchenLoad = 0;
+        var todayRevenue = 0.0;
+        final fulfillmentMinutes = <int>[];
 
-          final recentOrders = docs.where((d) {
-            final ts = (d['createdAt'] as Timestamp?)?.toDate();
-            return ts != null && ts.isAfter(oneHourAgo);
-          }).length;
+        for (final doc in docs) {
+          final data = doc.data();
+          final status = _statusOf(data);
+          final ts = _orderTime(data);
 
-          final kitchenTickets =
-              docs.where((d) => d['status'] == 'in_kitchen').length;
-
-          final kitchenLoad = docs
-              .where((d) => d['status'] == 'in_kitchen')
-              .fold<int>(0, (sum, d) {
-            final count =
-                (d['items'] is List) ? (d['items'] as List).length : 0;
-            return sum + count;
-          });
-
-          final todayRevenue = docs.where((d) {
-            final ts = (d['createdAt'] as Timestamp?)?.toDate();
-            return ts != null &&
-                ts.isAfter(todayStart) &&
-                d['status'] == 'completed';
-          }).fold<double>(0.0, (sum, d) {
-            final val = d['total'];
-            return sum + ((val is num) ? val.toDouble() : 0.0);
-          });
-
-          final completedOrders = docs
-              .where(
-                  (d) => d['status'] == 'completed' && d['completedAt'] != null)
-              .take(20)
-              .map((d) {
-            final created = (d['createdAt'] as Timestamp?)?.toDate() ?? now;
-            final completed = (d['completedAt'] as Timestamp?)?.toDate() ?? now;
-            return completed.difference(created).inMinutes;
-          }).toList();
-
-          final avgFulfillmentTime = completedOrders.isEmpty
-              ? 0
-              : completedOrders.reduce((a, b) => a + b) /
-                  completedOrders.length;
-
-          debugPrint('[LiveOperationalSnapshotWidget] Metrics → '
-              'Active: $activeOrders, LastHour: $recentOrders, '
-              'KitchenTickets: $kitchenTickets, KitchenLoad: $kitchenLoad, '
-              'RevenueToday: $todayRevenue, AvgFulfillment: $avgFulfillmentTime');
-
-          // Expanded → 2×3 grid
-          if (expanded) {
-            return GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 2.4,
-              children: [
-                _metricCard('Active Orders', activeOrders.toString(),
-                    Icons.shopping_cart),
-                _metricCard('Orders (Last Hour)', recentOrders.toString(),
-                    Icons.access_time),
-                _metricCard('Kitchen Tickets', kitchenTickets.toString(),
-                    Icons.kitchen),
-                _metricCard(
-                    'Kitchen Load', kitchenLoad.toString(), Icons.restaurant),
-                _metricCard('Revenue Today',
-                    '\$${todayRevenue.toStringAsFixed(2)}', Icons.attach_money),
-                _metricCard('Avg Fulfillment (min)',
-                    avgFulfillmentTime.toStringAsFixed(1), Icons.timer),
-              ],
-            );
+          if (_isOpenBoard(status)) {
+            activeOrders++;
+          }
+          if (_isKitchen(status)) {
+            kitchenTickets++;
+            final items = data['items'];
+            if (items is List) {
+              kitchenLoad += items.length;
+            }
+          }
+          if (ts != null && ts.isAfter(oneHourAgo)) {
+            recentOrders++;
+          }
+          if (ts != null &&
+              !ts.isBefore(todayStart) &&
+              (_isCompleted(status) ||
+                  data['paidAt'] != null ||
+                  (data['timestamps'] is Map &&
+                      (data['timestamps'] as Map)['paid'] != null))) {
+            final total = data['total'];
+            if (total is num) {
+              todayRevenue += total.toDouble();
+            }
           }
 
-          // Collapsed → single compact row
-          return Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          if (_isCompleted(status)) {
+            final created = ts;
+            DateTime? completed = _asDateTime(data['completedAt']);
+            final tsMap = data['timestamps'];
+            if (completed == null && tsMap is Map) {
+              completed =
+                  _asDateTime(tsMap['completed']) ?? _asDateTime(tsMap['paid']);
+            }
+            if (created != null && completed != null) {
+              final mins = completed.difference(created).inMinutes;
+              if (mins >= 0 && mins < 24 * 60) {
+                fulfillmentMinutes.add(mins);
+              }
+            }
+          }
+        }
+
+        final avgFulfillmentTime = fulfillmentMinutes.isEmpty
+            ? 0.0
+            : fulfillmentMinutes.reduce((a, b) => a + b) /
+                fulfillmentMinutes.length;
+
+        if (expanded) {
+          return GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 2.4,
             children: [
+              _metricCard('Active Orders', activeOrders.toString(),
+                  Icons.shopping_cart),
+              _metricCard('Orders (Last Hour)', recentOrders.toString(),
+                  Icons.access_time),
               _metricCard(
-                  'Active', activeOrders.toString(), Icons.shopping_cart,
-                  compact: true),
-              _metricCard('1h', recentOrders.toString(), Icons.access_time,
-                  compact: true),
-              _metricCard('Rev', '\$${todayRevenue.toStringAsFixed(0)}',
-                  Icons.attach_money,
-                  compact: true),
+                  'Kitchen Tickets', kitchenTickets.toString(), Icons.kitchen),
+              _metricCard(
+                  'Kitchen Load', kitchenLoad.toString(), Icons.restaurant),
+              _metricCard('Revenue Today',
+                  '\$${todayRevenue.toStringAsFixed(2)}', Icons.attach_money),
+              _metricCard('Avg Fulfillment (min)',
+                  avgFulfillmentTime.toStringAsFixed(1), Icons.timer),
             ],
           );
-        } catch (e, st) {
-          shared.ErrorLogger.log(
-            message: 'Error calculating live ops metrics',
-            stack: st.toString(),
-            source: 'LiveOperationalSnapshotWidget',
-            severity: 'error',
-            contextData: {'franchiseId': franchiseId, 'docCount': docs.length},
-          );
-          return const Center(
-            child: Text('Error calculating metrics.',
-                style: TextStyle(color: Colors.red)),
-          );
         }
+
+        return Card(
+          elevation: 2,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _metricCard(
+                    'Active', activeOrders.toString(), Icons.shopping_cart,
+                    compact: true),
+                _metricCard('1h', recentOrders.toString(), Icons.access_time,
+                    compact: true),
+                _metricCard('Kitchen', kitchenTickets.toString(), Icons.kitchen,
+                    compact: true),
+                _metricCard('Rev', '\$${todayRevenue.toStringAsFixed(0)}',
+                    Icons.attach_money,
+                    compact: true),
+              ],
+            ),
+          ),
+        );
       },
     );
   }
 
-  /// Reusable metric card
   Widget _metricCard(String title, String value, IconData icon,
       {bool compact = false}) {
     return Card(
-      elevation: 2,
+      elevation: compact ? 0 : 2,
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
@@ -204,13 +230,22 @@ class LiveOperationalSnapshotWidget extends StatelessWidget {
           children: [
             Icon(icon, size: compact ? 20 : 28, color: Colors.blueGrey),
             const SizedBox(height: 4),
-            Text(value,
-                style: TextStyle(
-                    fontSize: compact ? 14 : 20, fontWeight: FontWeight.bold)),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: compact ? 14 : 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 2),
-            Text(title,
-                style:
-                    TextStyle(fontSize: compact ? 10 : 12, color: Colors.grey)),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: compact ? 10 : 12,
+                color: Colors.grey,
+              ),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),

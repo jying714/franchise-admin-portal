@@ -320,15 +320,120 @@ class FirestoreServiceImpl implements FirestoreService {
           {required String period}) async =>
       throw UnimplementedError(_adminOnlyMsg('exportAnalyticsToCsv'));
 
+  /// Local calendar bounds for KPI period strings used by Admin cards.
+  /// [period]: 'day' | 'today' | 'week' | 'month' (case-insensitive).
+  DateTime _kpiPeriodStart(String period) {
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    switch (period.toLowerCase().trim()) {
+      case 'week':
+        // Monday-start week.
+        final weekday = todayStart.weekday; // Mon=1 … Sun=7
+        return todayStart.subtract(Duration(days: weekday - 1));
+      case 'month':
+        return DateTime(now.year, now.month, 1);
+      case 'day':
+      case 'today':
+      default:
+        return todayStart;
+    }
+  }
+
+  DateTime? _orderTimestamp(Map<String, dynamic> data) {
+    final raw = data['timestamp'];
+    if (raw is firestore.Timestamp) return raw.toDate();
+    if (raw is DateTime) return raw;
+    // Fallback: timestamps.created / timestamps.paid as ISO strings.
+    final tsMap = data['timestamps'];
+    if (tsMap is Map) {
+      for (final key in ['paid', 'created', 'sent_to_kitchen', 'open']) {
+        final v = tsMap[key];
+        if (v is String && v.isNotEmpty) {
+          final parsed = DateTime.tryParse(v);
+          if (parsed != null) return parsed;
+        }
+        if (v is firestore.Timestamp) return v.toDate();
+      }
+    }
+    return null;
+  }
+
+  /// Exclude unpaid draft / cancelled from revenue and order KPIs.
+  bool _countsTowardKpi(Map<String, dynamic> data) {
+    final status = (data['status'] as String?)?.toLowerCase().trim() ?? '';
+    if (status == 'pending_payment' ||
+        status == 'cancelled' ||
+        status == 'canceled') {
+      return false;
+    }
+    return true;
+  }
+
+  Future<List<Map<String, dynamic>>> _ordersForKpiPeriod(
+    String franchiseId,
+    String period,
+  ) async {
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        franchiseId == 'test' ||
+        franchiseId == 'default') {
+      return const [];
+    }
+    final start = _kpiPeriodStart(period);
+    try {
+      // Client-side filter avoids requiring a composite index for MVP.
+      final snap = await _db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection(_orders)
+          .get();
+      final out = <Map<String, dynamic>>[];
+      for (final doc in snap.docs) {
+        final data = doc.data();
+        if (!_countsTowardKpi(data)) continue;
+        final ts = _orderTimestamp(data);
+        if (ts == null || ts.isBefore(start)) continue;
+        out.add(data);
+      }
+      return out;
+    } catch (e, st) {
+      _logError('ordersForKpiPeriod', e, st, franchiseId: franchiseId);
+      return const [];
+    }
+  }
+
   @override
-  Future<double> getTotalRevenueToday(String franchiseId) async => 0.0;
+  Future<double> getTotalRevenueToday(String franchiseId) async {
+    return getTotalRevenueForPeriod(franchiseId, 'today');
+  }
+
   @override
   Future<double> getTotalRevenueForPeriod(
-          String franchiseId, String period) async =>
-      0.0;
+    String franchiseId,
+    String period,
+  ) async {
+    final orders = await _ordersForKpiPeriod(franchiseId, period);
+    double sum = 0.0;
+    for (final data in orders) {
+      final total = data['total'];
+      if (total is num) sum += total.toDouble();
+    }
+    return (sum * 100).roundToDouble() / 100.0;
+  }
+
   @override
-  Future<int> getTotalOrdersTodayCount({required String franchiseId}) async =>
-      0;
+  Future<int> getTotalOrdersTodayCount({required String franchiseId}) async {
+    return getTotalOrdersForPeriod(franchiseId, 'today');
+  }
+
+  @override
+  Future<int> getTotalOrdersForPeriod(
+    String franchiseId,
+    String period,
+  ) async {
+    final orders = await _ordersForKpiPeriod(franchiseId, period);
+    return orders.length;
+  }
 
   @override
   Future<void> addPromo(String franchiseId, Promo promo) async =>
@@ -679,15 +784,36 @@ class FirestoreServiceImpl implements FirestoreService {
       return Stream.value(<app_user.User>[]);
     }
 
+    // Firestore forbids array-contains + array-contains-any on one query.
+    // Filter membership in the query; filter portal roles client-side.
+    const portalRoles = {
+      'staff',
+      'manager',
+      'admin',
+      'hq_owner',
+      'owner',
+      'developer',
+    };
+
     return _db
         .collection('users')
         .where('franchiseIds', arrayContains: franchiseId)
-        .where('roles', arrayContainsAny: ['staff', 'manager', 'admin'])
         .snapshots()
-        .map((s) => s.docs
-            .map((d) => app_user.User.fromFirestore(
-                d.data() as Map<String, dynamic>, d.id))
-            .toList());
+        .map((s) {
+      final users = <app_user.User>[];
+      for (final d in s.docs) {
+        final data = d.data() as Map<String, dynamic>;
+        final user = app_user.User.fromFirestore(data, d.id);
+        final roles = user.roles.map((r) => r.toLowerCase()).toSet();
+        if (roles.any(portalRoles.contains)) {
+          users.add(user);
+        }
+      }
+      users.sort(
+        (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+      );
+      return users;
+    });
   }
 
   @override

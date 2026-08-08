@@ -6,6 +6,87 @@ import '../models/order.dart';
 class InventoryLedger {
   InventoryLedger._();
 
+  /// Decrement for lines added after the order already held stock (POS append).
+  /// Idempotent per [decrementKey] via order field `inventoryDecrementedKeys`.
+  /// Does not require or clear the whole-order `inventoryDecremented` flag.
+  static Future<void> applyAppendSaleDecrement({
+    required FirebaseFirestore db,
+    required String franchiseId,
+    required String orderId,
+    required List<OrderItem> items,
+    required String decrementKey,
+  }) async {
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        orderId.isEmpty ||
+        items.isEmpty ||
+        decrementKey.trim().isEmpty) {
+      return;
+    }
+
+    final orderRef = db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('orders')
+        .doc(orderId);
+
+    await db.runTransaction((tx) async {
+      final orderSnap = await tx.get(orderRef);
+      if (!orderSnap.exists) return;
+      final orderData = orderSnap.data();
+      if (orderData == null) return;
+
+      final priorKeys = <String>[];
+      final rawKeys = orderData['inventoryDecrementedKeys'];
+      if (rawKeys is List) {
+        for (final k in rawKeys) {
+          final s = k.toString().trim();
+          if (s.isNotEmpty) priorKeys.add(s);
+        }
+      }
+      if (priorKeys.contains(decrementKey)) return;
+
+      final qtyById = <String, int>{};
+      for (final line in items) {
+        final id = line.menuItemId.trim();
+        if (id.isEmpty) continue;
+        final q = line.quantity;
+        if (q <= 0) continue;
+        qtyById[id] = (qtyById[id] ?? 0) + q;
+      }
+      if (qtyById.isEmpty) return;
+
+      for (final entry in qtyById.entries) {
+        final menuRef = db
+            .collection('franchises')
+            .doc(franchiseId)
+            .collection('menu_items')
+            .doc(entry.key);
+        final menuSnap = await tx.get(menuRef);
+        if (!menuSnap.exists) continue;
+        final data = menuSnap.data();
+        if (data == null) continue;
+        if (data['inventoryTracked'] != true) continue;
+
+        final current = (data['stockCount'] as num?)?.toInt() ?? 0;
+        final next = current - entry.value;
+        tx.update(menuRef, {
+          'stockCount': next < 0 ? 0 : next,
+        });
+      }
+
+      tx.set(
+        orderRef,
+        {
+          'inventoryDecremented': true,
+          'inventoryDecrementedKeys': FieldValue.arrayUnion([decrementKey]),
+          'inventoryDecrementedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+    });
+  }
+
   /// Call once after tender/paid is committed.
   /// Untracked items are skipped. Never goes below 0.
   static Future<void> applySaleDecrement({

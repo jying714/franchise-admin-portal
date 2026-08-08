@@ -45,7 +45,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   /// POS parity: lowercase "pickup" | "delivery"
   String _deliveryType = 'pickup';
-  static const double _deliveryFeeFlat = 5.0;
+
+  /// Flat delivery fee in dollars. Loaded from config/store_ops.deliveryFee.
+  /// Fallback 5.0 matches prior hardcode until the doc is read.
+  double _deliveryFeeFlat = 5.0;
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _streetController = TextEditingController();
@@ -175,8 +178,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         );
       }
 
+      final fee = (data['deliveryFee'] as num?)?.toDouble();
+
       setState(() {
         if (rate != null && rate >= 0) _taxRate = rate;
+        if (fee != null && fee >= 0) _deliveryFeeFlat = fee;
         _open = open;
         _close = close;
         _dayClosed = closed;

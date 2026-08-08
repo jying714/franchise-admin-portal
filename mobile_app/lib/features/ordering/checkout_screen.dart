@@ -26,6 +26,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   TimeOfDay? _selectedTime;
   PaymentMethod? _selectedPayment = PaymentMethod.posMock;
   final TextEditingController _promoController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
   bool _promoApplied = false;
   String? _promoError;
   bool _isPaying = false;
@@ -44,6 +45,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   /// Decimal rate e.g. 0.0925. Loaded from config/store_ops.
   double _taxRate = 0.0925;
+
+  /// Flat delivery fee in dollars. Loaded from config/store_ops.deliveryFee.
+  /// Fallback 5.0 matches prior hardcode until the doc is read.
+  double _deliveryFeeFlat = 5.0;
+
   bool _storeOpsLoadStarted = false;
 
   double _orderSubtotal = 0.0;
@@ -57,6 +63,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   void dispose() {
     _promoController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
@@ -164,8 +171,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         );
       }
 
+      final fee = (data['deliveryFee'] as num?)?.toDouble();
+
       setState(() {
         if (rate != null && rate >= 0) _taxRate = rate;
+        if (fee != null && fee >= 0) _deliveryFeeFlat = fee;
         _businessOpen = open;
         _businessClose = close;
         _dayClosed = closed;
@@ -360,7 +370,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       setState(() {
         _orderSubtotal = subtotal;
         _orderTax = (_orderSubtotal * _taxRate);
-        _deliveryFee = _deliveryType == DeliveryType.delivery ? 5.0 : 0.0;
+        _deliveryFee =
+            _deliveryType == DeliveryType.delivery ? _deliveryFeeFlat : 0.0;
         _promoValue = _promoApplied ? promoDiscount : 0.0;
         _orderTotal = (_orderSubtotal + _orderTax + _deliveryFee - _promoValue)
             .clamp(0, double.infinity);
@@ -401,6 +412,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       );
       return;
     }
+
+    final phone = _phoneController.text.trim();
+    if (phone.isEmpty) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Phone number is required'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+      return;
+    }
+
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       if (!context.mounted) return;
@@ -469,6 +493,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         status: 'pending_payment',
         timestamp: DateTime.now(),
         estimatedTime: 30,
+        customerPhone: phone,
         timestamps: {
           ...cart.timestamps,
           'pending_payment': DateTime.now().toIso8601String(),
@@ -516,6 +541,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       timestamp: now,
       estimatedTime: 30,
       source: 'mobile',
+      customerPhone: phone,
       timestamps: {
         ...cart.timestamps,
         'placed': now.toIso8601String(),
@@ -775,6 +801,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               onPressed: () =>
                                   _selectTime(context, localizations),
                               child: Text(localizations.pickTime),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          TextField(
+                            controller: _phoneController,
+                            keyboardType: TextInputType.phone,
+                            decoration: InputDecoration(
+                              labelText: 'Phone number',
+                              hintText: 'Required for order contact',
+                              prefixIcon: const Icon(Icons.phone),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(
+                                    shared.DesignTokens.formFieldRadius),
+                              ),
                             ),
                           ),
                           const SizedBox(height: 16),

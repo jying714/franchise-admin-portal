@@ -346,6 +346,7 @@ abstract class FirestoreService {
   Future<double> getTotalRevenueToday(String franchiseId);
   Future<double> getTotalRevenueForPeriod(String franchiseId, String period);
   Future<int> getTotalOrdersTodayCount({required String franchiseId});
+  Future<int> getTotalOrdersForPeriod(String franchiseId, String period);
 
   // === MENU ITEMS ===
   Future<void> addMenuItem(String franchiseId, MenuItem item, {String? userId});

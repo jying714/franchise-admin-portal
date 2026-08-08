@@ -3,16 +3,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:franchise_admin_portal/widgets/financials/dashboard_stat_card.dart';
+import 'package:franchise_admin_portal/widgets/financials/orders_stat_card.dart';
 import 'package:franchise_admin_portal/widgets/financials/revenue_stat_card.dart';
 import 'package:franchise_admin_portal/widgets/financials/kpi_card.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/analytics_placeholder_card.dart';
+import 'package:franchise_admin_portal/widgets/dashboard/orders_over_time_card.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/activity_feed_widget.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/urgent_status_card.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/notifications_panel.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:franchise_admin_portal/widgets/admin/role_guard_widget.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/live_operational_snapshot_widget.dart';
+import 'package:franchise_admin_portal/widgets/dashboard/top_menu_items_card.dart';
 
 /// ---------------------------------------------------------------------------
 /// ðŸ–¥ï¸ DashboardHomeScreen
@@ -96,16 +98,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
               children: [
                 SizedBox(
                   width: isMobile ? double.infinity : 290,
-                  child: DashboardStatCard(
-                    label: 'Orders Today',
-                    icon: Icons.shopping_cart,
-                    getValue: () => Provider.of<shared.FirestoreService>(
-                            context,
-                            listen: false)
-                        .getTotalOrdersTodayCount(franchiseId: franchiseId),
-                    tooltip: 'Total orders placed today',
-                    semanticLabel: 'Total orders placed today',
-                  ),
+                  child: OrdersStatCard(franchiseId: franchiseId),
                 ),
                 SizedBox(
                   width: isMobile ? double.infinity : 290,
@@ -187,11 +180,11 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                 mainAxisSpacing: gap,
                 childAspectRatio: isMobile ? 1.8 : 2.5,
                 physics: const NeverScrollableScrollPhysics(),
-                children: const [
-                  AnalyticsPlaceholderCard(title: "Orders Over Time"),
-                  AnalyticsPlaceholderCard(title: "Top Menu Items"),
-                  UrgentStatusCard(),
-                  ActivityFeedWidget(),
+                children: [
+                  OrdersOverTimeCard(franchiseId: franchiseId),
+                  TopMenuItemsCard(franchiseId: franchiseId),
+                  const UrgentStatusCard(),
+                  const ActivityFeedWidget(),
                 ],
               ),
             ),

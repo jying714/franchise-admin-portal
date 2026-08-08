@@ -8,7 +8,7 @@ import '../../providers/pin_session_provider.dart';
 import '../payments/payment_screen.dart';
 import '../../services/print_service.dart';
 import 'pos_modifier_dialog.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' hide Category;
 
 class _DeliveryCustomer {
   final String name;
@@ -55,6 +55,11 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
   final List<_TicketLine> _lines = [];
   bool _sending = false;
   _DeliveryCustomer? _deliveryCustomer;
+  String? _customerPhone;
+
+  /// null = category picker; non-null = items in that category.
+  String? _selectedCategoryId;
+  String? _selectedCategoryName;
 
   bool get _isDelivery => widget.orderType == 'delivery';
 
@@ -67,6 +72,11 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
     if (_isDelivery) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _promptDeliveryCustomer();
+      });
+    } else if (widget.existingOrderId == null) {
+      // New carryout / dine-in ticket — collect contact phone once.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _promptCustomerPhone();
       });
     }
   }
@@ -82,7 +92,45 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
       Navigator.of(context).pop();
       return;
     }
-    setState(() => _deliveryCustomer = result);
+    setState(() {
+      _deliveryCustomer = result;
+      _customerPhone = result.phone.trim();
+    });
+  }
+
+  Future<void> _promptCustomerPhone() async {
+    final result = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const _CustomerPhoneDialog(),
+    );
+    if (!mounted) return;
+    if (result == null || result.trim().isEmpty) {
+      Navigator.of(context).pop();
+      return;
+    }
+    setState(() => _customerPhone = result.trim());
+  }
+
+  Stream<List<Category>> _categoryStream() {
+    return FirebaseFirestore.instance
+        .collection('franchises')
+        .doc(widget.franchiseId)
+        .collection('categories')
+        .snapshots()
+        .map((snap) {
+          final cats = snap.docs
+              .map((d) => Category.fromFirestore(d.data(), d.id))
+              .where((c) => c.isActive)
+              .toList();
+          cats.sort((a, b) {
+            final ao = a.sortOrder ?? 9999;
+            final bo = b.sortOrder ?? 9999;
+            if (ao != bo) return ao.compareTo(bo);
+            return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+          });
+          return cats;
+        });
   }
 
   Stream<List<MenuItem>> _menuStream() {
@@ -96,7 +144,12 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
               .map((d) => MenuItem.fromFirestore(d.data(), d.id))
               .where((m) => m.isSellable)
               .toList();
-          items.sort((a, b) => a.name.compareTo(b.name));
+          items.sort((a, b) {
+            final ao = a.sortOrder ?? 9999;
+            final bo = b.sortOrder ?? 9999;
+            if (ao != bo) return ao.compareTo(bo);
+            return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+          });
           return items;
         });
   }
@@ -152,6 +205,12 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
   /// Provisional rate — matches mobile checkout (`0.0925`) until franchise tax config exists.
   /// Do not invent a new config field here.
   double _taxRate = 0.0925;
+
+  /// Flat delivery fee in dollars. Loaded from config/store_ops.deliveryFee.
+  /// Used only when orderType == delivery. Fallback 0.0 keeps prior POS behavior
+  /// until the doc is read.
+  double _deliveryFeeFlat = 0.0;
+
   bool _storeOpsLoadStarted = false;
 
   double _moneyRound(double v) => (v * 100).roundToDouble() / 100.0;
@@ -198,12 +257,16 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
           .collection('config')
           .doc('store_ops')
           .get();
-      final rate = (snap.data()?['taxRate'] as num?)?.toDouble();
-      if (rate != null && rate >= 0 && mounted) {
-        setState(() => _taxRate = rate);
-      }
+      final data = snap.data();
+      final rate = (data?['taxRate'] as num?)?.toDouble();
+      final fee = (data?['deliveryFee'] as num?)?.toDouble();
+      if (!mounted) return;
+      setState(() {
+        if (rate != null && rate >= 0) _taxRate = rate;
+        if (fee != null && fee >= 0) _deliveryFeeFlat = fee;
+      });
     } catch (e) {
-      debugPrint('[POS] store_ops tax load failed: $e');
+      debugPrint('[POS] store_ops tax/fee load failed: $e');
     }
   }
 
@@ -255,12 +318,13 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
     final subtotal = _subtotal;
     // Order-level discount at create is 0 today (payment-time discount is on PaymentScreen).
     const discount = 0.0;
+    final deliveryFee = _isDelivery ? _deliveryFeeFlat : 0.0;
     final taxable = _taxableAmount(subtotal: subtotal, discount: discount);
     final tax = _taxFor(taxable);
     final total = _totalFor(
       subtotal: subtotal,
       discount: discount,
-      deliveryFee: 0.0,
+      deliveryFee: deliveryFee,
     );
     final customer = _deliveryCustomer;
     final customerName = _isDelivery ? customer!.name : staff.name;
@@ -285,7 +349,7 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
       items: items,
       subtotal: subtotal,
       tax: tax,
-      deliveryFee: 0,
+      deliveryFee: deliveryFee,
       discount: 0,
       total: total,
       deliveryType: widget.orderType,
@@ -370,8 +434,11 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
     final data = order.copyWith(id: ref.id).toFirestore();
     data['staffId'] = staff.id;
     data['staffName'] = staff.name;
-    if (_isDelivery && customer != null) {
-      data['customerPhone'] = customer.phone;
+    final phone = _isDelivery && customer != null
+        ? customer.phone.trim()
+        : (_customerPhone ?? '').trim();
+    if (phone.isNotEmpty) {
+      data['customerPhone'] = phone;
     }
     if (widget.tableId != null && widget.tableId!.isNotEmpty) {
       data['tableId'] = widget.tableId;
@@ -429,6 +496,43 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
       }
       final isAppend =
           widget.existingOrderId != null && widget.existingOrderId!.isNotEmpty;
+
+      // A3: kitchen commit holds stock so web/mobile cannot sell the last unit.
+      // First send: whole-order flag. Append: key per batch of new lines only.
+      try {
+        final items = _lines
+            .map(
+              (l) => OrderItem(
+                menuItemId: l.menuItemId,
+                name: l.name,
+                price: l.unitPrice,
+                quantity: l.quantity,
+                customizations: l.customizations,
+              ),
+            )
+            .toList();
+        if (isAppend) {
+          final decrementKey =
+              'append_${DateTime.now().millisecondsSinceEpoch}';
+          await InventoryLedger.applyAppendSaleDecrement(
+            db: FirebaseFirestore.instance,
+            franchiseId: widget.franchiseId,
+            orderId: id,
+            items: items,
+            decrementKey: decrementKey,
+          );
+        } else {
+          await InventoryLedger.applySaleDecrement(
+            db: FirebaseFirestore.instance,
+            franchiseId: widget.franchiseId,
+            orderId: id,
+            items: items,
+          );
+        }
+      } catch (e) {
+        debugPrint('[POS] inventory decrement on send skipped: $e');
+      }
+
       await _mockKitchenTicketForOrder(id, isAppend: isAppend);
       if (!mounted) return;
       setState(() {
@@ -465,7 +569,11 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
       }
       if (!mounted) return;
 
-      final amountDue = _totalFor(subtotal: _subtotal, discount: 0.0);
+      final amountDue = _totalFor(
+        subtotal: _subtotal,
+        discount: 0.0,
+        deliveryFee: _isDelivery ? _deliveryFeeFlat : 0.0,
+      );
       final paid = await Navigator.of(context).push<bool>(
         MaterialPageRoute<bool>(
           builder: (_) => PaymentScreen(
@@ -555,6 +663,64 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
     );
   }
 
+  Widget _buildItemGrid(
+    BuildContext context,
+    ColorScheme scheme,
+    List<MenuItem> items,
+  ) {
+    if (items.isEmpty) {
+      return Center(
+        child: Text(
+          'No menu items',
+          style: TextStyle(color: scheme.onSurfaceVariant),
+        ),
+      );
+    }
+    return GridView.builder(
+      padding: const EdgeInsets.all(12),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: 1.1,
+      ),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+        return Material(
+          color: scheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => _addSimpleLine(item),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  const Spacer(),
+                  Text(
+                    '\$${item.price.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      color: scheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -572,71 +738,181 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
           children: [
             Expanded(
               flex: 3,
-              child: StreamBuilder<List<MenuItem>>(
-                stream: _menuStream(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
+              child: StreamBuilder<List<Category>>(
+                stream: _categoryStream(),
+                builder: (context, catSnap) {
+                  if (catSnap.hasError) {
                     return Center(
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: Text(
-                          'Menu error:\n${snapshot.error}',
+                          'Categories error:\n${catSnap.error}',
                           textAlign: TextAlign.center,
                           style: TextStyle(color: scheme.error),
                         ),
                       ),
                     );
                   }
-                  if (!snapshot.hasData) {
+                  if (!catSnap.hasData) {
                     return const Center(child: CircularProgressIndicator());
                   }
-                  final items = snapshot.data!;
-                  if (items.isEmpty) {
-                    return Center(
-                      child: Text(
-                        'No menu items',
-                        style: TextStyle(color: scheme.onSurfaceVariant),
-                      ),
-                    );
-                  }
-                  return GridView.builder(
-                    padding: const EdgeInsets.all(12),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 8,
-                          crossAxisSpacing: 8,
-                          childAspectRatio: 1.4,
-                        ),
-                    itemCount: items.length,
-                    itemBuilder: (context, index) {
-                      final item = items[index];
-                      return Card(
-                        child: InkWell(
-                          onTap: () => _addSimpleLine(item),
+                  final categories = catSnap.data!;
+
+                  return StreamBuilder<List<MenuItem>>(
+                    stream: _menuStream(),
+                    builder: (context, menuSnap) {
+                      if (menuSnap.hasError) {
+                        return Center(
                           child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            padding: const EdgeInsets.all(16),
+                            child: Text(
+                              'Menu error:\n${menuSnap.error}',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: scheme.error),
+                            ),
+                          ),
+                        );
+                      }
+                      if (!menuSnap.hasData) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      final allItems = menuSnap.data!;
+
+                      // ---- Category picker ----
+                      if (_selectedCategoryId == null) {
+                        if (categories.isEmpty) {
+                          // Fallback: no categories configured — show all items
+                          return _buildItemGrid(context, scheme, allItems);
+                        }
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                              child: Text(
+                                'Categories',
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                            ),
+                            Expanded(
+                              child: GridView.builder(
+                                padding: const EdgeInsets.all(12),
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 3,
+                                      mainAxisSpacing: 10,
+                                      crossAxisSpacing: 10,
+                                      childAspectRatio: 1.35,
+                                    ),
+                                itemCount: categories.length,
+                                itemBuilder: (context, index) {
+                                  final cat = categories[index];
+                                  final label =
+                                      (cat.displayName?.isNotEmpty == true)
+                                      ? cat.displayName!
+                                      : cat.name;
+                                  final count = allItems
+                                      .where((m) => m.categoryId == cat.id)
+                                      .length;
+                                  return Material(
+                                    color: scheme.surfaceContainerHighest,
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(12),
+                                      onTap: () {
+                                        setState(() {
+                                          _selectedCategoryId = cat.id;
+                                          _selectedCategoryName = label;
+                                        });
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(12),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              label,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .titleSmall
+                                                  ?.copyWith(
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                            ),
+                                            const Spacer(),
+                                            Text(
+                                              count == 1
+                                                  ? '1 item'
+                                                  : '$count items',
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodySmall
+                                                  ?.copyWith(
+                                                    color:
+                                                        scheme.onSurfaceVariant,
+                                                  ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+
+                      // ---- Items in selected category ----
+                      final filtered = allItems
+                          .where((m) => m.categoryId == _selectedCategoryId)
+                          .toList();
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(4, 8, 12, 4),
+                            child: Row(
                               children: [
-                                Text(
-                                  item.name,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.titleSmall,
+                                IconButton(
+                                  tooltip: 'All categories',
+                                  onPressed: () {
+                                    setState(() {
+                                      _selectedCategoryId = null;
+                                      _selectedCategoryName = null;
+                                    });
+                                  },
+                                  icon: const Icon(Icons.arrow_back),
                                 ),
-                                const Spacer(),
-                                Text(
-                                  '\$${item.price.toStringAsFixed(2)}',
-                                  style: TextStyle(
-                                    color: scheme.primary,
-                                    fontWeight: FontWeight.w600,
+                                Expanded(
+                                  child: Text(
+                                    _selectedCategoryName ?? 'Items',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleMedium,
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        ),
+                          Expanded(
+                            child: filtered.isEmpty
+                                ? Center(
+                                    child: Text(
+                                      'No items in this category',
+                                      style: TextStyle(
+                                        color: scheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  )
+                                : _buildItemGrid(context, scheme, filtered),
+                          ),
+                        ],
                       );
                     },
                   );
@@ -723,6 +999,26 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
                       children: [
                         Text(
                           'Subtotal  \$${_subtotal.toStringAsFixed(2)}',
+                          textAlign: TextAlign.right,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        if (_isDelivery && _deliveryFeeFlat > 0) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            'Delivery  \$${_deliveryFeeFlat.toStringAsFixed(2)}',
+                            textAlign: TextAlign.right,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ],
+                        const SizedBox(height: 2),
+                        Text(
+                          'Tax  \$${_taxFor(_taxableAmount(subtotal: _subtotal, discount: 0.0)).toStringAsFixed(2)}',
+                          textAlign: TextAlign.right,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Total  \$${_totalFor(subtotal: _subtotal, discount: 0.0, deliveryFee: _isDelivery ? _deliveryFeeFlat : 0.0).toStringAsFixed(2)}',
                           textAlign: TextAlign.right,
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
@@ -927,6 +1223,73 @@ class _DeliveryCustomerDialogState extends State<_DeliveryCustomerDialog> {
               ],
             ],
           ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(onPressed: _submit, child: const Text('Continue')),
+      ],
+    );
+  }
+}
+
+class _CustomerPhoneDialog extends StatefulWidget {
+  const _CustomerPhoneDialog();
+
+  @override
+  State<_CustomerPhoneDialog> createState() => _CustomerPhoneDialogState();
+}
+
+class _CustomerPhoneDialogState extends State<_CustomerPhoneDialog> {
+  final _phoneController = TextEditingController();
+  String? _error;
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final phone = _phoneController.text.trim();
+    if (phone.isEmpty) {
+      setState(() => _error = 'Phone number is required');
+      return;
+    }
+    Navigator.of(context).pop(phone);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return AlertDialog(
+      title: const Text('Customer phone'),
+      content: SizedBox(
+        width: 360,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TextField(
+              controller: _phoneController,
+              autofocus: true,
+              keyboardType: TextInputType.phone,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _submit(),
+              decoration: const InputDecoration(
+                labelText: 'Phone',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 10),
+              Text(_error!, style: TextStyle(color: scheme.error)),
+            ],
+          ],
         ),
       ),
       actions: [
