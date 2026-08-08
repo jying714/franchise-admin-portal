@@ -514,188 +514,231 @@ class FranchiseAppRootSplit extends StatelessWidget {
           });
         }
 
-        // AUTHENTICATED - Force dashboard
-        // AUTHENTICATED - Force dashboard
-        // AUTHENTICATED - Force dashboard
-        debugPrint(
-            '[FP-PROOF] PARENT scope FP hash=${identityHashCode(Provider.of<shared.FranchiseProvider>(context, listen: false))}');
-        return MultiProvider(
-          providers: [
-            // === Core Providers ===
-            ChangeNotifierProvider(create: (_) => shared.AdminUserProvider()),
-            Provider<shared.InvoiceService>(
-                create: (_) => InvoiceServiceImpl()),
+        // AUTHENTICATED — finish portal invite before Admin shell
+        return FutureBuilder<String?>(
+          future: Provider.of<shared.AuthService>(context, listen: false)
+              .getInviteToken(),
+          builder: (context, tokenSnap) {
+            if (tokenSnap.connectionState != ConnectionState.done) {
+              return const MaterialApp(
+                home: Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                ),
+              );
+            }
 
-            // === ADMIN FIRESTORE SERVICE ===
-            Provider<shared.FirestoreService>(
-                create: (_) => AdminFirestoreService()),
+            final savedToken = (tokenSnap.data ?? '').trim();
+            String hashToken = '';
+            final hash = Uri.base.fragment;
+            if (hash.startsWith('/invite-accept')) {
+              final q = hash.indexOf('?');
+              if (q != -1) {
+                hashToken =
+                    Uri.splitQueryString(hash.substring(q + 1))['token'] ?? '';
+              }
+            }
+            final inviteToken =
+                savedToken.isNotEmpty ? savedToken : hashToken.trim();
 
-            // === Franchise Info ===
-            ChangeNotifierProxyProvider2<shared.FranchiseProvider,
-                shared.FirestoreService, FranchiseInfoProviderImpl>(
-              create: (context) => FranchiseInfoProviderImpl(
-                firestore: Provider.of<shared.FirestoreService>(context,
-                    listen: false),
-                franchiseProvider: Provider.of<shared.FranchiseProvider>(
-                    context,
-                    listen: false),
-              ),
-              update: (_, fp, fs, prev) {
-                // Always reuse the same ChangeNotifier instance.
-                // Creating a new one while Provider still holds the old
-                // causes addListener on a disposed notifier (Null is not a subtype of bool).
-                final p = prev ??
-                    FranchiseInfoProviderImpl(
-                      firestore: fs,
-                      franchiseProvider: fp,
-                    );
-                // Franchise id may have changed — reload, do not replace.
-                p.loadFranchiseInfo();
-                return p;
-              },
-            ),
+            if (inviteToken.isNotEmpty) {
+              return MaterialApp(
+                navigatorKey: navigatorKey,
+                debugShowCheckedModeBanner: false,
+                title: 'Franchise Admin Portal',
+                theme: _lightTheme,
+                darkTheme: _darkTheme,
+                themeMode: Provider.of<ThemeProvider>(context, listen: true)
+                        .themeMode ??
+                    ThemeMode.system,
+                home: InviteAcceptScreen(inviteToken: inviteToken),
+              );
+            }
 
-            // === Franchise Feature ===
-            ChangeNotifierProxyProvider2<shared.FranchiseProvider,
-                shared.FirestoreService, FranchiseFeatureProviderImpl>(
-              create: (_) => FranchiseFeatureProviderImpl(
-                  service: FranchiseFeatureServiceImpl(), franchiseId: ''),
-              update: (_, fp, fs, prev) {
-                final p = prev ??
-                    FranchiseFeatureProviderImpl(
-                        service: FranchiseFeatureServiceImpl(),
-                        franchiseId: fp.franchiseId ?? '');
-                if (fp.franchiseId != null) p.setFranchiseId(fp.franchiseId!);
-                return p;
-              },
-            ),
+            debugPrint(
+                '[FP-PROOF] PARENT scope FP hash=${identityHashCode(Provider.of<shared.FranchiseProvider>(context, listen: false))}');
+            return MultiProvider(
+              providers: [
+                // === Core Providers ===
+                ChangeNotifierProvider(
+                    create: (_) => shared.AdminUserProvider()),
+                Provider<shared.InvoiceService>(
+                    create: (_) => InvoiceServiceImpl()),
 
-            // === Abstract Alias for FranchiseFeatureProvider (fixes DashboardHomeScreen + FeatureGuard) ===
-            ProxyProvider<FranchiseFeatureProviderImpl,
-                shared.FranchiseFeatureProvider>(
-              update: (_, impl, __) => impl,
-            ),
+                // === ADMIN FIRESTORE SERVICE ===
+                Provider<shared.FirestoreService>(
+                    create: (_) => AdminFirestoreService()),
 
-            // === Franchise Subscription Service (required by PlatformPlansSummaryCard, plan tiles, etc.) ===
-            Provider<shared.FranchiseSubscriptionService>(
-              create: (_) => FranchiseSubscriptionServiceImpl(),
-            ),
-
-            // === Onboarding Progress ===
-            ChangeNotifierProxyProvider2<shared.FirestoreService,
-                shared.FranchiseProvider, OnboardingProgressProviderImpl>(
-              create: (context) => OnboardingProgressProviderImpl(
-                firestore: Provider.of<shared.FirestoreService>(context,
-                    listen: false),
-                franchiseId: '',
-              ),
-              update: (_, fs, fp, prev) {
-                final notifier = prev ??
-                    OnboardingProgressProviderImpl(
-                      firestore: fs,
-                      franchiseId: fp.franchiseId ?? '',
-                    );
-                final id = fp.franchiseId ?? '';
-                if (id.isNotEmpty && id != 'unknown') {
-                  notifier.updateFranchiseId(id);
-                }
-                return notifier;
-              },
-            ),
-            // === Abstract Alias (required for Consumer<shared.OnboardingProgressProvider>) ===
-            ProxyProvider<OnboardingProgressProviderImpl,
-                shared.OnboardingProgressProvider>(
-              update: (_, impl, __) => impl,
-            ),
-
-            // === Ingredient Metadata ===
-            ChangeNotifierProxyProvider2<shared.FirestoreService,
-                shared.FranchiseProvider, IngredientMetadataProviderImpl>(
-              create: (context) => IngredientMetadataProviderImpl(
-                  firestore: Provider.of<shared.FirestoreService>(context,
-                      listen: false),
-                  franchiseId: ''),
-              update: (_, fs, fp, prev) {
-                final notifier = prev ??
-                    IngredientMetadataProviderImpl(
-                        firestore: fs, franchiseId: fp.franchiseId ?? '');
-                if (fp.franchiseId != null && fp.franchiseId!.isNotEmpty)
-                  notifier.updateFranchiseId(fp.franchiseId!);
-                return notifier;
-              },
-            ),
-
-            // === Category ===
-            ChangeNotifierProxyProvider2<shared.FirestoreService,
-                shared.FranchiseProvider, CategoryProviderImpl>(
-              create: (context) => CategoryProviderImpl(
-                  firestore: AdminFirestoreService(), franchiseId: ''),
-              update: (_, fs, fp, prev) =>
-                  prev ??
-                  CategoryProviderImpl(
-                      firestore: fs, franchiseId: fp.franchiseId ?? ''),
-            ),
-
-            // === Ingredient Type ===
-            ChangeNotifierProxyProvider2<shared.FirestoreService,
-                shared.FranchiseProvider, IngredientTypeProviderImpl>(
-              create: (context) => IngredientTypeProviderImpl(
-                  firestoreService: AdminFirestoreService()),
-              update: (_, fs, fp, prev) {
-                final notifier = prev ??
-                    IngredientTypeProviderImpl(
-                        firestoreService: AdminFirestoreService());
-                if (fp.franchiseId != null && fp.franchiseId!.isNotEmpty)
-                  notifier.franchiseId = fp.franchiseId!;
-                return notifier;
-              },
-            ),
-
-            // === Menu Item Provider ===
-            ChangeNotifierProxyProvider6<
-                shared.FirestoreService,
-                shared.FranchiseProvider,
-                FranchiseInfoProviderImpl,
-                IngredientMetadataProviderImpl,
-                CategoryProviderImpl,
-                IngredientTypeProviderImpl,
-                MenuItemProviderImpl>(
-              create: (context) => MenuItemProviderImpl(
-                firestoreService: Provider.of<shared.FirestoreService>(context,
-                    listen: false),
-                franchiseInfoProvider: Provider.of<FranchiseInfoProviderImpl>(
-                    context,
-                    listen: false),
-                ingredientProvider: Provider.of<IngredientMetadataProviderImpl>(
-                    context,
-                    listen: false),
-                categoryProvider:
-                    Provider.of<CategoryProviderImpl>(context, listen: false),
-                typeProvider: Provider.of<IngredientTypeProviderImpl>(context,
-                    listen: false),
-              ),
-              update: (_, fs, fp, fip, ingP, catP, typeP, prev) =>
-                  prev ??
-                  MenuItemProviderImpl(
-                    firestoreService: fs,
-                    franchiseInfoProvider: fip,
-                    ingredientProvider: ingP,
-                    categoryProvider: catP,
-                    typeProvider: typeP,
+                // === Franchise Info ===
+                ChangeNotifierProxyProvider2<shared.FranchiseProvider,
+                    shared.FirestoreService, FranchiseInfoProviderImpl>(
+                  create: (context) => FranchiseInfoProviderImpl(
+                    firestore: Provider.of<shared.FirestoreService>(context,
+                        listen: false),
+                    franchiseProvider: Provider.of<shared.FranchiseProvider>(
+                        context,
+                        listen: false),
                   ),
-            ),
+                  update: (_, fp, fs, prev) {
+                    // Always reuse the same ChangeNotifier instance.
+                    // Creating a new one while Provider still holds the old
+                    // causes addListener on a disposed notifier (Null is not a subtype of bool).
+                    final p = prev ??
+                        FranchiseInfoProviderImpl(
+                          firestore: fs,
+                          franchiseProvider: fp,
+                        );
+                    // Franchise id may have changed — reload, do not replace.
+                    p.loadFranchiseInfo();
+                    return p;
+                  },
+                ),
 
-            // === Firebase Storage ===
-            Provider<shared.FirebaseStorageService>(
-                create: (_) => FirebaseStorageServiceImpl()),
+                // === Franchise Feature ===
+                ChangeNotifierProxyProvider2<shared.FranchiseProvider,
+                    shared.FirestoreService, FranchiseFeatureProviderImpl>(
+                  create: (_) => FranchiseFeatureProviderImpl(
+                      service: FranchiseFeatureServiceImpl(), franchiseId: ''),
+                  update: (_, fp, fs, prev) {
+                    final p = prev ??
+                        FranchiseFeatureProviderImpl(
+                            service: FranchiseFeatureServiceImpl(),
+                            franchiseId: fp.franchiseId ?? '');
+                    if (fp.franchiseId != null)
+                      p.setFranchiseId(fp.franchiseId!);
+                    return p;
+                  },
+                ),
 
-            // === Logging & Analytics ===
-            Provider<shared.AuditLogService>.value(
-                value: AuditLogServiceImpl()),
-            Provider<shared.AnalyticsService>.value(
-                value: shared.AnalyticsServiceImpl()),
-          ],
-          child: const FranchiseAuthenticatedRoot(),
+                // === Abstract Alias for FranchiseFeatureProvider (fixes DashboardHomeScreen + FeatureGuard) ===
+                ProxyProvider<FranchiseFeatureProviderImpl,
+                    shared.FranchiseFeatureProvider>(
+                  update: (_, impl, __) => impl,
+                ),
+
+                // === Franchise Subscription Service (required by PlatformPlansSummaryCard, plan tiles, etc.) ===
+                Provider<shared.FranchiseSubscriptionService>(
+                  create: (_) => FranchiseSubscriptionServiceImpl(),
+                ),
+
+                // === Onboarding Progress ===
+                ChangeNotifierProxyProvider2<shared.FirestoreService,
+                    shared.FranchiseProvider, OnboardingProgressProviderImpl>(
+                  create: (context) => OnboardingProgressProviderImpl(
+                    firestore: Provider.of<shared.FirestoreService>(context,
+                        listen: false),
+                    franchiseId: '',
+                  ),
+                  update: (_, fs, fp, prev) {
+                    final notifier = prev ??
+                        OnboardingProgressProviderImpl(
+                          firestore: fs,
+                          franchiseId: fp.franchiseId ?? '',
+                        );
+                    final id = fp.franchiseId ?? '';
+                    if (id.isNotEmpty && id != 'unknown') {
+                      notifier.updateFranchiseId(id);
+                    }
+                    return notifier;
+                  },
+                ),
+                // === Abstract Alias (required for Consumer<shared.OnboardingProgressProvider>) ===
+                ProxyProvider<OnboardingProgressProviderImpl,
+                    shared.OnboardingProgressProvider>(
+                  update: (_, impl, __) => impl,
+                ),
+
+                // === Ingredient Metadata ===
+                ChangeNotifierProxyProvider2<shared.FirestoreService,
+                    shared.FranchiseProvider, IngredientMetadataProviderImpl>(
+                  create: (context) => IngredientMetadataProviderImpl(
+                      firestore: Provider.of<shared.FirestoreService>(context,
+                          listen: false),
+                      franchiseId: ''),
+                  update: (_, fs, fp, prev) {
+                    final notifier = prev ??
+                        IngredientMetadataProviderImpl(
+                            firestore: fs, franchiseId: fp.franchiseId ?? '');
+                    if (fp.franchiseId != null && fp.franchiseId!.isNotEmpty)
+                      notifier.updateFranchiseId(fp.franchiseId!);
+                    return notifier;
+                  },
+                ),
+
+                // === Category ===
+                ChangeNotifierProxyProvider2<shared.FirestoreService,
+                    shared.FranchiseProvider, CategoryProviderImpl>(
+                  create: (context) => CategoryProviderImpl(
+                      firestore: AdminFirestoreService(), franchiseId: ''),
+                  update: (_, fs, fp, prev) =>
+                      prev ??
+                      CategoryProviderImpl(
+                          firestore: fs, franchiseId: fp.franchiseId ?? ''),
+                ),
+
+                // === Ingredient Type ===
+                ChangeNotifierProxyProvider2<shared.FirestoreService,
+                    shared.FranchiseProvider, IngredientTypeProviderImpl>(
+                  create: (context) => IngredientTypeProviderImpl(
+                      firestoreService: AdminFirestoreService()),
+                  update: (_, fs, fp, prev) {
+                    final notifier = prev ??
+                        IngredientTypeProviderImpl(
+                            firestoreService: AdminFirestoreService());
+                    if (fp.franchiseId != null && fp.franchiseId!.isNotEmpty)
+                      notifier.franchiseId = fp.franchiseId!;
+                    return notifier;
+                  },
+                ),
+
+                // === Menu Item Provider ===
+                ChangeNotifierProxyProvider6<
+                    shared.FirestoreService,
+                    shared.FranchiseProvider,
+                    FranchiseInfoProviderImpl,
+                    IngredientMetadataProviderImpl,
+                    CategoryProviderImpl,
+                    IngredientTypeProviderImpl,
+                    MenuItemProviderImpl>(
+                  create: (context) => MenuItemProviderImpl(
+                    firestoreService: Provider.of<shared.FirestoreService>(
+                        context,
+                        listen: false),
+                    franchiseInfoProvider:
+                        Provider.of<FranchiseInfoProviderImpl>(context,
+                            listen: false),
+                    ingredientProvider:
+                        Provider.of<IngredientMetadataProviderImpl>(context,
+                            listen: false),
+                    categoryProvider: Provider.of<CategoryProviderImpl>(context,
+                        listen: false),
+                    typeProvider: Provider.of<IngredientTypeProviderImpl>(
+                        context,
+                        listen: false),
+                  ),
+                  update: (_, fs, fp, fip, ingP, catP, typeP, prev) =>
+                      prev ??
+                      MenuItemProviderImpl(
+                        firestoreService: fs,
+                        franchiseInfoProvider: fip,
+                        ingredientProvider: ingP,
+                        categoryProvider: catP,
+                        typeProvider: typeP,
+                      ),
+                ),
+
+                // === Firebase Storage ===
+                Provider<shared.FirebaseStorageService>(
+                    create: (_) => FirebaseStorageServiceImpl()),
+
+                // === Logging & Analytics ===
+                Provider<shared.AuditLogService>.value(
+                    value: AuditLogServiceImpl()),
+                Provider<shared.AnalyticsService>.value(
+                    value: shared.AnalyticsServiceImpl()),
+              ],
+              child: const FranchiseAuthenticatedRoot(),
+            );
+          },
         );
       },
     );

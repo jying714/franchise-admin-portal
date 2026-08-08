@@ -53,8 +53,6 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
       }
     }
     if (_effectiveToken != null && _effectiveToken!.isNotEmpty) {
-      Provider.of<shared.AuthService>(context, listen: false)
-          .saveInviteToken(_effectiveToken!);
       _fetchInvite(_effectiveToken!);
     } else {
       setState(() {
@@ -169,9 +167,27 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
         return;
       }
       if (doc['status'] == 'accepted') {
+        final current = fb_auth.FirebaseAuth.instance.currentUser;
+        final inviteEmail =
+            ((doc['email'] as String?) ?? '').trim().toLowerCase();
+        final authEmail = (current?.email ?? '').trim().toLowerCase();
+        final acceptedBy = (doc['acceptedByUserId'] as String?)?.trim();
+        final isInvitee = current != null &&
+            ((authEmail.isNotEmpty && authEmail == inviteEmail) ||
+                (acceptedBy != null && acceptedBy == current.uid));
+
+        if (isInvitee) {
+          if (!mounted) return;
+          await _exitInviteToApp();
+          return;
+        }
+
         setState(() => _error = "Invitation already accepted.");
         return;
       }
+      await Provider.of<shared.AuthService>(context, listen: false)
+          .saveInviteToken(token);
+      if (!mounted) return;
       setState(() {
         _inviteData = doc;
       });
@@ -251,16 +267,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
           inviteEmail: inviteEmail,
         );
         if (!mounted) return;
-        setState(() => _accepted = true);
-        // Land on app root / login shell — not franchisee onboarding.
-        await _acceptPortalStaffInvite(
-          token: _effectiveToken!,
-          currentUser: currentUser,
-          inviteEmail: inviteEmail,
-        );
-        if (!mounted) return;
-        setState(() => _accepted = true);
-        Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+        await _exitInviteToApp();
         return;
       }
 
@@ -287,6 +294,13 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
     } finally {
       setState(() => _loading = false);
     }
+  }
+
+  Future<void> _exitInviteToApp() async {
+    await Provider.of<shared.AuthService>(context, listen: false)
+        .clearInviteToken();
+    // Full load into authenticated root — no invite MaterialApp, no hash token.
+    html.window.location.href = '${Uri.base.origin}/';
   }
 
   @override
@@ -388,8 +402,9 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
         const SizedBox(height: 18),
         Builder(
           builder: (context) {
-            if (_emailRegistered) {
-              // STEP 4: Show sign-in prompt if the invitee already registered
+            // Already registered + not signed in → prompt sign-in only.
+            // If already signed in, fall through to email/uid match + Accept.
+            if (_emailRegistered && !isLoggedIn) {
               return Column(
                 children: [
                   Text(
@@ -414,7 +429,6 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
               );
             }
 
-            // If not registered, continue the rest of your existing logic:
             if (!isLoggedIn) {
               return Column(
                 children: [
@@ -439,12 +453,19 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
                 ],
               );
             }
-            if (!isUidMatch) {
+            // Portal invites have no invitedUserId until accept — match on email.
+            // Franchisee invites may set invitedUserId; honor either match.
+            final isInvitee = isEmailMatch ||
+                (inviteUid != null &&
+                    isLoggedIn &&
+                    currentUser!.uid == inviteUid);
+
+            if (!isInvitee) {
               return Column(
                 children: [
                   Text(
-                    "You are signed in with a different account.\n"
-                    "Please sign in with the invited email to accept this invite.",
+                    "You are signed in as ${currentUser?.email ?? 'another account'}.\n"
+                    "Please sign in with $inviteEmail to accept this invite.",
                     style: theme.textTheme.bodyMedium ?? const TextStyle(),
                     textAlign: TextAlign.center,
                   ),
@@ -465,7 +486,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
                 ],
               );
             }
-            // All good (not registered, signed in with correct user)
+            // All good — signed in as invitee
             return Column(
               children: [
                 Text(

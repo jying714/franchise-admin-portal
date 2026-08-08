@@ -236,10 +236,11 @@ service cloud.firestore {
 
   allow update: if isHqOwner()
                 || (isSignedIn()
-                    && resource.data.email is string
-                    && resource.data.email == request.auth.token.email
                     && resource.data.status == 'pending'
-                    && request.resource.data.status == 'accepted');
+                    && request.resource.data.status == 'accepted'
+                    && resource.data.inviteType == 'portal_staff'
+                    && request.resource.data.acceptedByUserId == request.auth.uid
+                    && request.resource.data.invitedUserId == request.auth.uid);
 
   allow delete: if isHqOwner();
 }
