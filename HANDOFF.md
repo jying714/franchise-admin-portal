@@ -1,6 +1,6 @@
 # HANDOFF.md — Agent Context & Project Status
 
-**Last Updated**: August 6, 2026 (~20:40 CDT)  
+**Last Updated**: August 8, 2026 (~19:40 CDT)  
 **Active branch**: **`main`**  
 **Repo**: https://github.com/jying714/franchise-admin-portal  
 **Local path**: `C:\\projects\\franchise-admin-portal`  
@@ -16,18 +16,29 @@ Prefer **STATUS.md + this handoff + `docs/plans/*` + app READMEs** over agent me
 **main** includes:
 
 - Full order path (customer_web, mobile, POS software pilot)
-- Storefront shell Wave 1 + **Modern template** + **Modern polish** (side-sheet cart, branded cards/cart, story band, HQ template + story photo upload)
+- Storefront shell Wave 1 + **Modern template** + polish
 - Inventory v1 + Staff/labor v1 + station claims + POS clock gates
+- **Portal users on HQ** (invite accept, pending/revoke, post-login gate)
+- **Station staff permission editor** (role defaults + extras; roster subtitle grants)
+- **POS delivery**: Accept & deliver → in route → Returned → Close out (cash)
 
-| Plan | State |
-|------|--------|
+| Plan / surface | State |
+|----------------|--------|
 | `docs/plans/mvp-ops-inventory-v1.md` | **COMPLETE** |
 | `docs/plans/mvp-ops-staff-labor-v1.md` | **COMPLETE** |
 | `docs/plans/customer-web-storefront-shell-v1.md` | **COMPLETE** |
 | `docs/plans/customer-web-template-modern-v1.md` | **COMPLETE** (+ polish) |
+| Portal staff invite + HQ host | **COMPLETE** (email needs SendGrid credits) |
+| POS delivery close-out product rule | **COMPLETE** |
 | `docs/plans/home-page-composition-engine-v1.md` | Deferred |
 
 **Operator next:** Manager burn-in → soft parallel → hard Owner.com off on sign-off.
+
+```powershell
+cd C:\projects\franchise-admin-portal
+git checkout main
+git pull origin main
+```
 
 ---
 
@@ -38,17 +49,16 @@ Prefer **STATUS.md + this handoff + `docs/plans/*` + app READMEs** over agent me
 | Template resolver | `customer_web/lib/features/storefront/storefront_landing.dart` |
 | Modern landing | `customer_web/.../templates/modern/modern_storefront_home.dart` |
 | Shell + cart sheet | `customer_web/lib/widgets/storefront_shell.dart` |
-| Cart (branded sheet) | `customer_web/lib/features/cart/cart_screen.dart` |
 | HQ Website | `web-app/.../website_settings_panel.dart` |
+| HQ Portal users | `web-app/lib/admin/staff/staff_access_screen.dart` · HQ Quick Link |
+| Invite accept | `web-app/lib/admin/auth/invite_accept_screen.dart` · `main.dart` FutureBuilder gate |
+| Station staff roster | `web-app/lib/admin/staff/pos_staff_roster_screen.dart` |
+| Admin section registry | `web-app/lib/core/section_registry.dart` |
+| POS open board / delivery | `pos_app/lib/features/orders/open_orders_screen.dart` |
 | POS unlock / clock | `pos_app/lib/features/session/pin_unlock_screen.dart` |
 | Labor service | `packages/shared_core/.../labor_firestore_service.dart` |
-| Inventory sellability | `MenuItem.isSellable` · InventoryLedger |
-
-```powershell
-cd C:\projects\franchise-admin-portal
-git checkout main
-git pull origin main
-```
+| Claims sync | `functions/.../userClaims.ts` (`syncClaimsOnUserRoleChange`) |
+| Portal invite email CF | `sendPortalStaffInviteEmail` (SendGrid credits required) |
 
 ---
 
@@ -59,7 +69,8 @@ git pull origin main
 - Unlock requires open punch; off-shift needs manager PIN  
 - `isPosStation` = `stationFranchise` claim only  
 - Modern optional via `templateId`; default layout unchanged  
-- Public cart UX = shell side sheet (not dual in-page stacks)  
+- **Portal users** = HQ-owned; **Station staff** = Admin Staff Management  
+- Delivery close-out **cash-only** unless `manager_override`  
 - Growth after soft stability  
 
 ---
@@ -70,11 +81,12 @@ git pull origin main
 |------|--------|
 | `README.md` | Monorepo overview |
 | `customer_web/README.md` | Storefront templates, shell, run |
-| `pos_app/README.md` | Station POS, claims, clock, run defines |
+| `pos_app/README.md` | Station POS, claims, clock, **delivery close-out**, run defines |
 | `packages/shared_core/README.md` | Shared domain |
-| `web-app/README.md` | Admin / HQ portal |
+| `web-app/README.md` | Admin / HQ portal, **Portal users**, Staff Management |
 | `mobile_app/README.md` | Customer mobile |
+| `docs/DASHBOARDS.md` | Dashboard IA |
 
 ---
 
-**Bottom line:** Ops gates + Modern storefront (incl. polish) on main. Next = burn-in / soft parallel.
+**Bottom line:** Ops gates + Modern + portal users HQ + station perms + delivery COD path on main. Next = burn-in / soft parallel; hardware & iOS when available.

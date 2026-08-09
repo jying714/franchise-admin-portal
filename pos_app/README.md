@@ -1,6 +1,6 @@
 # pos_app
 
-Franchise **counter / station POS** (Flutter) — thin station client for order board, carry-out, payments, and staff clock-in. Not a full back-office; Admin/HQ own schedule, roster, and reporting.
+Franchise **counter / station POS** (Flutter) — thin station client for order board, carry-out, **delivery**, payments, and staff clock-in. Not a full back-office; Admin/HQ own schedule, roster, and reporting.
 
 | | |
 |---|---|
@@ -15,12 +15,12 @@ Franchise **counter / station POS** (Flutter) — thin station client for order 
 
 | App | Role |
 |-----|------|
-| **pos_app** | Counter: PIN session, tickets, pay, clock |
-| `web-app` | Admin schedule, station staff roster, hours/timesheets, menu ops |
+| **pos_app** | Counter: PIN session, tickets, pay, clock, delivery close-out |
+| `web-app` | Admin schedule, **station staff roster + permissions**, hours; HQ portal users |
 | `customer_web` / `mobile_app` | Guest ordering |
 | `packages/shared_core` | `PosFirestoreService`, `LaborFirestoreService`, `PinHash`, orders, menu, inventory |
 
-**Do not** implement a separate kitchen-only binary. Kitchen-oriented flows are absorbed into this thin POS (Decision 14).
+**Do not** implement a separate kitchen-only binary (Decision 14).
 
 ---
 
@@ -28,27 +28,39 @@ Franchise **counter / station POS** (Flutter) — thin station client for order 
 
 ### Station identity
 - Dart-defines: `STATION_FRANCHISE_ID`, `STATION_AUTH_EMAIL`, `STATION_AUTH_PASSWORD`
-- Firebase Auth user for the device + custom claim **`stationFranchise`** (set via Admin script / ops)
-- Bootstrap refreshes ID token and logs claim for diagnostics
-- Firestore rules: `isPosStation(franchiseId)` → claim match only (email smoke gate removed)
+- Custom claim **`stationFranchise`**; rules `isPosStation(franchiseId)`
 
 ### Staff session
-- PIN unlock against `franchises/{id}/staff` (`pinHash` via shared `PinHash`)
-- **Clock-in required** before unlock/console use
-- On-schedule clock-in; **off-schedule** requires manager PIN override
-- Clock-out allowed even if shift was deleted mid-punch
-- Schedule reads prefer **server** source so Admin edits apply without full app restart
+- PIN unlock against `franchises/{id}/staff` (`pinHash`, **permissions** array)
+- Clock-in required; off-shift manager override
+- Driver role: open board locked to **Delivery** filter
 
 ### Orders & payments
-- Order board / detail workspace (void, comp, partial, print hooks as implemented)
-- Carry-out modifiers; payment screen (cash / card / split as configured)
-- Inventory: tracked items use `isSellable`; paid sale decrements; void/refund restore (shared ledger)
+- Open board + detail workspace (void, comp, add, print hooks)
+- Carry-out / dine-in / delivery entry
+- Payment: cash / card / split (as permitted)
+
+### Delivery close-out (product rule)
+
+```text
+Accept & deliver     → status out_for_delivery (in route)
+Returned (unpaid)    → pending_till
+Close out (cash)     → delivered (cash only)
+Returned (paid)      → delivered
+Card on delivery     → requires manager_override (not driver)
+```
+
+Implementation: `lib/features/orders/open_orders_screen.dart` · `OrderStatus` · `DriverAssignSheet`.
+
+Driver staff need `view_orders` + `take_payment` + `open_drawer` for COD close-out (set on **Admin → Station staff**).
+
+### Inventory
+- Tracked items: `isSellable`; paid decrement / void restore via shared ledger
 
 ### Not in this app
-- Week schedule editor (Admin **Schedule**)
-- Staff roster + PIN assignment (Admin **Station staff**)
-- Hours summary / timesheet print (Admin **Hours**)
-- Full HQ financials / onboarding
+- Week schedule editor, roster editor, hours print (Admin)
+- Portal user invites (HQ)
+- Hardware Terminal / real ESC-POS (when devices arrive)
 
 ---
 
@@ -56,22 +68,15 @@ Franchise **counter / station POS** (Flutter) — thin station client for order 
 
 ```text
 pos_app/lib/
-  app/bootstrap.dart                 # station auth + claim refresh
+  app/bootstrap.dart
   features/session/pin_unlock_screen.dart
-  features/orders/                   # board, detail dialog
-  features/ordering/                 # cart-like station flows
+  features/orders/open_orders_screen.dart    # delivery lifecycle actions
+  features/orders/widgets/order_detail_dialog.dart
+  features/delivery/driver_assign_sheet.dart
+  features/payments/payment_screen.dart
+  features/ordering/
   providers/pin_session_provider.dart
-  services/                          # print, card-present stubs as present
-```
-
-Shared:
-
-```text
-packages/shared_core/lib/src/core/services/pos_firestore_service.dart
-packages/shared_core/lib/src/core/services/labor_firestore_service.dart
-packages/shared_core/lib/src/core/utils/pin_hash.dart
-packages/shared_core/lib/src/core/models/shift.dart
-packages/shared_core/lib/src/core/models/time_entry.dart
+  core/constants/pos_permissions.dart
 ```
 
 Admin labor UI: `web-app/lib/admin/staff/`.
@@ -79,8 +84,6 @@ Admin labor UI: `web-app/lib/admin/staff/`.
 ---
 
 ## Run (Android recommended)
-
-Windows desktop Firebase CMake often fails — prefer an Android device/emulator for smoke.
 
 ```powershell
 cd C:\projects\franchise-admin-portal\pos_app
@@ -92,17 +95,13 @@ flutter run -d <deviceId> `
   --dart-define=STATION_AUTH_PASSWORD=<station-password>
 ```
 
-Secrets/station passwords: keep out of git (local defines or ignored secrets files only).
-
 ### Station claim (ops)
 
-After creating the station Auth user, set custom claim `stationFranchise` to the franchise id (project script e.g. `scripts/set-station-claim.mjs` with application credentials). Confirm logs:
+Set custom claim `stationFranchise` on the station Auth user. Confirm:
 
 ```text
 [POS] station claims stationFranchise=<id>
 ```
-
-Without the claim, staff list / time entries reads fail closed under hardened rules.
 
 ---
 
@@ -110,33 +109,11 @@ Without the claim, staff list / time entries reads fail closed under hardened ru
 
 | Path | Use |
 |------|-----|
-| `franchises/{id}/staff/{staffId}` | Roster, `pinHash`, role, status |
-| `franchises/{id}/shifts/…` | Schedule windows |
-| `franchises/{id}/time_entries/…` | Open/closed punches |
-| `franchises/{id}/orders/…` | Active tickets |
-| `franchises/{id}/menu_items/…` | Catalog + inventory fields |
-
-Rules must allow station claim list/get on staff and time_entries for the bound franchise.
-
----
-
-## Labor contract (POS side)
-
-1. Match PIN → active staff.  
-2. If open time entry → allow unlock.  
-3. Else clock-in: prefer current shift (± grace); else manager override.  
-4. Clock-out closes open entry; does not require shift still to exist.  
-
-Admin owns who is on the roster and the week grid; POS only executes clock + session.
-
----
-
-## Inventory at the counter
-
-- Tracked items with `stockCount <= 0` are not sellable (`isSellable`).  
-- Successful paid paths decrement via shared inventory ledger.  
-- Voids/refunds restore where implemented.  
-- HQ/Admin set counts; POS does not replace inventory management UI.
+| `franchises/{id}/staff/{staffId}` | Roster, pinHash, role, **permissions**, status |
+| `franchises/{id}/shifts/…` | Schedule |
+| `franchises/{id}/time_entries/…` | Punches |
+| `franchises/{id}/orders/…` | Tickets (`out_for_delivery`, `pending_till`, …) |
+| `franchises/{id}/menu_items/…` | Catalog + inventory |
 
 ---
 
@@ -146,7 +123,6 @@ Admin owns who is on the roster and the week grid; POS only executes clock + ses
 |-----|--------|
 | `STATUS.md` / `HANDOFF.md` | Live status |
 | `docs/slices/pos-app-v1.md` | Product slice |
-| `docs/plans/pos-app-v1-development-plan.md` | Phased plan (if present) |
 | `docs/plans/mvp-ops-staff-labor-v1.md` | Labor gate |
 | `docs/plans/mvp-ops-inventory-v1.md` | Inventory gate |
 | `firestore.rules` | `isPosStation` |
@@ -156,7 +132,8 @@ Admin owns who is on the roster and the week grid; POS only executes clock + ses
 ## Agent / contributor notes
 
 - Prefer Android smoke over Windows desktop for Firebase.  
-- Never weaken station rules back to email-only gates.  
-- PIN hashing must use **shared** `PinHash` (avoid ambiguous duplicate imports).  
-- Proposal-only agents: no auto write to staff PINs or claims.  
-- Human merge gate for rules, claims scripts, and payment paths.
+- Never weaken station rules to email-only gates.  
+- PIN hashing: shared `PinHash` only.  
+- Human merge gate for rules, claims, and payment paths.  
+
+**Last updated:** August 8, 2026

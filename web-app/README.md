@@ -2,42 +2,55 @@
 
 Flutter Web admin dashboard for franchise owners, HQ users, platform admins, and developers.
 
-## Current Status (July 25, 2026)
+## Current Status (August 8, 2026)
 
-**P2 – White-Label & Scalability: COMPLETE**  
-**P2.5 – Web-App Cleanup Sprint: COMPLETE**  
-**Phase 1**: Live branding; HQ Design & Branding **v1.1**; onboarding **HQ-only host**
+**On main with monorepo soft-release software.** Prefer root **`STATUS.md`** / **`HANDOFF.md`** for the live checklist.
 
-### Major Achievements
-- Auth handoff + role dashboards stabilized
-- Franchise-aware providers unified (`FranchiseProvider`, `AdminUserProvider`)
-- Web live branding: `FranchiseProvider` → `DesignTokens.setFranchiseProvider` → live colors
-- **HQ Design & Branding v1.1**: card CTA → screen; Save writes franchise branding + `config/ui_config`
-- **Onboarding (Decision 7)**: full migration under HQ Owner
-  - Host: `web-app/lib/admin/hq_owner/onboarding/` + `HqOnboardingShellScreen`
-  - Admin onboarding tree removed; Admin sidebar is ops-only
-  - Deep link: `/hq/onboarding?section=…`
-  - Progress: `franchises/{id}/onboarding_progress/progress`; HQ card watches `OnboardingProgressProviderImpl`
-  - Feature Setup → progress card verified; steps 2–4 writers still being hardened
+### Recent (Aug 2026)
+
+- **Portal users** moved to **HQ Owner** (Quick Links → polished `StaffAccessScreen`)
+  - Create portal_staff invite, pending list, copy link, revoke
+  - Accept flow post-login; `users/{uid}` bind + claims sync trigger
+  - RoleGuard: `platform_owner` | `hq_owner` | `developer`
+  - Email CF `sendPortalStaffInviteEmail` wired; SendGrid **credits** required for delivery
+- **Admin sidebar**: **Staff Management** expansion (Station staff, Schedule, Hours)
+- **Station staff** roster: role defaults + **editable permissions**; subtitle shows grants
+- Admin ops: KPIs, inventory, order analytics (as previously landed)
+
+### Earlier foundations
+
+- Auth handoff + role dashboards  
+- Live branding: `FranchiseProvider` → `DesignTokens.setFranchiseProvider`  
+- HQ Design & Branding; onboarding **HQ-only host** (Decision 7)  
+- Menu modifier system (Decision 10)  
 
 ## Features
-- Dynamic white-label branding per franchise (HQ Design & Branding)
-- Menu / category / ingredient management via **HQ onboarding shell**
-- Orders, analytics, staff, financial tools (Admin ops)
-- Subscription & billing; franchise picker; role switcher
-- Hybrid single/multi-location support
 
-## Onboarding placement (Decision 7 — implemented)
+- Dynamic white-label branding per franchise  
+- HQ onboarding shell (menu foundation / items / review)  
+- Admin: menu, categories, inventory, orders, analytics, promotions  
+- **HQ Portal users** vs **Admin station labor** (see DASHBOARDS)  
+- Subscription & billing; franchise picker; role switcher  
 
-- **Home**: HQ Owner → Onboarding Progress card → **Continue** → `HqOnboardingShellScreen`
-- **Code**: `web-app/lib/admin/hq_owner/onboarding/**` (Admin onboarding tree deleted)
-- **Registry**: `section_registry.dart` has no onboarding sections
-- **Progress keys**: `onboarding_feature_setup`, `onboarding_menu_foundation`, `onboardingMenuItems`, `onboardingReview`
-- Foundation tab marks update **detail %** only; product step 2 via foundation continue
-- See `docs/DECISIONS.md` Decision 7 and `STATUS.md`
+## People / access (IA)
 
-## Config Delegation
-Web-app uses thin delegation layers (`branding_config.dart`, `design_tokens.dart`) that forward to `shared_core`. Do not add new config logic here.
+| Surface | Where |
+|---------|--------|
+| Portal users (web login invites) | HQ Quick Links |
+| Station staff (PIN / permissions) | Admin → Staff Management |
+| Schedule / Hours | Admin → Staff Management |
+
+Registry: `lib/core/section_registry.dart` — `staffAccess` `showInSidebar: false`.
+
+## Onboarding placement (Decision 7)
+
+- HQ Owner → Onboarding Progress → `HqOnboardingShellScreen`  
+- Code: `lib/admin/hq_owner/onboarding/**`  
+- Progress: `franchises/{id}/onboarding_progress/progress`  
+
+## Config delegation
+
+Thin layers (`branding_config.dart`, `design_tokens.dart`) forward to `shared_core`. Do not invent new branding models here.
 
 ## Development
 
@@ -50,21 +63,10 @@ flutter analyze
 flutter run -d chrome
 ```
 
-## Architecture Notes
+## Related documentation
 
-- Business logic and models from `shared_core`
-- Role-based access, dashboard switching, FeatureGate
-- Agent work: `AGENT_SYSTEM.md` + `orchestrator/SCOPE_CARD.md`; human merge gate
-- Do not reintroduce Admin onboarding host or top-level `onboarding_progress/{id}`
+- Root `STATUS.md` · `HANDOFF.md` · `docs/DASHBOARDS.md` · `docs/DECISIONS.md`  
+- `docs/slices/hq-design-branding-v1.md`  
+- `AGENT_SYSTEM.md` · `orchestrator/SCOPE_CARD.md`  
 
-## Related Documentation
-
-- `ARCHITECTURE.md`
-- `docs/DASHBOARDS.md`
-- `docs/DECISIONS.md`
-- `docs/slices/hq-design-branding-v1.md`
-- `ROADMAP.md`
-- `STATUS.md`
-- `AGENT_SYSTEM.md`
-
-**Last Updated**: July 25, 2026
+**Last Updated**: August 8, 2026

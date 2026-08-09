@@ -17,7 +17,7 @@ Flutter **monorepo** for franchise-scoped ordering and ops: HQ/Admin web, custom
 
 ---
 
-## Current status (August 6, 2026)
+## Current status (August 8, 2026)
 
 Prefer **`STATUS.md`** and **`HANDOFF.md`** for the live checklist.
 
@@ -26,12 +26,15 @@ Prefer **`STATUS.md`** and **`HANDOFF.md`** for the live checklist.
 - Franchise-scoped config & live branding  
 - HQ onboarding, Design & Branding, menu modifier system  
 - Stripe Connect checkout (web/mobile)  
-- **customer_web** shell + **Modern** template (optional `templateId`) + cart side sheet  
+- **customer_web** shell + **Modern** template + cart side sheet  
 - **Inventory v1** + **Staff/labor v1** (Admin schedule/hours; POS clock + PIN)  
-- Station `stationFranchise` claims hardening  
+- Station `stationFranchise` claims  
+- **HQ Portal users** (invite / accept / pending / revoke)  
+- **Station staff permissions** (role defaults + per-person grants)  
+- **POS delivery**: Accept & deliver → in route → Returned → **Close out (cash)**  
 - Soft release / **manager burn-in** before hard Owner.com cutover  
 
-**Deferred:** Home composition Wave 2, growth (promos/push/loyalty), POS hardware in transit.
+**Deferred:** Home composition Wave 2, growth (promos/push/loyalty), POS hardware in transit, SendGrid credits for invite email, customer iOS until Mac.
 
 ---
 
@@ -107,4 +110,4 @@ flutter run -d <device> `
 - Local multi-agent orchestrator is **proposal-only** (human merge gate)  
 - Small iterative changes; STATUS/HANDOFF updated after significant sessions  
 
-**Last updated:** August 6, 2026
+**Last updated:** August 8, 2026
