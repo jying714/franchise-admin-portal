@@ -89,7 +89,8 @@ final List<shared.DashboardSection> sectionRegistry = [
     icon: Icons.manage_accounts_outlined,
     builder: (_) => const StaffAccessScreen(),
     sidebarOrder: 8,
-    showInSidebar: true,
+    // HQ-owned (Quick Links). Keep registered for IndexedStack / deep link.
+    showInSidebar: false,
   ),
   shared.DashboardSection(
     key: 'posStaffRoster',

@@ -267,6 +267,54 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
           inviteEmail: inviteEmail,
         );
         if (!mounted) return;
+
+        // Best-effort custom claims so JWT matches users/{uid}.
+        // Firestore bind already succeeded; do not block exit on CF failure.
+        try {
+          final data = _inviteData ?? const <String, dynamic>{};
+          final franchiseId = (data['franchiseId'] as String?)?.trim() ?? '';
+          final role = (data['role'] as String?)?.trim();
+          final rolesRaw = data['roles'];
+          final roles = <String>[];
+          if (rolesRaw is List) {
+            for (final r in rolesRaw) {
+              final s = r.toString().trim();
+              if (s.isNotEmpty) roles.add(s);
+            }
+          }
+          if (role != null && role.isNotEmpty && !roles.contains(role)) {
+            roles.add(role);
+          }
+          if (roles.isEmpty) {
+            roles.add('manager');
+          }
+
+          if (franchiseId.isNotEmpty) {
+            await Provider.of<shared.FirestoreService>(context, listen: false)
+                .updateUserClaims(
+              uid: currentUser.uid,
+              franchiseIds: [franchiseId],
+              roles: roles,
+              additionalClaims: {
+                'defaultFranchise': franchiseId,
+              },
+            );
+            await currentUser.getIdToken(true);
+          }
+        } catch (e, st) {
+          shared.ErrorLogger.log(
+            message: 'Portal invite claims update failed: $e',
+            stack: st.toString(),
+            source: 'InviteAcceptScreen',
+            severity: 'warning',
+            contextData: {
+              'token': _effectiveToken,
+              'uid': currentUser.uid,
+            },
+          );
+        }
+
+        if (!mounted) return;
         await _exitInviteToApp();
         return;
       }

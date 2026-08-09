@@ -372,6 +372,166 @@ export const revokeInvitation = functions.https.onCall(
   }
 );
 
+/**
+ * Send accept-link email for portal_staff invites only.
+ * Does not create Auth users or change franchisee invite flow.
+ */
+export const sendPortalStaffInviteEmail = functions.https.onCall(
+  async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Authentication required."
+      );
+    }
+
+    const callerRoles: string[] = context.auth.token.roles || [];
+    const allowed = [
+      "platform_owner",
+      "owner",
+      "hq_owner",
+      "developer",
+      "admin",
+      "manager",
+    ];
+    if (!callerRoles.some((r) => allowed.includes(r))) {
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "Insufficient privileges to send portal invites."
+      );
+    }
+
+    const token =
+      typeof data?.token === "string" ? data.token.trim() : "";
+    if (!token) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "token is required."
+      );
+    }
+
+    const inviteRef = admin
+      .firestore()
+      .collection(INVITATION_COLLECTION)
+      .doc(token);
+    const inviteSnap = await inviteRef.get();
+    if (!inviteSnap.exists) {
+      throw new functions.https.HttpsError(
+        "not-found",
+        "Invitation not found."
+      );
+    }
+
+    const invite = inviteSnap.data() || {};
+    if (invite.inviteType !== "portal_staff") {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Not a portal staff invitation."
+      );
+    }
+    if (invite.status !== "pending") {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        `Invitation status is ${invite.status || "unknown"}.`
+      );
+    }
+
+    const email =
+      typeof invite.email === "string" ? invite.email.trim() : "";
+    if (!email) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Invitation has no email."
+      );
+    }
+
+    const inviteUrl =
+      typeof invite.inviteUrl === "string" && invite.inviteUrl.length > 0 ?
+        invite.inviteUrl :
+        `${APP_BASE_URL}/#/invite-accept?token=${token}`;
+
+    const name =
+      typeof invite.name === "string" ? invite.name.trim() : "";
+    const role =
+      typeof invite.role === "string" ? invite.role.trim() : "manager";
+
+    const cfg = functions.config().sendgrid || {};
+    const apiKey = String(cfg.key || cfg.api_key ||
+      process.env.SENDGRID_API_KEY || "")
+      .trim();
+
+    console.log("[sendPortalStaffInviteEmail] sendgrid key present:",
+      apiKey.length > 0);
+    console.log(
+      "[sendPortalStaffInviteEmail] key length:",
+      apiKey.length,
+      "prefix:",
+      apiKey ? apiKey.substring(0, 3) : "NONE"
+    );
+
+    if (!apiKey || !apiKey.startsWith("SG.")) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "SendGrid API key missing or invalid in " +
+          "functions config (expected sendgrid.key)."
+      );
+    }
+
+    sgMail.setApiKey(apiKey);
+
+    const subject = "You're invited to the Franchise Admin Portal";
+    const html = `
+        <div style="font-family: Arial, sans-serif;
+      max-width: 500px; margin: 0 auto;">
+      <h2>Portal access invitation</h2>
+      <p>Hello${name ? ` ${name}` : ""},</p>
+      <p>
+        You've been invited as <b>${role}</b> to manage a store in the
+        Franchise Admin Portal.
+      </p>
+      <p>
+        <a href="${inviteUrl}" style="
+          display:inline-block;background:#008CBA;color:#fff;
+          padding:12px 30px;margin:18px 0;border-radius:5px;
+          text-decoration:none;font-weight:bold;">
+          Accept invitation
+        </a>
+      </p>
+      <p style="word-break:break-all;">
+        Or open this link:<br/>${inviteUrl}
+      </p>
+      <p style="color:#888;">
+        This invite was intended for ${email}.
+        If you did not expect it, ignore it.
+      </p>
+      <hr/>
+      <small>Invite code: ${token}</small>
+    </div>
+  `;
+
+    await sgMail.send({
+      to: email,
+      from: {
+        name: "Joshua Yingling",
+        email: "joshuayingling@franchisehq.io",
+      },
+      subject,
+      html,
+    });
+
+    await inviteRef.set(
+      {
+        lastSentAt: admin.firestore.FieldValue.serverTimestamp(),
+        lastEmailedAt: admin.firestore.FieldValue.serverTimestamp(),
+        inviteUrl,
+      },
+      {merge: true}
+    );
+
+    return {status: "ok", token, email};
+  }
+);
+
 // === Acceptance Function ===
 /**
  * Callable function to accept an invitation by token.
@@ -600,7 +760,7 @@ async function sendOnboardingEmail({
     to: email,
     from: {
       name: "Joshua Yingling",
-      email: "JoshuaYingling@FranchiseHQ.io",
+      email: "joshuayingling@franchisehq.io",
     },
     subject,
     html,

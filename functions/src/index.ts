@@ -23,6 +23,7 @@ export {
   inviteAndSetRole,
   acceptInvitation,
   revokeInvitation,
+  sendPortalStaffInviteEmail,
 } from "../functions/invitations";
 export {logAppError, logPublicError} from "../functions/errors";
 export {

@@ -51,7 +51,7 @@ class _PosStaffRosterScreenState extends State<PosStaffRosterScreen> {
       phoneNumber: result.phone.isEmpty ? null : result.phone,
       role: result.role,
       status: result.active ? 'active' : 'inactive',
-      permissions: existing?.permissions ?? const <String>[],
+      permissions: result.permissions,
       franchiseId: fid,
       hourlyPay: result.hourlyPay,
       pinHash: pinHash,
@@ -179,6 +179,12 @@ class _PosStaffRosterScreenState extends State<PosStaffRosterScreen> {
                                     '\$${s.hourlyPay!.toStringAsFixed(2)}/hr',
                                   if (s.posEnabled) 'POS',
                                   active ? 'Active' : 'Inactive',
+                                  if (s.permissions.isEmpty)
+                                    'No permissions'
+                                  else if (s.permissions.length <= 4)
+                                    s.permissions.join(' · ')
+                                  else
+                                    '${s.permissions.take(3).join(' · ')} +${s.permissions.length - 3}',
                                 ].join(' · '),
                               ),
                               trailing: Row(
@@ -217,6 +223,7 @@ class _StaffDraft {
   final double? hourlyPay;
   final bool active;
   final bool posEnabled;
+  final List<String> permissions;
 
   /// Null = leave existing pinHash unchanged; non-null = replace.
   final String? newPin;
@@ -229,6 +236,7 @@ class _StaffDraft {
     required this.hourlyPay,
     required this.active,
     required this.posEnabled,
+    required this.permissions,
     this.newPin,
   });
 }
@@ -245,6 +253,71 @@ class _StaffEditorDialog extends StatefulWidget {
 class _StaffEditorDialogState extends State<_StaffEditorDialog> {
   static const _roles = ['owner', 'manager', 'cashier', 'cook', 'driver'];
 
+  /// Must match POS PosPermissions string values.
+  static const _allPermissions = <String>[
+    'view_orders',
+    'take_order',
+    'take_payment',
+    'open_drawer',
+    'void_item',
+    'void_order',
+    'refund',
+    'discount',
+    '86_item',
+    'manage_tables',
+    'change_settings',
+    'approve_large_order',
+    'manager_override',
+  ];
+
+  static const _permissionLabels = <String, String>{
+    'view_orders': 'View orders',
+    'take_order': 'Take / send orders',
+    'take_payment': 'Take payment',
+    'open_drawer': 'Open cash drawer',
+    'void_item': 'Void item',
+    'void_order': 'Void order',
+    'refund': 'Refund',
+    'discount': 'Discount',
+    '86_item': '86 item',
+    'manage_tables': 'Manage tables',
+    'change_settings': 'Change settings',
+    'approve_large_order': 'Approve large order',
+    'manager_override': 'Manager override',
+  };
+
+  /// Baseline by role; manager can add extras per person below.
+  static List<String> _defaultsForRole(String role) {
+    switch (role.trim().toLowerCase()) {
+      case 'owner':
+      case 'manager':
+        return List<String>.from(_allPermissions);
+      case 'cashier':
+        return const [
+          'view_orders',
+          'take_order',
+          'take_payment',
+          'open_drawer',
+          'discount',
+          'manage_tables',
+        ];
+      case 'cook':
+        return const [
+          'view_orders',
+          'take_order',
+          '86_item',
+        ];
+      case 'driver':
+        return const [
+          'view_orders',
+          'take_payment',
+          'open_drawer',
+        ];
+      default:
+        return const ['view_orders'];
+    }
+  }
+
   late final TextEditingController _name;
   late final TextEditingController _email;
   late final TextEditingController _phone;
@@ -254,6 +327,7 @@ class _StaffEditorDialogState extends State<_StaffEditorDialog> {
   late String _role;
   late bool _active;
   late bool _posEnabled;
+  late Set<String> _permissions;
 
   @override
   void initState() {
@@ -273,6 +347,11 @@ class _StaffEditorDialogState extends State<_StaffEditorDialog> {
     }
     _active = (e?.status ?? 'active').toLowerCase() == 'active';
     _posEnabled = e?.posEnabled ?? true;
+    if (e != null && e.permissions.isNotEmpty) {
+      _permissions = Set<String>.from(e.permissions);
+    } else {
+      _permissions = Set<String>.from(_defaultsForRole(_role));
+    }
   }
 
   @override
@@ -286,9 +365,19 @@ class _StaffEditorDialogState extends State<_StaffEditorDialog> {
     super.dispose();
   }
 
+  void _onRoleChanged(String role) {
+    setState(() {
+      _role = role;
+      // New staff: always reset to role defaults.
+      // Edit: offer defaults for the new role (manager can still tick extras).
+      _permissions = Set<String>.from(_defaultsForRole(role));
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final isEdit = widget.existing != null;
+    final theme = Theme.of(context);
     return AlertDialog(
       title: Text(isEdit ? 'Edit staff' : 'Add staff'),
       content: SizedBox(
@@ -296,6 +385,7 @@ class _StaffEditorDialogState extends State<_StaffEditorDialog> {
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               TextField(
                 controller: _name,
@@ -311,7 +401,7 @@ class _StaffEditorDialogState extends State<_StaffEditorDialog> {
                 controller: _email,
                 keyboardType: TextInputType.emailAddress,
                 decoration: const InputDecoration(
-                  labelText: 'Email',
+                  labelText: 'Email (optional)',
                   border: OutlineInputBorder(),
                   isDense: true,
                 ),
@@ -335,25 +425,24 @@ class _StaffEditorDialogState extends State<_StaffEditorDialog> {
                   isDense: true,
                 ),
                 items: _roles
-                    .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                    .map(
+                      (r) => DropdownMenuItem(value: r, child: Text(r)),
+                    )
                     .toList(),
                 onChanged: (v) {
-                  if (v != null) setState(() => _role = v);
+                  if (v != null) _onRoleChanged(v);
                 },
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: _pay,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                ],
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 decoration: const InputDecoration(
                   labelText: 'Hourly pay (optional)',
                   border: OutlineInputBorder(),
                   isDense: true,
-                  prefixText: '\$ ',
                 ),
               ),
               const SizedBox(height: 8),
@@ -374,11 +463,46 @@ class _StaffEditorDialogState extends State<_StaffEditorDialog> {
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  widget.existing?.pinHash != null &&
+                  'Permissions',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Text(
+                'Role sets a baseline. Tick extra grants for this person.',
+                style: theme.textTheme.bodySmall,
+              ),
+              const SizedBox(height: 4),
+              ..._allPermissions.map((perm) {
+                final selected = _permissions.contains(perm);
+                return CheckboxListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  title: Text(_permissionLabels[perm] ?? perm),
+                  value: selected,
+                  onChanged: (v) {
+                    setState(() {
+                      if (v == true) {
+                        _permissions.add(perm);
+                      } else {
+                        _permissions.remove(perm);
+                      }
+                    });
+                  },
+                );
+              }),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  isEdit &&
+                          widget.existing?.pinHash != null &&
                           widget.existing!.pinHash!.isNotEmpty
-                      ? 'PIN is set — enter a new PIN only to change it'
-                      : 'Set a numeric PIN for station unlock / clock',
-                  style: Theme.of(context).textTheme.bodySmall,
+                      ? 'Leave PIN blank to keep current PIN'
+                      : 'PIN (optional)',
+                  style: theme.textTheme.bodySmall,
                 ),
               ),
               const SizedBox(height: 8),
@@ -443,18 +567,23 @@ class _StaffEditorDialogState extends State<_StaffEditorDialog> {
               if (pin.length < 4) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                      content: Text('PIN must be at least 4 digits')),
+                    content: Text('PIN must be at least 4 digits'),
+                  ),
                 );
                 return;
               }
               if (pin != pinConfirm) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                      content: Text('PIN confirmation does not match')),
+                    content: Text('PIN confirmation does not match'),
+                  ),
                 );
                 return;
               }
             }
+
+            final ordered =
+                _allPermissions.where((p) => _permissions.contains(p)).toList();
 
             Navigator.pop(
               context,
@@ -466,6 +595,7 @@ class _StaffEditorDialogState extends State<_StaffEditorDialog> {
                 hourlyPay: pay,
                 active: _active,
                 posEnabled: _posEnabled,
+                permissions: ordered,
                 newPin: pin.isEmpty ? null : pin,
               ),
             );

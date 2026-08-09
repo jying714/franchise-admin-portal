@@ -18,6 +18,7 @@ import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/hq_onbo
 import 'package:franchise_admin_portal/core/providers/onboarding_progress_provider_impl.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:franchise_admin_portal/admin/staff/staff_access_screen.dart';
 
 class OwnerHQDashboardScreen extends StatelessWidget {
   final String currentScreen;
@@ -251,6 +252,17 @@ class QuickLinksPanel extends StatelessWidget {
                         builder: (_) => HqOnboardingShellScreen(
                           initialSectionKey: initialKey,
                         ),
+                      ),
+                    );
+                  },
+                ),
+                _QuickLinkTile(
+                  icon: Icons.manage_accounts_outlined,
+                  label: 'Portal users',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const StaffAccessScreen(),
                       ),
                     );
                   },

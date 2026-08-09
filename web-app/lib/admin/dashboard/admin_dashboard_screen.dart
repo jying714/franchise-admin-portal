@@ -311,26 +311,74 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
+  static const _staffManagementKeys = {
+    'posStaffRoster',
+    'staffSchedule',
+    'staffHours',
+  };
+
   Widget _buildSidebar({
     required BuildContext context,
     required ColorScheme colorScheme,
   }) {
+    final labor = _sidebarSections
+        .where((s) => _staffManagementKeys.contains(s.key))
+        .toList();
+    final rest = _sidebarSections
+        .where((s) => !_staffManagementKeys.contains(s.key))
+        .toList();
+
+    final laborSelected = _selectedIndex < _sections.length &&
+        _staffManagementKeys.contains(_sections[_selectedIndex].key);
+
+    void selectSection(shared.DashboardSection section) {
+      final index = _sections.indexWhere((s) => s.key == section.key);
+      if (index != -1 && index != _selectedIndex) {
+        setState(() => _selectedIndex = index);
+      }
+      if (Navigator.of(context).canPop()) Navigator.of(context).pop();
+    }
+
     return ListView(
       padding: EdgeInsets.zero,
       children: [
-        for (final section in _sidebarSections)
+        for (final section in rest)
           _SidebarSectionTile(
             section: section,
             isSelected: _selectedIndex < _sections.length &&
                 _sections[_selectedIndex].key == section.key,
-            onTap: () {
-              final index = _sections.indexWhere((s) => s.key == section.key);
-              if (index != -1 && index != _selectedIndex) {
-                setState(() => _selectedIndex = index);
-              }
-              if (Navigator.of(context).canPop()) Navigator.of(context).pop();
-            },
+            onTap: () => selectSection(section),
             colorScheme: colorScheme,
+          ),
+        if (labor.isNotEmpty)
+          ExpansionTile(
+            initiallyExpanded: laborSelected,
+            leading: Icon(
+              Icons.groups_outlined,
+              color: laborSelected
+                  ? colorScheme.primary
+                  : Theme.of(context).iconTheme.color,
+            ),
+            title: Text(
+              'Staff Management',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontWeight:
+                        laborSelected ? FontWeight.w600 : FontWeight.w400,
+                    color: laborSelected
+                        ? colorScheme.primary
+                        : Theme.of(context).textTheme.bodyLarge?.color,
+                  ),
+            ),
+            children: [
+              for (final section in labor)
+                _SidebarSectionTile(
+                  section: section,
+                  isSelected: _selectedIndex < _sections.length &&
+                      _sections[_selectedIndex].key == section.key,
+                  onTap: () => selectSection(section),
+                  colorScheme: colorScheme,
+                ),
+            ],
           ),
       ],
     );

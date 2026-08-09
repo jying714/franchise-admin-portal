@@ -106,14 +106,44 @@ export const syncClaimsOnUserRoleChange = functions.firestore
   .document("users/{userId}")
   .onUpdate(async (change, context) => {
     const userId = context.params.userId;
+    const before = change.before.data() || {};
     const after = change.after.data();
     if (!after) return;
 
-    const roles = after.roles && after.roles.length > 0 ? after.roles : [
-      "customer"];
-    await admin.auth().setCustomUserClaims(userId, {roles});
+    const roles =
+      after.roles && after.roles.length > 0 ? after.roles : ["customer"];
+    const franchiseIds = Array.isArray(after.franchiseIds) ?
+      after.franchiseIds :
+      [];
+    const defaultFranchise =
+      typeof after.defaultFranchise === "string" ?
+        after.defaultFranchise :
+        franchiseIds[0] || undefined;
+
+    const beforeRoles = JSON.stringify(before.roles ?? []);
+    const afterRoles = JSON.stringify(roles);
+    const beforeFids = JSON.stringify(before.franchiseIds ?? []);
+    const afterFids = JSON.stringify(franchiseIds);
+    const beforeDefault = before.defaultFranchise ?? null;
+    const afterDefault = defaultFranchise ?? null;
+
+    if (
+      beforeRoles === afterRoles &&
+      beforeFids === afterFids &&
+      beforeDefault === afterDefault
+    ) {
+      return;
+    }
+
+    await admin.auth().setCustomUserClaims(userId, {
+      roles,
+      franchiseIds,
+      ...(defaultFranchise ? {defaultFranchise} : {}),
+    });
     console.log(
-      `[syncClaimsOnUserRoleChange] Synced claims for ${userId}:`, roles);
+      `[syncClaimsOnUserRoleChange] Synced claims for ${userId}:`,
+      {roles, franchiseIds, defaultFranchise}
+    );
   });
 
 /**

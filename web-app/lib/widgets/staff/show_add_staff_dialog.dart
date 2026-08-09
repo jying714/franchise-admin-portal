@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 class AddStaffDialog extends StatefulWidget {
   final AppLocalizations loc;
@@ -139,6 +140,12 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
                   .doc()
                   .id;
 
+              // Production URL for email; local origin for HQ copy-paste testing.
+              final productionAcceptUrl =
+                  'https://franchisehq.io/#/invite-accept?token=$token';
+              final localAcceptUrl =
+                  '${Uri.base.origin}/#/invite-accept?token=$token';
+
               await FirebaseFirestore.instance
                   .collection('franchisee_invitations')
                   .doc(token)
@@ -153,28 +160,46 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
                 'status': 'pending',
                 'token': token,
                 'inviteType': 'portal_staff',
+                'inviteUrl': productionAcceptUrl,
                 'createdAt': FieldValue.serverTimestamp(),
                 'lastSentAt': FieldValue.serverTimestamp(),
               });
 
-              // Same hash query style InviteAcceptScreen already parses.
-              final acceptUrl =
-                  '${Uri.base.origin}/#/invite-accept?token=$token';
+              String emailStatus = 'Email sent.';
+              try {
+                await FirebaseFunctions.instance
+                    .httpsCallable('sendPortalStaffInviteEmail')
+                    .call(<String, dynamic>{'token': token});
+              } catch (mailErr, mailStack) {
+                emailStatus = 'Email failed (link still works).';
+                shared.ErrorLogger.log(
+                  message: mailErr.toString(),
+                  stack: mailStack.toString(),
+                  source: 'show_add_staff_dialog',
+                  severity: 'warning',
+                  contextData: {
+                    'franchiseId': fid,
+                    'email': _email,
+                    'token': token,
+                    'operation': 'send_portal_invite_email',
+                  },
+                );
+              }
 
               if (!mounted) return;
               Navigator.of(context).pop();
 
-              await Clipboard.setData(ClipboardData(text: acceptUrl));
+              await Clipboard.setData(ClipboardData(text: localAcceptUrl));
               if (!mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                    'Invite created for $_email. Accept link copied.',
+                    'Invite created for $_email. Accept link copied. $emailStatus',
                   ),
                   action: SnackBarAction(
                     label: 'Copy again',
                     onPressed: () {
-                      Clipboard.setData(ClipboardData(text: acceptUrl));
+                      Clipboard.setData(ClipboardData(text: localAcceptUrl));
                     },
                   ),
                   duration: const Duration(seconds: 8),

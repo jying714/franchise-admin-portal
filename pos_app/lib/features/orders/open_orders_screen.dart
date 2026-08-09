@@ -258,33 +258,63 @@ class _OpenOrdersScreenState extends State<OpenOrdersScreen> {
               );
             },
           ),
-          _ActionRow(
-            icon: Icons.payments_outlined,
-            label: 'Take payment',
-            enabled: session.hasPermission(PosPermissions.takePayment),
-            onTap: () async {
-              Navigator.pop(ctx);
-              final paid = await Navigator.of(context).push<bool>(
-                MaterialPageRoute<bool>(
-                  builder: (_) => PaymentScreen(
-                    franchiseId: widget.franchiseId,
-                    orderId: liveOrder.id,
-                    amountDue: liveOrder.total,
-                    closeOutOrder: !isDelivery,
-                    statusWhenPaid: OrderStatus.sentToKitchen,
-                    allowedMethods: isDelivery
-                        ? const {'card'}
-                        : const {'cash', 'split', 'card'},
-                  ),
-                ),
-              );
-              if (paid == true && context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Order ${liveOrder.id} paid')),
+          // Delivery: cash close-out only after return (pending_till).
+          // Non-delivery: normal take payment.
+          if (!isDelivery ||
+              liveOrder.status.trim().toLowerCase() == OrderStatus.pendingTill)
+            _ActionRow(
+              icon: Icons.payments_outlined,
+              label: isDelivery ? 'Close out (cash)' : 'Take payment',
+              enabled:
+                  session.hasPermission(PosPermissions.takePayment) &&
+                  (isDelivery
+                      ? session.hasPermission(PosPermissions.openDrawer)
+                      : true),
+              onTap: () async {
+                Navigator.pop(ctx);
+
+                final isDriver =
+                    session.staff?.role.trim().toLowerCase() == 'driver';
+                final canOverride = session.hasPermission(
+                  PosPermissions.managerOverride,
                 );
-              }
-            },
-          ),
+
+                Set<String> methods;
+                if (!isDelivery) {
+                  methods = const {'cash', 'split', 'card'};
+                } else if (canOverride && !isDriver) {
+                  methods = const {'cash', 'split', 'card'};
+                } else {
+                  methods = const {'cash'};
+                }
+
+                final paid = await Navigator.of(context).push<bool>(
+                  MaterialPageRoute<bool>(
+                    builder: (_) => PaymentScreen(
+                      franchiseId: widget.franchiseId,
+                      orderId: liveOrder.id,
+                      amountDue: liveOrder.total,
+                      closeOutOrder: true,
+                      statusWhenPaid: isDelivery
+                          ? OrderStatus.delivered
+                          : OrderStatus.sentToKitchen,
+                      allowedMethods: methods,
+                    ),
+                  ),
+                );
+                if (paid == true && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isDelivery
+                            ? 'Delivery ${liveOrder.id} closed (cash)'
+                            : 'Order ${liveOrder.id} paid',
+                      ),
+                    ),
+                  );
+                }
+              },
+            ),
           _ActionRow(
             icon: Icons.soup_kitchen_outlined,
             label: 'Send to kitchen',
@@ -380,10 +410,15 @@ class _OpenOrdersScreenState extends State<OpenOrdersScreen> {
               }
             },
           ),
-          if (isDelivery)
+          if (isDelivery &&
+              liveOrder.status.trim().toLowerCase() !=
+                  OrderStatus.outForDelivery &&
+              liveOrder.status.trim().toLowerCase() != OrderStatus.pendingTill)
             _ActionRow(
               icon: Icons.delivery_dining,
-              label: 'Assign / deliver',
+              label: session.staff?.role.trim().toLowerCase() == 'driver'
+                  ? 'Accept & deliver'
+                  : 'Assign driver',
               enabled:
                   (session.staff?.role.trim().toLowerCase() == 'driver') ||
                   session.hasPermission(PosPermissions.takeOrder) ||
@@ -396,16 +431,30 @@ class _OpenOrdersScreenState extends State<OpenOrdersScreen> {
                   orderId: liveOrder.id,
                 );
                 if (ok && context.mounted) {
+                  final asDriver =
+                      Provider.of<PinSessionProvider>(
+                        context,
+                        listen: false,
+                      ).staff?.role.trim().toLowerCase() ==
+                      'driver';
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Driver assigned')),
+                    SnackBar(
+                      content: Text(
+                        asDriver
+                            ? 'In route — order ${liveOrder.id}'
+                            : 'Driver assigned — in route',
+                      ),
+                    ),
                   );
                 }
               },
             ),
-          if (isDelivery)
+          if (isDelivery &&
+              liveOrder.status.trim().toLowerCase() ==
+                  OrderStatus.outForDelivery)
             _ActionRow(
               icon: Icons.home_outlined,
-              label: 'Mark delivered',
+              label: 'Returned (mark delivered)',
               enabled:
                   (session.staff?.role.trim().toLowerCase() == 'driver') ||
                   session.hasPermission(PosPermissions.takeOrder) ||
@@ -447,7 +496,7 @@ class _OpenOrdersScreenState extends State<OpenOrdersScreen> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text(
-                            'Delivered — close till when cash is in drawer',
+                            'Returned — use Close out (cash) to finish',
                           ),
                         ),
                       );
@@ -456,48 +505,7 @@ class _OpenOrdersScreenState extends State<OpenOrdersScreen> {
                 }
               },
             ),
-          if (isDelivery &&
-              liveOrder.status.trim().toLowerCase() == OrderStatus.pendingTill)
-            _ActionRow(
-              icon: Icons.point_of_sale,
-              label: 'Close till (cash)',
-              enabled:
-                  session.hasPermission(PosPermissions.takePayment) &&
-                  session.hasPermission(PosPermissions.openDrawer),
-              onTap: () async {
-                Navigator.pop(ctx);
-                final ok = await showDialog<bool>(
-                  context: context,
-                  builder: (dCtx) => AlertDialog(
-                    title: const Text('Close till?'),
-                    content: Text(
-                      'Record \$${liveOrder.total.toStringAsFixed(2)} cash '
-                      'into the till for ${liveOrder.id}?',
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(dCtx, false),
-                        child: const Text('Cancel'),
-                      ),
-                      FilledButton(
-                        onPressed: () => Navigator.pop(dCtx, true),
-                        child: const Text('Cash in till'),
-                      ),
-                    ],
-                  ),
-                );
-                if (ok == true) {
-                  await _closeTillCash(liveOrder);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Till closed — delivery complete'),
-                      ),
-                    );
-                  }
-                }
-              },
-            ),
+
           _ActionRow(
             icon: Icons.replay,
             label: 'Refund',
@@ -618,42 +626,6 @@ class _OpenOrdersScreenState extends State<OpenOrdersScreen> {
           'status': status,
           'timestamps.$status': DateTime.now().toIso8601String(),
         }, SetOptions(merge: true));
-  }
-
-  Future<void> _closeTillCash(Order order) async {
-    final session = Provider.of<PinSessionProvider>(context, listen: false);
-    if (!session.hasPermission(PosPermissions.takePayment) ||
-        !session.hasPermission(PosPermissions.openDrawer)) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Till close needs take_payment + open_drawer'),
-        ),
-      );
-      return;
-    }
-
-    final now = DateTime.now();
-    await FirebaseFirestore.instance
-        .collection('franchises')
-        .doc(widget.franchiseId)
-        .collection('orders')
-        .doc(order.id)
-        .set({
-          'status': OrderStatus.delivered,
-          'paymentMethod': 'cash',
-          'amountTendered': order.total,
-          'changeDue': 0,
-          'amountDueAtPay': order.total,
-          'paidAt': now.toIso8601String(),
-          'tillClosedAt': now.toIso8601String(),
-          'timestamps.paid': now.toIso8601String(),
-          'timestamps.delivered': now.toIso8601String(),
-          'timestamps.till_closed': now.toIso8601String(),
-        }, SetOptions(merge: true));
-
-    // ignore: avoid_print
-    print('[POS] cash drawer kick (mock) — delivery till close ${order.id}');
   }
 
   Future<void> _refundCash(Order order) async {
