@@ -49,6 +49,7 @@ export 'src/core/services/payout_service.dart';
 export 'src/core/services/promo_service.dart';
 export 'src/core/services/pos_firestore_service.dart';
 export 'src/core/services/labor_firestore_service.dart';
+export 'src/core/services/promo_pricing.dart';
 
 // Enrichment
 export 'src/core/services/enrichment/franchise_subscription_enricher.dart';

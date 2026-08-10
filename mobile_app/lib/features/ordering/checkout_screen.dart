@@ -1,5 +1,4 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
@@ -35,8 +34,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   late final shared.PaymentService _paymentService =
       shared.createPaymentService();
 
-  static const String validPromoCode = "PIZZA10";
-  static const double promoDiscount = 10.0;
+  /// Last successfully applied promo (null if none / cleared).
+  shared.Promo? _appliedPromo;
+  String _promoSummary = '';
 
   /// Fallback until store_ops loads (matches prior hardcode).
   TimeOfDay _businessOpen = const TimeOfDay(hour: 11, minute: 0);
@@ -67,17 +67,120 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     super.dispose();
   }
 
-  void _applyPromo(AppLocalizations localizations) {
-    setState(() {
-      _promoError = null;
-      if (_promoController.text.trim().toUpperCase() == validPromoCode) {
-        _promoApplied = true;
-      } else {
+  Future<void> _applyPromo(AppLocalizations localizations) async {
+    final code = _promoController.text.trim().toUpperCase();
+    if (code.isEmpty) {
+      setState(() {
         _promoError = localizations.invalidPromo;
         _promoApplied = false;
-      }
+        _appliedPromo = null;
+        _promoSummary = '';
+        _promoValue = 0;
+      });
       _updateOrderTotals();
-    });
+      return;
+    }
+
+    final franchiseProvider =
+        Provider.of<shared.FranchiseProvider>(context, listen: false);
+    final firestoreService =
+        Provider.of<shared.FirestoreService>(context, listen: false);
+    final franchiseId = franchiseProvider.currentFranchiseId;
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (franchiseId.isEmpty || franchiseId == 'unknown' || user == null) {
+      setState(() {
+        _promoError = localizations.invalidPromo;
+        _promoApplied = false;
+        _appliedPromo = null;
+      });
+      return;
+    }
+
+    try {
+      final promos = await firestoreService.getPromos(franchiseId).first;
+      shared.Promo? match;
+      for (final p in promos) {
+        if (p.code.trim().toUpperCase() == code) {
+          match = p;
+          break;
+        }
+      }
+      if (match == null) {
+        if (!mounted) return;
+        setState(() {
+          _promoError = localizations.invalidPromo;
+          _promoApplied = false;
+          _appliedPromo = null;
+          _promoSummary = '';
+          _promoValue = 0;
+        });
+        _updateOrderTotals();
+        return;
+      }
+
+      final cart = await firestoreService
+          .getCart(user.uid, franchiseId: franchiseId)
+          .first;
+      if (!mounted) return;
+      if (cart == null || cart.items.isEmpty) {
+        setState(() {
+          _promoError = localizations.invalidPromo;
+          _promoApplied = false;
+          _appliedPromo = null;
+        });
+        return;
+      }
+
+      double subtotal = 0;
+      for (final item in cart.items) {
+        subtotal += item.price * item.quantity;
+      }
+      final deliveryFee =
+          _deliveryType == DeliveryType.delivery ? _deliveryFeeFlat : 0.0;
+
+      final result = shared.PromoPricing.evaluate(
+        promo: match,
+        lines: List<shared.OrderItem>.from(cart.items),
+        subtotal: subtotal,
+        deliveryFee: deliveryFee,
+        channel: 'mobile',
+      );
+
+      if (!result.ok) {
+        setState(() {
+          _promoError = result.reason ?? localizations.invalidPromo;
+          _promoApplied = false;
+          _appliedPromo = null;
+          _promoSummary = '';
+          _promoValue = 0;
+        });
+        _updateOrderTotals();
+        return;
+      }
+
+      final applied = match;
+      setState(() {
+        _promoError = null;
+        _promoApplied = true;
+        _appliedPromo = applied;
+        _promoSummary = result.summary;
+        _promoValue = result.discountAmount;
+        if (applied.isDelivery) {
+          _deliveryFee = result.deliveryFeeAfter;
+        }
+      });
+      _updateOrderTotals();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _promoError = localizations.invalidPromo;
+        _promoApplied = false;
+        _appliedPromo = null;
+        _promoSummary = '';
+        _promoValue = 0;
+      });
+    }
   }
 
   Future<void> _selectTime(
@@ -369,12 +472,34 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
       setState(() {
         _orderSubtotal = subtotal;
-        _orderTax = (_orderSubtotal * _taxRate);
-        _deliveryFee =
+        final deliveryBase =
             _deliveryType == DeliveryType.delivery ? _deliveryFeeFlat : 0.0;
-        _promoValue = _promoApplied ? promoDiscount : 0.0;
+        var promoValue = 0.0;
+        var deliveryFee = deliveryBase;
+        if (_promoApplied && _appliedPromo != null) {
+          final result = shared.PromoPricing.evaluate(
+            promo: _appliedPromo!,
+            lines: List<shared.OrderItem>.from(cart.items),
+            subtotal: subtotal,
+            deliveryFee: deliveryBase,
+            channel: 'mobile',
+          );
+          if (result.ok) {
+            promoValue = result.discountAmount;
+            deliveryFee = result.deliveryFeeAfter;
+            _promoSummary = result.summary;
+          } else {
+            _promoApplied = false;
+            _appliedPromo = null;
+            _promoSummary = '';
+            _promoError = result.reason;
+          }
+        }
+        _promoValue = promoValue;
+        _deliveryFee = deliveryFee;
+        _orderTax = _orderSubtotal * _taxRate;
         _orderTotal = (_orderSubtotal + _orderTax + _deliveryFee - _promoValue)
-            .clamp(0, double.infinity);
+            .clamp(0.0, double.infinity);
       });
     }).catchError((e) {
       // Non-fatal; UI will show stale or zero totals
@@ -824,9 +949,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               labelText: localizations.promoCode,
                               errorText: _promoError,
                               suffixIcon: _promoApplied
-                                  ? Icon(Icons.check,
-                                      color:
-                                          Theme.of(context).colorScheme.primary)
+                                  ? IconButton(
+                                      icon: Icon(
+                                        Icons.close,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
+                                      ),
+                                      tooltip: 'Remove',
+                                      onPressed: () {
+                                        setState(() {
+                                          _promoApplied = false;
+                                          _appliedPromo = null;
+                                          _promoSummary = '';
+                                          _promoValue = 0;
+                                          _promoError = null;
+                                        });
+                                        _updateOrderTotals();
+                                      },
+                                    )
                                   : IconButton(
                                       icon: const Icon(Icons.local_offer),
                                       onPressed: () =>
@@ -844,7 +985,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             Padding(
                               padding: const EdgeInsets.only(top: 4),
                               child: Text(
-                                '${localizations.promoApplied}: -\$${promoDiscount.toStringAsFixed(2)}',
+                                _promoSummary.isNotEmpty
+                                    ? _promoSummary
+                                    : '${localizations.promoApplied}: -\$${_promoValue.toStringAsFixed(2)}',
                                 style: TextStyle(
                                   color: shared.UiConfig.successColor,
                                   fontSize: shared.DesignTokens.captionFontSize,

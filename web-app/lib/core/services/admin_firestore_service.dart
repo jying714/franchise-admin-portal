@@ -1005,6 +1005,74 @@ class AdminFirestoreService extends shared.FirestoreServiceImpl {
     }
   }
 
+  // ===================== BANNERS (franchise-scoped) =====================
+
+  Stream<List<shared.Banner>> streamFranchiseBanners(String franchiseId) {
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        franchiseId == 'default') {
+      return Stream.value(<shared.Banner>[]);
+    }
+    return db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('banners')
+        .snapshots()
+        .map((snap) {
+      final list = snap.docs
+          .map((d) => shared.Banner.fromFirestore(d.data(), d.id))
+          .toList();
+      list.sort((a, b) {
+        final bySort = a.sortOrder.compareTo(b.sortOrder);
+        if (bySort != 0) return bySort;
+        return a.title.toLowerCase().compareTo(b.title.toLowerCase());
+      });
+      return list;
+    });
+  }
+
+  Future<void> saveFranchiseBanner(
+    String franchiseId,
+    shared.Banner banner,
+  ) async {
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        franchiseId == 'default') {
+      shared.ErrorLogger.log(
+        message: 'saveFranchiseBanner invalid franchiseId',
+        source: 'AdminFirestoreService.saveFranchiseBanner',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return;
+    }
+    final col =
+        db.collection('franchises').doc(franchiseId).collection('banners');
+    final id = banner.id.isNotEmpty ? banner.id : col.doc().id;
+    await col.doc(id).set(
+          banner.copyWith(id: id).toFirestore(),
+          firestore.SetOptions(merge: true),
+        );
+  }
+
+  Future<void> deleteFranchiseBanner(
+    String franchiseId,
+    String bannerId,
+  ) async {
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        franchiseId == 'default' ||
+        bannerId.isEmpty) {
+      return;
+    }
+    await db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('banners')
+        .doc(bannerId)
+        .delete();
+  }
+
   /// Robust import of menu items from onboarding template.
   /// Copies from onboarding_templates/pizzeria/menu_items → franchises/{franchiseId}/menu_items
   /// Preserves original document IDs, all fields (customizations, sizes, nutrition, etc.).

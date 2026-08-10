@@ -57,6 +57,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final TextEditingController _zipController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
 
+  final TextEditingController _promoController = TextEditingController();
+  bool _promoApplied = false;
+  String? _promoError;
+  shared.Promo? _appliedPromo;
+  String _promoSummary = '';
+  double _promoValue = 0;
+
   @override
   void dispose() {
     _cardController.dispose();
@@ -66,6 +73,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     _stateController.dispose();
     _zipController.dispose();
     _phoneController.dispose();
+    _promoController.dispose();
     super.dispose();
   }
 
@@ -255,6 +263,140 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 
+  void _clearPromo() {
+    setState(() {
+      _promoApplied = false;
+      _appliedPromo = null;
+      _promoSummary = '';
+      _promoValue = 0;
+      _promoError = null;
+    });
+  }
+
+  Future<void> _applyPromo(shared.Order cart, double subtotal) async {
+    final code = _promoController.text.trim().toUpperCase();
+    if (code.isEmpty) {
+      setState(() {
+        _promoError = 'Enter a promo code';
+        _clearPromoFieldsOnly();
+      });
+      return;
+    }
+
+    final fp = Provider.of<shared.FranchiseProvider>(context, listen: false);
+    final fs = Provider.of<shared.FirestoreService>(context, listen: false);
+    final franchiseId = fp.currentFranchiseId;
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      setState(() => _promoError = 'Restaurant not selected');
+      return;
+    }
+
+    try {
+      final promos = await fs.getPromos(franchiseId).first;
+      shared.Promo? match;
+      for (final p in promos) {
+        if (p.code.trim().toUpperCase() == code) {
+          match = p;
+          break;
+        }
+      }
+      if (match == null) {
+        if (!mounted) return;
+        setState(() {
+          _promoError = 'Invalid or expired promo code';
+          _promoApplied = false;
+          _appliedPromo = null;
+          _promoSummary = '';
+          _promoValue = 0;
+        });
+        return;
+      }
+
+      final deliveryBase = _deliveryFee;
+      final result = shared.PromoPricing.evaluate(
+        promo: match,
+        lines: List<shared.OrderItem>.from(cart.items),
+        subtotal: subtotal,
+        deliveryFee: deliveryBase,
+        channel: 'web',
+      );
+
+      if (!mounted) return;
+      if (!result.ok) {
+        setState(() {
+          _promoError = result.reason ?? 'Promo cannot be applied';
+          _promoApplied = false;
+          _appliedPromo = null;
+          _promoSummary = '';
+          _promoValue = 0;
+        });
+        return;
+      }
+
+      final applied = match;
+      setState(() {
+        _promoError = null;
+        _promoApplied = true;
+        _appliedPromo = applied;
+        _promoSummary = result.summary;
+        _promoValue = result.discountAmount;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _promoError = 'Could not apply promo';
+        _promoApplied = false;
+        _appliedPromo = null;
+        _promoSummary = '';
+        _promoValue = 0;
+      });
+    }
+  }
+
+  void _clearPromoFieldsOnly() {
+    _promoApplied = false;
+    _appliedPromo = null;
+    _promoSummary = '';
+    _promoValue = 0;
+  }
+
+  /// Recompute fee/discount for current cart (delivery type + applied promo).
+  ({double discount, double deliveryFee, double tax, double total}) _totalsFor(
+    shared.Order cart,
+    double subtotal,
+  ) {
+    final deliveryBase = _deliveryType == 'delivery' ? _deliveryFeeFlat : 0.0;
+    var discount = 0.0;
+    var deliveryFee = deliveryBase;
+    if (_promoApplied && _appliedPromo != null) {
+      final result = shared.PromoPricing.evaluate(
+        promo: _appliedPromo!,
+        lines: List<shared.OrderItem>.from(cart.items),
+        subtotal: subtotal,
+        deliveryFee: deliveryBase,
+        channel: 'web',
+      );
+      if (result.ok) {
+        discount = result.discountAmount;
+        deliveryFee = result.deliveryFeeAfter;
+      } else {
+        discount = 0;
+        deliveryFee = deliveryBase;
+      }
+    }
+    final tax = subtotal * _taxRate;
+    final total = (subtotal + tax + deliveryFee - discount).clamp(
+      0.0,
+      double.infinity,
+    );
+    return (
+      discount: discount,
+      deliveryFee: deliveryFee,
+      tax: tax,
+      total: total,
+    );
+  }
+
   Future<void> _placeOrder(shared.Order cart, double subtotal) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -291,9 +433,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return;
     }
 
-    final tax = subtotal * _taxRate;
-    final deliveryFee = _deliveryFee;
-    final total = subtotal + tax + deliveryFee;
+    final t = _totalsFor(cart, subtotal);
+    final tax = t.tax;
+    final deliveryFee = t.deliveryFee;
+    final discount = t.discount;
+    final total = t.total;
     final deliveryAddress = _buildDeliveryAddress();
     final recipientName = _nameController.text.trim();
     final orderId = _orderId();
@@ -309,7 +453,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         subtotal: subtotal,
         tax: tax,
         deliveryFee: deliveryFee,
-        discount: 0,
+        discount: discount,
         total: total,
         deliveryType: _deliveryType,
         deliveryAddress: deliveryAddress,
@@ -455,12 +599,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         }
 
         double subtotal = 0;
-        for (final i in items) {
+        for (final i in cart!.items) {
           subtotal += i.price * i.quantity;
         }
-        final tax = subtotal * _taxRate;
-        final deliveryFee = _deliveryFee;
-        final total = subtotal + tax + deliveryFee;
+        final t = _totalsFor(cart, subtotal);
+        final tax = t.tax;
+        final deliveryFee = t.deliveryFee;
+        final discount = t.discount;
+        final total = t.total;
 
         return Align(
           alignment: Alignment.topCenter,
@@ -598,9 +744,45 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   );
                 }),
                 const Divider(),
+                TextField(
+                  controller: _promoController,
+                  textCapitalization: TextCapitalization.characters,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => _applyPromo(cart, subtotal),
+                  enabled: !_promoApplied,
+                  decoration: InputDecoration(
+                    labelText: 'Promo code',
+                    errorText: _promoError,
+                    border: const OutlineInputBorder(),
+                    suffixIcon: _promoApplied
+                        ? IconButton(
+                            icon: const Icon(Icons.close),
+                            tooltip: 'Remove',
+                            onPressed: _clearPromo,
+                          )
+                        : IconButton(
+                            icon: const Icon(Icons.local_offer),
+                            tooltip: 'Apply',
+                            onPressed: () => _applyPromo(cart, subtotal),
+                          ),
+                  ),
+                ),
+                if (_promoApplied && _promoSummary.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6, bottom: 8),
+                    child: Text(
+                      _promoSummary,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 12),
                 _row('Subtotal', subtotal),
                 _row('Tax (${(_taxRate * 100).toStringAsFixed(2)}%)', tax),
                 if (deliveryFee > 0) _row('Delivery fee', deliveryFee),
+                if (discount > 0) _row('Promo', -discount),
                 _row('Total', total, bold: true),
                 const SizedBox(height: 24),
                 Text('Card', style: Theme.of(context).textTheme.titleMedium),
