@@ -196,9 +196,38 @@ class MenuFirestoreRepository implements MenuRepository {
 
   @override
   Stream<List<MenuItem>> getMenuItemsByCategory(String categoryId,
-          {String? franchiseId, String? sortBy}) =>
-      throw UnimplementedError(
-          'MenuRepository.getMenuItemsByCategory not yet extracted');
+      {String? franchiseId, String? sortBy}) {
+    if (_badFranchise(franchiseId)) {
+      return Stream.value(<MenuItem>[]);
+    }
+
+    firestore.Query q =
+        _col(franchiseId!).where('categoryId', isEqualTo: categoryId);
+
+    if (sortBy != null && sortBy.isNotEmpty) {
+      q = q.orderBy(sortBy);
+    } else {
+      q = q.orderBy('sortOrder');
+    }
+
+    return q.snapshots().map((s) {
+      final list = s.docs
+          .map((d) {
+            try {
+              return MenuItem.fromFirestore(
+                  d.data() as Map<String, dynamic>, d.id);
+            } catch (e) {
+              return null;
+            }
+          })
+          .where((item) => item != null)
+          .cast<MenuItem>()
+          .where((m) => m.isSellable)
+          .toList();
+
+      return list;
+    });
+  }
 
   @override
   List<Customization> getCustomizationGroups(MenuItem item) =>

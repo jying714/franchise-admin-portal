@@ -3121,39 +3121,8 @@ class FirestoreServiceImpl implements FirestoreService {
   @override
   Stream<List<MenuItem>> getMenuItemsByCategory(String categoryId,
       {String? franchiseId, String? sortBy}) {
-    if (franchiseId == null ||
-        franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return Stream.value(<MenuItem>[]);
-    }
-
-    firestore.Query q = _franchiseCollection(franchiseId, _menuItems)
-        .where('categoryId', isEqualTo: categoryId);
-
-    if (sortBy != null && sortBy.isNotEmpty) {
-      q = q.orderBy(sortBy);
-    } else {
-      q = q.orderBy('sortOrder');
-    }
-
-    return q.snapshots().map((s) {
-      final list = s.docs
-          .map((d) {
-            try {
-              return MenuItem.fromFirestore(
-                  d.data() as Map<String, dynamic>, d.id);
-            } catch (e, stack) {
-              return null;
-            }
-          })
-          .where((item) => item != null)
-          .cast<MenuItem>()
-          .where((m) => m.isSellable)
-          .toList();
-
-      return list;
-    });
+    return _menuRepo!.getMenuItemsByCategory(categoryId,
+        franchiseId: franchiseId, sortBy: sortBy);
   }
 
   @override

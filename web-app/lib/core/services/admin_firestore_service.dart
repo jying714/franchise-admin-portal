@@ -2589,12 +2589,12 @@ class AdminFirestoreService extends shared.FirestoreServiceImpl {
     }
 
     try {
-      await db
-          .collection('franchises')
-          .doc(franchiseId)
-          .collection('menu_items')
-          .doc(menuItemId)
-          .delete();
+      // Shared MenuRepository path (Phase A1) — same collection/doc delete.
+      await shared.MenuFirestoreRepository(db: db).deleteMenuItem(
+        franchiseId,
+        menuItemId,
+        userId: userId,
+      );
     } catch (e, stack) {
       shared.ErrorLogger.log(
         message: 'Failed to delete menu item',

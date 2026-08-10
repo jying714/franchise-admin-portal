@@ -51,6 +51,10 @@ export 'src/core/services/pos_firestore_service.dart';
 export 'src/core/services/labor_firestore_service.dart';
 export 'src/core/services/promo_pricing.dart';
 
+// Bounded-context repositories (Phase A — docs/slices/bounded-context-repos-v1.md)
+export 'src/core/repositories/menu_repository.dart';
+export 'src/core/repositories/menu_firestore_repository.dart';
+
 // Enrichment
 export 'src/core/services/enrichment/franchise_subscription_enricher.dart';
 
