@@ -21,6 +21,7 @@ import 'package:franchise_mobile_app/widgets/customization/header.dart';
 import 'package:franchise_mobile_app/widgets/customization/bottom_bar.dart';
 import 'package:franchise_mobile_app/generated/app_localizations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'customization_controller.dart';
 
 const MAX_DOUBLES = 4;
 const DOUGH_IDS = {'dough_calzone', 'dough_pizza', 'dough'};
@@ -144,6 +145,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
   String _selectedToppingTab = '';
   late List<Map<String, dynamic>> _toppingTabGroups;
 
+  late final CustomizationController _controller;
   // AFTER
   void _handleSauceTap(int index) {
     setState(() {
@@ -513,6 +515,17 @@ class _CustomizationModalState extends State<CustomizationModal> {
         (sizes != null && sizes.isNotEmpty) ? sizes.first.label : null;
     _drinkFlavorCounts = {};
 
+    _controller = CustomizationController(
+      item: widget.menuItem,
+      ingredientMap: _ingredientMetadata,
+      initialQuantity: widget.initialQuantity,
+      initialCustomizations: widget.initialCustomizations,
+    );
+    if (_selectedSize != null) {
+      _controller.setSelectedSize(_selectedSize);
+    }
+    _controller.setQuantity(_quantity);
+
     if (_isPizzaOrCalzone()) {
       // AFTER
       var sauceIds = _optionalIdsByType('sauces');
@@ -686,6 +699,12 @@ class _CustomizationModalState extends State<CustomizationModal> {
         _drinkFlavorCounts[ingId] = 0;
       }
     }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   // AFTER
@@ -1101,9 +1120,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
     return 0.80;
   }
 
-  double get _customizationsTotal {
-    final selection = shared.MenuCustomizationSelection(
-      selectedSize: _selectedSize,
+  void _syncControllerSelection() {
+    _controller.syncSelection(
       currentIngredients: _currentIngredients,
       selectedAddOns: _selectedAddOns,
       doubleAddOns: Map<String, bool>.from(_doubleAddOns),
@@ -1111,30 +1129,28 @@ class _CustomizationModalState extends State<CustomizationModal> {
       selectedSauceCounts: Map<String, int>.from(_selectedSauceCounts),
       selectedDressingCounts: Map<String, int>.from(_selectedDressingCounts),
       sideDipCounts: Map<String, int>.from(_sideDipCounts),
-    );
-
-    return shared.MenuPricing.customizationsTotal(
-      item: widget.menuItem,
-      selection: selection,
-      ingredientMetadata: _ingredientMetadata,
-      wingSauceIds: _effectiveWingSauceIds(),
       maxFreeSaucesFromGroup: _maxFreeForGroupLabel('sauces'),
       maxFreeDressingsFromGroup: _maxFreeForGroupLabel('dressings'),
       maxFreeToppingsFromGroup: _maxFreeForGroupLabel('toppings'),
       maxFreeMeatsFromGroup: _maxFreeForGroupLabel('meats'),
+      wingSauceIds: _effectiveWingSauceIds(),
     );
   }
 
   double get _basePrice {
-    return shared.MenuPricing.basePrice(widget.menuItem, _selectedSize);
+    _syncControllerSelection();
+    return _controller.basePrice;
   }
 
-  double get _totalPrice => shared.MenuPricing.lineTotal(
-        item: widget.menuItem,
-        selectedSize: _selectedSize,
-        customizationsTotal: _customizationsTotal,
-        quantity: _quantity,
-      );
+  double get _customizationsTotal {
+    _syncControllerSelection();
+    return _controller.customizationsTotal;
+  }
+
+  double get _totalPrice {
+    _syncControllerSelection();
+    return _controller.totalPrice;
+  }
 
   int get _doublesCount =>
       _doubleToppings.values.where((isDouble) => isDouble).length;
@@ -1418,6 +1434,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                 onChanged: (newSize) {
                                   setState(() {
                                     _selectedSize = newSize;
+                                    _controller.setSelectedSize(newSize);
                                     _resyncWingsForSize(newSize);
                                   });
                                 },
