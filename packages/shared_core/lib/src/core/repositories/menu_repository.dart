@@ -17,7 +17,8 @@ abstract class MenuRepository {
   Future<void> updateMenuItem(String franchiseId, MenuItem item,
       {String? userId});
   Future<void> deleteMenuItem(String franchiseId, String id, {String? userId});
-  Stream<List<MenuItem>> getMenuItems(String franchiseId, {String? search});
+  Stream<List<MenuItem>> getMenuItems(String franchiseId,
+      {String? search, String? sortBy, bool descending = false});
   Future<List<MenuItem>> getMenuItemsOnce(String franchiseId);
   Stream<List<MenuItem>> getMenuItemsByIds(
       String franchiseId, List<String> ids);

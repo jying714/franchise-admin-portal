@@ -24,20 +24,26 @@ import '../utils/error_logger.dart';
 import '../providers/franchise_provider.dart';
 import '../models/banner.dart';
 import 'dart:async';
+import '../repositories/menu_repository.dart';
+import '../repositories/menu_firestore_repository.dart';
 
 class FirestoreServiceImpl implements FirestoreService {
   late final firestore.FirebaseFirestore _db;
   late final fb_auth.FirebaseAuth _auth;
   late final FirebaseFunctions _functions;
 
+  MenuRepository? _menuRepo;
+
   FirestoreServiceImpl({
     firestore.FirebaseFirestore? db,
     fb_auth.FirebaseAuth? auth,
     FirebaseFunctions? functions,
+    MenuRepository? menuRepository,
   }) {
     _db = db ?? firestore.FirebaseFirestore.instance;
     _auth = auth ?? fb_auth.FirebaseAuth.instance;
     _functions = functions ?? FirebaseFunctions.instance;
+    _menuRepo = menuRepository ?? MenuFirestoreRepository(db: _db);
   }
 
   @override
@@ -3079,148 +3085,37 @@ class FirestoreServiceImpl implements FirestoreService {
   // ===================== MENU ITEMS =====================
   @override
   Future<void> addMenuItem(String franchiseId, MenuItem item,
-      {String? userId}) async {
-    if (franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return;
-    }
-
-    try {
-      await _franchiseCollection(franchiseId, _menuItems)
-          .doc(item.id)
-          .set(item.toFirestore());
-    } catch (e, stack) {
-      await ErrorLogger.log(
-        message: 'Failed to addMenuItem',
-        source: 'FirestoreServiceImpl',
-        severity: 'error',
-        stack: stack.toString(),
-        contextData: {'franchiseId': franchiseId, 'menuItemId': item.id},
-      );
-    }
+      {String? userId}) {
+    return _menuRepo!.addMenuItem(franchiseId, item, userId: userId);
   }
 
   @override
   Future<void> updateMenuItem(String franchiseId, MenuItem item,
-      {String? userId}) async {
-    if (franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return;
-    }
-
-    try {
-      await _franchiseCollection(franchiseId, _menuItems)
-          .doc(item.id)
-          .update(item.toFirestore());
-    } catch (e, stack) {
-      await ErrorLogger.log(
-        message: 'Failed to updateMenuItem',
-        source: 'FirestoreServiceImpl',
-        severity: 'error',
-        stack: stack.toString(),
-        contextData: {'franchiseId': franchiseId, 'menuItemId': item.id},
-      );
-    }
+      {String? userId}) {
+    return _menuRepo!.updateMenuItem(franchiseId, item, userId: userId);
   }
 
   @override
-  Future<void> deleteMenuItem(String franchiseId, String id,
-      {String? userId}) async {
-    if (franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return;
-    }
-
-    try {
-      await _franchiseCollection(franchiseId, _menuItems).doc(id).delete();
-    } catch (e, stack) {
-      await ErrorLogger.log(
-        message: 'Failed to deleteMenuItem',
-        source: 'FirestoreServiceImpl',
-        severity: 'error',
-        stack: stack.toString(),
-        contextData: {'franchiseId': franchiseId, 'menuItemId': id},
-      );
-    }
+  Future<void> deleteMenuItem(String franchiseId, String id, {String? userId}) {
+    return _menuRepo!.deleteMenuItem(franchiseId, id, userId: userId);
   }
 
   @override
   Stream<List<MenuItem>> getMenuItems(String franchiseId,
       {String? search, String? sortBy, bool descending = false}) {
-    if (franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return Stream.value(<MenuItem>[]);
-    }
-
-    firestore.Query q = _franchiseCollection(franchiseId, _menuItems);
-
-    if (search != null && search.isNotEmpty) {
-      q = q.where('categoryId', isEqualTo: search);
-    }
-    // Do NOT orderBy sortOrder in the query: docs without that field are
-    // excluded by Firestore. Sort client-side so HQ-authored items load.
-    if (sortBy != null && sortBy.isNotEmpty && sortBy != 'sortOrder') {
-      q = q.orderBy(sortBy, descending: descending);
-    }
-
-    return q.snapshots().map((s) {
-      final list = s.docs
-          .map((d) {
-            try {
-              return MenuItem.fromFirestore(
-                  d.data() as Map<String, dynamic>, d.id);
-            } catch (e) {
-              return null;
-            }
-          })
-          .where((item) => item != null)
-          .cast<MenuItem>()
-          .toList();
-
-      list.sort((a, b) {
-        final ao = a.sortOrder ?? 0;
-        final bo = b.sortOrder ?? 0;
-        if (ao != bo) return ao.compareTo(bo);
-        return a.name.compareTo(b.name);
-      });
-
-      return list;
-    });
+    return _menuRepo!.getMenuItems(franchiseId,
+        search: search, sortBy: sortBy, descending: descending);
   }
 
   @override
-  Future<List<MenuItem>> getMenuItemsOnce(String franchiseId) async {
-    if (franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return [];
-    }
-
-    final snap = await _franchiseCollection(franchiseId, _menuItems).get();
-    return snap.docs
-        .map((d) => MenuItem.fromFirestore(d.data(), d.id))
-        .toList();
+  Future<List<MenuItem>> getMenuItemsOnce(String franchiseId) {
+    return _menuRepo!.getMenuItemsOnce(franchiseId);
   }
 
   @override
   Stream<List<MenuItem>> getMenuItemsByIds(
       String franchiseId, List<String> ids) {
-    if (franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default' ||
-        ids.isEmpty) {
-      return Stream.value(<MenuItem>[]);
-    }
-
-    return _franchiseCollection(franchiseId, _menuItems)
-        .where(firestore.FieldPath.documentId, whereIn: ids)
-        .snapshots()
-        .map((s) =>
-            s.docs.map((d) => MenuItem.fromFirestore(d.data(), d.id)).toList());
+    return _menuRepo!.getMenuItemsByIds(franchiseId, ids);
   }
 
   @override
@@ -3262,33 +3157,8 @@ class FirestoreServiceImpl implements FirestoreService {
   }
 
   @override
-  Future<MenuItem?> getMenuItemById(String itemId,
-      {String? franchiseId}) async {
-    if (franchiseId == null ||
-        franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return null;
-    }
-
-    try {
-      final doc =
-          await _franchiseCollection(franchiseId, _menuItems).doc(itemId).get();
-      if (doc.exists && doc.data() != null) {
-        return MenuItem.fromFirestore(
-            doc.data() as Map<String, dynamic>, doc.id);
-      }
-      return null;
-    } catch (e, stack) {
-      await ErrorLogger.log(
-        message: 'Failed to getMenuItemById',
-        source: 'FirestoreServiceImpl',
-        severity: 'error',
-        stack: stack.toString(),
-        contextData: {'franchiseId': franchiseId, 'menuItemId': itemId},
-      );
-      return null;
-    }
+  Future<MenuItem?> getMenuItemById(String itemId, {String? franchiseId}) {
+    return _menuRepo!.getMenuItemById(itemId, franchiseId: franchiseId);
   }
 
   // ===================== FRANCHISE LIST HELPERS =====================
