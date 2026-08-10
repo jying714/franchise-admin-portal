@@ -26,6 +26,12 @@ class MenuFirestoreRepository implements MenuRepository {
           String franchiseId) =>
       _db.collection('franchises').doc(franchiseId).collection(_menuItems);
 
+  static const String _categories = 'categories';
+
+  firestore.CollectionReference<Map<String, dynamic>> _catCol(
+          String franchiseId) =>
+      _db.collection('franchises').doc(franchiseId).collection(_categories);
+
   bool _badFranchise(String? franchiseId) =>
       franchiseId == null ||
       franchiseId.isEmpty ||
@@ -240,34 +246,126 @@ class MenuFirestoreRepository implements MenuRepository {
           'MenuRepository.getPreselectedCustomizations not yet extracted');
 
   @override
-  Future<List<model.Category>> fetchCategories(String franchiseId) =>
-      throw UnimplementedError(
-          'MenuRepository.fetchCategories not yet extracted');
+  Future<List<model.Category>> fetchCategories(String franchiseId) async {
+    if (_badFranchise(franchiseId)) return [];
+
+    try {
+      final snap = await _catCol(franchiseId).get();
+      final list = snap.docs
+          .map((d) => model.Category.fromFirestore(d.data(), d.id))
+          .toList();
+      list.sort((a, b) {
+        final ao = a.sortOrder ?? 0;
+        final bo = b.sortOrder ?? 0;
+        if (ao != bo) return ao.compareTo(bo);
+        return a.name.compareTo(b.name);
+      });
+      return list;
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to fetchCategories',
+        source: 'MenuFirestoreRepository',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {'franchiseId': franchiseId},
+      );
+      return [];
+    }
+  }
 
   @override
-  Stream<List<model.Category>> getCategories(String franchiseId) =>
-      throw UnimplementedError(
-          'MenuRepository.getCategories not yet extracted');
+  Stream<List<model.Category>> getCategories(String franchiseId) {
+    if (_badFranchise(franchiseId)) {
+      return Stream.value(<model.Category>[]);
+    }
+
+    return _catCol(franchiseId).snapshots().map((s) {
+      final list = s.docs
+          .map((d) {
+            try {
+              return model.Category.fromFirestore(
+                  d.data() as Map<String, dynamic>, d.id);
+            } catch (_) {
+              return null;
+            }
+          })
+          .where((c) => c != null)
+          .cast<model.Category>()
+          .toList();
+
+      list.sort((a, b) {
+        final ao = a.sortOrder ?? 0;
+        final bo = b.sortOrder ?? 0;
+        if (ao != bo) return ao.compareTo(bo);
+        return a.name.compareTo(b.name);
+      });
+      return list;
+    });
+  }
 
   @override
   Future<void> saveCategory(String franchiseId, model.Category category) =>
       throw UnimplementedError('MenuRepository.saveCategory not yet extracted');
 
   @override
-  Future<void> addCategory(
-          {required String franchiseId, required model.Category category}) =>
-      throw UnimplementedError('MenuRepository.addCategory not yet extracted');
+  Future<void> addCategory({
+    required String franchiseId,
+    required model.Category category,
+  }) async {
+    if (_badFranchise(franchiseId)) return;
+
+    try {
+      await _catCol(franchiseId).doc(category.id).set(category.toFirestore());
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to addCategory',
+        source: 'MenuFirestoreRepository',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {'franchiseId': franchiseId, 'categoryId': category.id},
+      );
+    }
+  }
 
   @override
-  Future<void> updateCategory(String franchiseId, model.Category category) =>
-      throw UnimplementedError(
-          'MenuRepository.updateCategory not yet extracted');
+  Future<void> updateCategory(
+      String franchiseId, model.Category category) async {
+    if (_badFranchise(franchiseId)) return;
+
+    try {
+      await _catCol(franchiseId)
+          .doc(category.id)
+          .update(category.toFirestore());
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to updateCategory',
+        source: 'MenuFirestoreRepository',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {'franchiseId': franchiseId, 'categoryId': category.id},
+      );
+    }
+  }
 
   @override
-  Future<void> deleteCategory(
-          {required String franchiseId, required String categoryId}) =>
-      throw UnimplementedError(
-          'MenuRepository.deleteCategory not yet extracted');
+  Future<void> deleteCategory({
+    required String franchiseId,
+    required String categoryId,
+  }) async {
+    if (_badFranchise(franchiseId)) return;
+
+    try {
+      await _catCol(franchiseId).doc(categoryId).delete();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to deleteCategory',
+        source: 'MenuFirestoreRepository',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {'franchiseId': franchiseId, 'categoryId': categoryId},
+      );
+    }
+  }
 
   @override
   Future<Map<String, dynamic>?> getCategorySchema(

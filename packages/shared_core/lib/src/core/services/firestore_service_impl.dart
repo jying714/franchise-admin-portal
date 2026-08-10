@@ -701,34 +701,8 @@ class FirestoreServiceImpl implements FirestoreService {
       throw UnimplementedError(_adminOnlyMsg('fetchIngredientTypeIds'));
   // AFTER
   @override
-  Future<List<model.Category>> fetchCategories(String franchiseId) async {
-    if (franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return [];
-    }
-    try {
-      final snap = await _franchiseCollection(franchiseId, _categories).get();
-      final list = snap.docs
-          .map((d) => model.Category.fromFirestore(d.data(), d.id))
-          .toList();
-      list.sort((a, b) {
-        final ao = a.sortOrder ?? 0;
-        final bo = b.sortOrder ?? 0;
-        if (ao != bo) return ao.compareTo(bo);
-        return a.name.compareTo(b.name);
-      });
-      return list;
-    } catch (e, stack) {
-      await ErrorLogger.log(
-        message: 'Failed to fetchCategories',
-        source: 'FirestoreServiceImpl',
-        severity: 'error',
-        stack: stack.toString(),
-        contextData: {'franchiseId': franchiseId},
-      );
-      return [];
-    }
+  Future<List<model.Category>> fetchCategories(String franchiseId) {
+    return _menuRepo!.fetchCategories(franchiseId);
   }
 
   @override
@@ -744,8 +718,10 @@ class FirestoreServiceImpl implements FirestoreService {
           String franchiseId, List<model.Category> categories) async =>
       throw UnimplementedError(_adminOnlyMsg('saveAllCategories'));
   @override
-  Future<List<MenuItem>> fetchMenuItemsOnce(String franchiseId) =>
-      getMenuItemsOnce(franchiseId);
+  Future<List<MenuItem>> fetchMenuItemsOnce(String franchiseId) {
+    return _menuRepo!.fetchMenuItemsOnce(franchiseId);
+  }
+
   @override
   Future<void> saveMenuItems(String franchiseId, List<MenuItem> items) async =>
       throw UnimplementedError(_adminOnlyMsg('saveMenuItems'));
@@ -3010,76 +2986,27 @@ class FirestoreServiceImpl implements FirestoreService {
   Future<void> addCategory({
     required String franchiseId,
     required model.Category category,
-  }) async {
-    if (franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return;
-    }
-
-    try {
-      await _franchiseCollection(franchiseId, _categories)
-          .doc(category.id)
-          .set(category.toFirestore());
-    } catch (e, stack) {
-      await ErrorLogger.log(
-        message: 'Failed to addCategory',
-        source: 'FirestoreServiceImpl',
-        severity: 'error',
-        stack: stack.toString(),
-        contextData: {'franchiseId': franchiseId, 'categoryId': category.id},
-      );
-    }
+  }) {
+    return _menuRepo!.addCategory(
+      franchiseId: franchiseId,
+      category: category,
+    );
   }
 
   @override
-  Future<void> updateCategory(
-      String franchiseId, model.Category category) async {
-    if (franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return;
-    }
-
-    try {
-      await _franchiseCollection(franchiseId, _categories)
-          .doc(category.id)
-          .update(category.toFirestore());
-    } catch (e, stack) {
-      await ErrorLogger.log(
-        message: 'Failed to updateCategory',
-        source: 'FirestoreServiceImpl',
-        severity: 'error',
-        stack: stack.toString(),
-        contextData: {'franchiseId': franchiseId, 'categoryId': category.id},
-      );
-    }
+  Future<void> updateCategory(String franchiseId, model.Category category) {
+    return _menuRepo!.updateCategory(franchiseId, category);
   }
 
   @override
   Future<void> deleteCategory({
     required String franchiseId,
     required String categoryId,
-  }) async {
-    if (franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return;
-    }
-
-    try {
-      await _franchiseCollection(franchiseId, _categories)
-          .doc(categoryId)
-          .delete();
-    } catch (e, stack) {
-      await ErrorLogger.log(
-        message: 'Failed to deleteCategory',
-        source: 'FirestoreServiceImpl',
-        severity: 'error',
-        stack: stack.toString(),
-        contextData: {'franchiseId': franchiseId, 'categoryId': categoryId},
-      );
-    }
+  }) {
+    return _menuRepo!.deleteCategory(
+      franchiseId: franchiseId,
+      categoryId: categoryId,
+    );
   }
 
   // ===================== MENU ITEMS =====================
@@ -3598,34 +3525,7 @@ class FirestoreServiceImpl implements FirestoreService {
   // AFTER
   @override
   Stream<List<model.Category>> getCategories(String franchiseId) {
-    if (franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return Stream.value(<model.Category>[]);
-    }
-
-    return _franchiseCollection(franchiseId, _categories).snapshots().map((s) {
-      final list = s.docs
-          .map((d) {
-            try {
-              return model.Category.fromFirestore(
-                  d.data() as Map<String, dynamic>, d.id);
-            } catch (_) {
-              return null;
-            }
-          })
-          .where((c) => c != null)
-          .cast<model.Category>()
-          .toList();
-
-      list.sort((a, b) {
-        final ao = a.sortOrder ?? 0;
-        final bo = b.sortOrder ?? 0;
-        if (ao != bo) return ao.compareTo(bo);
-        return a.name.compareTo(b.name);
-      });
-      return list;
-    });
+    return _menuRepo!.getCategories(franchiseId);
   }
 
   @override
