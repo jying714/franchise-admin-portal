@@ -5,6 +5,9 @@
 // Arithmetic must match mobile_app customization_modal getters exactly.
 
 import '../models/menu_item.dart';
+import '../models/ingredient_metadata.dart';
+import '../models/modifier_group.dart'; // MenuProfile
+import 'menu_customization_selection.dart';
 
 class MenuPricing {
   MenuPricing._();
@@ -161,5 +164,164 @@ class MenuPricing {
     final extra =
         selectedDressingTotal > free ? (selectedDressingTotal - free) : 0;
     return extra * extraDressingUpcharge(item);
+  }
+
+  static bool isPizzaOrCalzone(MenuItem item) {
+    final profile = item.effectiveMenuProfile.toLowerCase();
+    if (profile == MenuProfile.pizza || profile == MenuProfile.calzone) {
+      return true;
+    }
+    final cat = item.category.toLowerCase();
+    return cat.contains('pizza') || cat.contains('calzone');
+  }
+
+  static bool isWings(MenuItem item) {
+    final profile = item.effectiveMenuProfile.toLowerCase();
+    if (profile == MenuProfile.wings) return true;
+    return item.name.toLowerCase().contains('wings');
+  }
+
+  static bool isSalad(MenuItem item) {
+    final cat = item.category.toLowerCase();
+    final catId = (item.categoryId ?? '').toLowerCase();
+    return cat.contains('salad') || catId.contains('salad');
+  }
+
+  static bool isDinner(MenuItem item) {
+    final cat = item.category.toLowerCase();
+    final catId = (item.categoryId ?? '').toLowerCase();
+    return cat.contains('dinner') || catId.contains('dinner');
+  }
+
+  static bool isSub(MenuItem item) {
+    return item.effectiveMenuProfile.toLowerCase() == MenuProfile.sub;
+  }
+
+  /// True if [ingredientId] appears in includedIngredients (id or ingredientId keys).
+  static bool wasIncludedIngredient(MenuItem item, String ingredientId) {
+    final raw = item.includedIngredients;
+    if (raw == null) return false;
+    final want = ingredientId.trim();
+    for (final e in raw) {
+      final a = (e['ingredientId'] ?? '').toString().trim();
+      final b = (e['id'] ?? '').toString().trim();
+      if (a == want || b == want) return true;
+    }
+    return false;
+  }
+
+  static List<String> effectiveWingSauceIds(MenuItem item) {
+    if (item.sideDipSauceOptions?.isNotEmpty == true) {
+      return List<String>.from(item.sideDipSauceOptions!);
+    }
+    if (item.dippingSauceOptions?.isNotEmpty == true) {
+      return List<String>.from(item.dippingSauceOptions!);
+    }
+    final groups = item.modifierGroups ?? const [];
+    final fromGroups = <String>[];
+    for (final g in groups) {
+      final label = (g.label ?? g.id ?? '').toString().toLowerCase();
+      if (label.contains('wing') &&
+          (label.contains('sauce') || label.contains('dip'))) {
+        for (final o in g.options) {
+          final id = o.ingredientId ?? o.id;
+          if (id != null && id.isNotEmpty) fromGroups.add(id);
+        }
+      }
+    }
+    return fromGroups;
+  }
+
+  /// Add-ons + dressings + sauces + wings side dips only.
+  /// Ingredient-loop (section 4) stays in the modal until B1.4.
+  static double customizationsTotalPartial({
+    required MenuItem item,
+    required MenuCustomizationSelection selection,
+    required Map<String, IngredientMetadata> ingredientMetadata,
+    double Function()? toppingUpcharge,
+    double Function(IngredientMetadata meta)? ingredientUpcharge,
+    List<String>? wingSauceIds,
+    int? maxFreeSaucesFromGroup,
+    int? maxFreeDressingsFromGroup,
+  }) {
+    double total = 0.0;
+    final selectedSize = selection.selectedSize;
+    final usesDynamicToppingPricing = selectedSize != null &&
+        (item.additionalToppingPrices != null ||
+            (item.sizes?.isNotEmpty ?? false));
+
+    final saladDinnerSub = isSalad(item) || isDinner(item) || isSub(item);
+
+    // 1. Add-ons
+    if (item.optionalAddOns != null) {
+      for (final addOn in item.optionalAddOns!) {
+        final ingId = (addOn['ingredientId'] ?? addOn['id'])?.toString();
+        if (ingId == null || ingId.isEmpty) continue;
+
+        if (saladDinnerSub && selection.currentIngredients.contains(ingId)) {
+          continue;
+        }
+        if (wasIncludedIngredient(item, ingId)) continue;
+
+        if (selection.selectedAddOns.contains(ingId)) {
+          final meta = ingredientMetadata[ingId];
+          double upcharge = usesDynamicToppingPricing
+              ? (toppingUpcharge?.call() ?? 0.0)
+              : (meta != null
+                  ? (ingredientUpcharge?.call(meta) ?? 0.0)
+                  : (addOn['price'] as num?)?.toDouble() ?? 0.0);
+          final multiplier = selection.doubleAddOns[ingId] == true ? 2 : 1;
+          total += upcharge * multiplier;
+        }
+      }
+    }
+
+    // 2. Dressings
+    if (selection.selectedDressingCounts.isNotEmpty) {
+      final totalDressings =
+          selection.selectedDressingCounts.values.fold(0, (a, b) => a + b);
+      total += extraDressingCharge(
+        item: item,
+        selectedSize: selectedSize,
+        selectedDressingTotal: totalDressings,
+        maxFreeFromGroup: maxFreeDressingsFromGroup,
+      );
+    }
+
+    // 3. Sauces
+    if (selection.selectedSauceCounts.isNotEmpty) {
+      final totalSauces =
+          selection.selectedSauceCounts.values.fold(0, (a, b) => a + b);
+      total += extraSauceCharge(
+        item: item,
+        selectedSize: selectedSize,
+        selectedSauceTotal: totalSauces,
+        maxFreeFromGroup: maxFreeSaucesFromGroup,
+      );
+    }
+
+    // Wings side dips
+    if (isWings(item)) {
+      final upcharge = item.sideDipUpcharge?[selectedSize] ?? 0.95;
+      final freeDips = item.freeDipCupCount?[selectedSize] ?? 0;
+      final dipIds = wingSauceIds ?? effectiveWingSauceIds(item);
+      final totalDipCups = dipIds.fold<int>(
+        0,
+        (sum, id) => sum + (selection.sideDipCounts[id] ?? 0),
+      );
+      final extraDips = (totalDipCups - freeDips).clamp(0, 1000);
+      total += extraDips * upcharge;
+
+      final sauceAddOnIds = (item.optionalAddOns ?? [])
+          .where((a) => (a['type']?.toString().toLowerCase() == 'sauces'))
+          .map((a) => (a['ingredientId'] ?? a['id'])?.toString())
+          .whereType<String>();
+      for (final id in sauceAddOnIds) {
+        final count = selection.sideDipCounts[id] ?? 0;
+        total += count * upcharge;
+      }
+    }
+
+    return total;
   }
 }

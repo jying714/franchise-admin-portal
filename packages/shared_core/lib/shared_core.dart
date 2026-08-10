@@ -63,3 +63,4 @@ export 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth;
 
 // Domain exports
 export 'src/core/domain/menu_pricing.dart';
+export 'src/core/domain/menu_customization_selection.dart';

@@ -235,18 +235,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
     return shared.MenuPricing.normalizeSizeKey(widget.menuItem, uiSize);
   }
 
-  bool _wasIncludedIngredient(String ingId) {
-    final raw = widget.menuItem.includedIngredients;
-    if (raw == null || raw.isEmpty) return false;
-    final want = ingId.trim();
-    if (want.isEmpty) return false;
-    for (final e in raw) {
-      final a = (e['ingredientId'] ?? '').toString().trim();
-      final b = (e['id'] ?? '').toString().trim();
-      if (a == want || b == want) return true;
-    }
-    return false;
-  }
+  bool _wasIncludedIngredient(String ingredientId) =>
+      shared.MenuPricing.wasIncludedIngredient(widget.menuItem, ingredientId);
 
   bool _showsCurrentIngredients() {
     if (_isWings()) return false;
@@ -266,13 +256,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
         c.contains('dinner'));
   }
 
-  bool _isPizzaOrCalzone() {
-    final profile = widget.menuItem.effectiveMenuProfile.toLowerCase();
-    if (profile == shared.MenuProfile.pizza ||
-        profile == shared.MenuProfile.calzone) return true;
-    final cat = widget.menuItem.category.toLowerCase();
-    return cat.contains('pizza') || cat.contains('calzone');
-  }
+  bool _isPizzaOrCalzone() =>
+      shared.MenuPricing.isPizzaOrCalzone(widget.menuItem);
 
   bool _isCalzone() {
     final profile = widget.menuItem.effectiveMenuProfile.toLowerCase();
@@ -280,29 +265,13 @@ class _CustomizationModalState extends State<CustomizationModal> {
     return widget.menuItem.category.toLowerCase().contains('calzone');
   }
 
-  bool _isWings() {
-    final profile = widget.menuItem.effectiveMenuProfile.toLowerCase();
-    if (profile == shared.MenuProfile.wings) return true;
-    final name = widget.menuItem.name.toLowerCase();
-    return name.contains('wings');
-  }
+  bool _isWings() => shared.MenuPricing.isWings(widget.menuItem);
 
-  bool _isSalad() {
-    final cat = widget.menuItem.category.toLowerCase();
-    final catId = (widget.menuItem.categoryId ?? '').toLowerCase();
-    return cat.contains('salad') || catId.contains('salad');
-  }
+  bool _isSalad() => shared.MenuPricing.isSalad(widget.menuItem);
 
-  bool _isDinner() {
-    final cat = widget.menuItem.category.toLowerCase();
-    final catId = (widget.menuItem.categoryId ?? '').toLowerCase();
-    return cat.contains('dinner') || catId.contains('dinner');
-  }
+  bool _isDinner() => shared.MenuPricing.isDinner(widget.menuItem);
 
-  bool _isSub() {
-    final profile = widget.menuItem.effectiveMenuProfile.toLowerCase();
-    return profile == shared.MenuProfile.sub;
-  }
+  bool _isSub() => shared.MenuPricing.isSub(widget.menuItem);
 
   List<String> _effectiveWingSauceIds() {
     if (widget.menuItem.sideDipSauceOptions?.isNotEmpty == true) {
@@ -1160,82 +1129,33 @@ class _CustomizationModalState extends State<CustomizationModal> {
   }
 
   double get _customizationsTotal {
-    double total = 0.0;
+    final selection = shared.MenuCustomizationSelection(
+      selectedSize: _selectedSize,
+      currentIngredients: _currentIngredients,
+      selectedAddOns: _selectedAddOns,
+      doubleAddOns: Map<String, bool>.from(_doubleAddOns),
+      doubleToppings: Map<String, bool>.from(_doubleToppings),
+      selectedSauceCounts: Map<String, int>.from(_selectedSauceCounts),
+      selectedDressingCounts: Map<String, int>.from(_selectedDressingCounts),
+      sideDipCounts: Map<String, int>.from(_sideDipCounts),
+    );
+
+    double total = shared.MenuPricing.customizationsTotalPartial(
+      item: widget.menuItem,
+      selection: selection,
+      ingredientMetadata: _ingredientMetadata,
+      toppingUpcharge: _getToppingUpcharge,
+      ingredientUpcharge: _getIngredientUpcharge,
+      wingSauceIds: _effectiveWingSauceIds(),
+      maxFreeSaucesFromGroup: _maxFreeForGroupLabel('sauces'),
+      maxFreeDressingsFromGroup: _maxFreeForGroupLabel('dressings'),
+    );
+
+    // 4. Ingredients (included or not) - handle doubles robustly!
     final usesDynamicToppingPricing = _selectedSize != null &&
         (widget.menuItem.additionalToppingPrices != null ||
             (widget.menuItem.sizes?.isNotEmpty ?? false));
 
-    // 1. Add-ons
-    if (widget.menuItem.optionalAddOns != null) {
-      for (final addOn in widget.menuItem.optionalAddOns!) {
-        final ingId = addOn['ingredientId'] ?? addOn['id'];
-        // Salad/dinner/sub: priced via _currentIngredients path below
-        if ((_isSalad() || _isDinner() || _isSub()) &&
-            _currentIngredients.contains(ingId)) {
-          continue;
-        }
-        if (_wasIncludedIngredient(ingId.toString())) {
-          continue; // included in base price — never charge as add-on
-        }
-        if (_selectedAddOns.contains(ingId)) {
-          final meta = _ingredientMetadata[ingId];
-          double upcharge = usesDynamicToppingPricing
-              ? _getToppingUpcharge()
-              : (meta != null
-                  ? _getIngredientUpcharge(meta)
-                  : (addOn['price'] as num?)?.toDouble() ?? 0.0);
-          int multiplier = _doubleAddOns[ingId] == true ? 2 : 1;
-          total += upcharge * multiplier;
-        }
-      }
-    }
-
-    // 2. Dressings (stepper logic for salads, etc)
-    if (_selectedDressingCounts.isNotEmpty) {
-      final int freeDressings = _getFreeDressingCount();
-      final double extraDressingUpcharge = _getExtraDressingUpcharge();
-      final totalDressings =
-          _selectedDressingCounts.values.fold(0, (a, b) => a + b);
-      final extraDressings =
-          totalDressings > freeDressings ? (totalDressings - freeDressings) : 0;
-      total += extraDressings * extraDressingUpcharge;
-    }
-
-    // 3. Sauces (stepper logic for sauces as customization group or add-on)
-    if (_selectedSauceCounts.isNotEmpty) {
-      final int freeSauces = _getFreeSauceCount();
-      final double extraSauceUpcharge = _getExtraSauceUpcharge();
-      final totalSauces = _selectedSauceCounts.values.fold(0, (a, b) => a + b);
-      final extraSauces =
-          totalSauces > freeSauces ? (totalSauces - freeSauces) : 0;
-      total += extraSauces * extraSauceUpcharge;
-    }
-
-    // --- Wings Side Dip Pricing ---
-    if (_isWings()) {
-      final upcharge = widget.menuItem.sideDipUpcharge?[_selectedSize] ?? 0.95;
-      final freeDips = widget.menuItem.freeDipCupCount?[_selectedSize] ?? 0;
-      // Cups from effective list (item bind → groups → W2 franchise pool)
-      final dipIds = _effectiveWingSauceIds();
-      final totalDipCups = dipIds.fold<int>(
-        0,
-        (sum, id) => sum + (_sideDipCounts[id] ?? 0),
-      );
-      final extraDips = (totalDipCups - freeDips).clamp(0, 1000);
-      total += extraDips * upcharge;
-
-      // Now always upcharge for sauces (add-ons of type "sauces")
-      final sauceAddOnIds = (widget.menuItem.optionalAddOns ?? [])
-          .where((a) => (a['type']?.toString()?.toLowerCase() == 'sauces'))
-          .map((a) => a['ingredientId'] ?? a['id'])
-          .toList();
-      for (final id in sauceAddOnIds) {
-        final count = _sideDipCounts[id] ?? 0;
-        total += count * upcharge; // No "free" sauces—always upcharge
-      }
-    }
-
-    // 4. Ingredients (included or not) - handle doubles robustly!
     for (final ingId in _currentIngredients) {
       if (_isDoughIngredient(ingId)) continue;
       if (_selectedSauceCounts.containsKey(ingId)) continue; // skip sauces
