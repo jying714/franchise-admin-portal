@@ -1,13 +1,13 @@
 # HANDOFF.md — Agent Context & Project Status
 
-**Last Updated**: August 8, 2026 (~19:40 CDT)  
+**Last Updated**: August 9, 2026 (~22:15 CDT)  
 **Active branch**: **`main`**  
 **Repo**: https://github.com/jying714/franchise-admin-portal  
 **Local path**: `C:\\projects\\franchise-admin-portal`  
 **Firebase**: `doughboyspizzeria-2b3d2`  
 **Admin/HQ**: franchisehq.io · **Storefront**: https://franchise-storefront.web.app
 
-Prefer **STATUS.md + this handoff + `docs/plans/*` + app READMEs** over agent memory.
+Prefer **STATUS.md + this handoff + `docs/plans/*` + `docs/slices/*` + app READMEs** over agent memory.
 
 ---
 
@@ -21,6 +21,7 @@ Prefer **STATUS.md + this handoff + `docs/plans/*` + app READMEs** over agent me
 - **Portal users on HQ** (invite accept, pending/revoke, post-login gate)
 - **Station staff permission editor** (role defaults + extras; roster subtitle grants)
 - **POS delivery**: Accept & deliver → in route → Returned → Close out (cash)
+- **Promos v1**: shared pricing engine, Admin Codes/Banners, templates, daypart, mobile+web apply, banner→checkout pending code
 
 | Plan / surface | State |
 |----------------|--------|
@@ -30,6 +31,7 @@ Prefer **STATUS.md + this handoff + `docs/plans/*` + app READMEs** over agent me
 | `docs/plans/customer-web-template-modern-v1.md` | **COMPLETE** (+ polish) |
 | Portal staff invite + HQ host | **COMPLETE** (email needs SendGrid credits) |
 | POS delivery close-out product rule | **COMPLETE** |
+| `docs/slices/promo-system-v1.md` | **COMPLETE** (v1 product; residuals listed in slice) |
 | `docs/plans/home-page-composition-engine-v1.md` | Deferred |
 
 **Operator next:** Manager burn-in → soft parallel → hard Owner.com off on sign-off.
@@ -59,6 +61,13 @@ git pull origin main
 | Labor service | `packages/shared_core/.../labor_firestore_service.dart` |
 | Claims sync | `functions/.../userClaims.ts` (`syncClaimsOnUserRoleChange`) |
 | Portal invite email CF | `sendPortalStaffInviteEmail` (SendGrid credits required) |
+| **Promo model** | `packages/shared_core/lib/src/core/models/promo.dart` |
+| **Promo engine** | `packages/shared_core/lib/src/core/services/promo_pricing.dart` |
+| **Admin promos** | `web-app/lib/admin/promo/promo_management_screen.dart` (+ form, templates, banners) |
+| **Mobile promo apply** | `mobile_app/lib/features/ordering/checkout_screen.dart` |
+| **Banner → code** | `mobile_app/lib/widgets/banner/banner_action_handler.dart` |
+| **Pending code** | `FranchiseProvider.pendingPromoCode` / `setPendingPromoCode` / `clearPendingPromoCode` |
+| **Web checkout promo** | `customer_web/lib/features/checkout/checkout_screen.dart` |
 
 ---
 
@@ -71,6 +80,8 @@ git pull origin main
 - Modern optional via `templateId`; default layout unchanged  
 - **Portal users** = HQ-owned; **Station staff** = Admin Staff Management  
 - Delivery close-out **cash-only** unless `manager_override`  
+- **Promos**: Codes = pricing rules; Banners = marketing that may *promote* a code — do not merge models  
+- **PromoPricing** is the single apply path for mobile + customer_web (no hardcoded codes)  
 - Growth after soft stability  
 
 ---
@@ -80,13 +91,14 @@ git pull origin main
 | Path | Covers |
 |------|--------|
 | `README.md` | Monorepo overview |
-| `customer_web/README.md` | Storefront templates, shell, run |
+| `customer_web/README.md` | Storefront templates, shell, run, **checkout promo** |
 | `pos_app/README.md` | Station POS, claims, clock, **delivery close-out**, run defines |
-| `packages/shared_core/README.md` | Shared domain |
-| `web-app/README.md` | Admin / HQ portal, **Portal users**, Staff Management |
-| `mobile_app/README.md` | Customer mobile |
+| `packages/shared_core/README.md` | Shared domain, **Promo + PromoPricing** |
+| `web-app/README.md` | Admin / HQ portal, **Portal users**, Staff Management, **Promos** |
+| `mobile_app/README.md` | Customer mobile, **promo checkout + banner handoff** |
 | `docs/DASHBOARDS.md` | Dashboard IA |
+| `docs/slices/promo-system-v1.md` | Promo product authority |
 
 ---
 
-**Bottom line:** Ops gates + Modern + portal users HQ + station perms + delivery COD path on main. Next = burn-in / soft parallel; hardware & iOS when available.
+**Bottom line:** Ops gates + Modern + portal users HQ + station perms + delivery COD + **promos v1** on main. Next = burn-in / soft parallel; hardware & iOS when available.

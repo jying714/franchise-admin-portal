@@ -2,12 +2,16 @@
 
 Flutter Web admin dashboard for franchise owners, HQ users, platform admins, and developers.
 
-## Current Status (August 8, 2026)
+## Current Status (August 9, 2026)
 
 **On main with monorepo soft-release software.** Prefer root **`STATUS.md`** / **`HANDOFF.md`** for the live checklist.
 
 ### Recent (Aug 2026)
 
+- **Promos / Codes + Banners v1**
+  - Codes: template picker, industry types (BOGO, %/$, free item, delivery), live menu chips, daypart, topping min/max/exact
+  - Banners: “When customer taps” → promote deal (dropdown), category, item, URL, or image-only
+  - Authority: `docs/slices/promo-system-v1.md` · `lib/admin/promo/**`
 - **Portal users** moved to **HQ Owner** (Quick Links → polished `StaffAccessScreen`)
   - Create portal_staff invite, pending list, copy link, revoke
   - Accept flow post-login; `users/{uid}` bind + claims sync trigger
@@ -28,7 +32,7 @@ Flutter Web admin dashboard for franchise owners, HQ users, platform admins, and
 
 - Dynamic white-label branding per franchise  
 - HQ onboarding shell (menu foundation / items / review)  
-- Admin: menu, categories, inventory, orders, analytics, promotions  
+- Admin: menu, categories, inventory, orders, analytics, **promotions (Codes + Banners)**  
 - **HQ Portal users** vs **Admin station labor** (see DASHBOARDS)  
 - Subscription & billing; franchise picker; role switcher  
 
@@ -41,6 +45,13 @@ Flutter Web admin dashboard for franchise owners, HQ users, platform admins, and
 | Schedule / Hours | Admin → Staff Management |
 
 Registry: `lib/core/section_registry.dart` — `staffAccess` `showInSidebar: false`.
+
+## Promotions IA
+
+| Tab | Purpose |
+|-----|--------|
+| Codes | Deal rules + redemption code (`Promo` + `PromoPricing`) |
+| Banners | Menu carousel creative; link to a deal or category |
 
 ## Onboarding placement (Decision 7)
 
@@ -66,7 +77,7 @@ flutter run -d chrome
 ## Related documentation
 
 - Root `STATUS.md` · `HANDOFF.md` · `docs/DASHBOARDS.md` · `docs/DECISIONS.md`  
-- `docs/slices/hq-design-branding-v1.md`  
+- `docs/slices/promo-system-v1.md` · `docs/slices/hq-design-branding-v1.md`  
 - `AGENT_SYSTEM.md` · `orchestrator/SCOPE_CARD.md`  
 
-**Last Updated**: August 8, 2026
+**Last Updated**: August 9, 2026

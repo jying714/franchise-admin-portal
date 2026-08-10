@@ -35,6 +35,7 @@ Everything is franchise-scoped under `franchises/{franchiseId}/…`.
 - Auth-gated cart and checkout
 - Stripe Connect (`source: 'web'`)
 - Inventory-aware sellability (`MenuItem.isSellable`)
+- **Promo codes** at checkout via shared `PromoPricing` (same engine as mobile)
 
 ### Shell & cart
 - `StorefrontShell` — floating bar: logo, name, Order now, **cart badge**, account
@@ -63,11 +64,12 @@ customer_web/lib/
   features/home/storefront_home_screen.dart
   features/menu/
   features/cart/cart_screen.dart
-  features/checkout/checkout_screen.dart
+  features/checkout/checkout_screen.dart   # PromoPricing apply
   features/auth/sign_in_screen.dart
 ```
 
-Plans: `docs/plans/customer-web-storefront-shell-v1.md`, `docs/plans/customer-web-template-modern-v1.md`.
+Plans: `docs/plans/customer-web-storefront-shell-v1.md`, `docs/plans/customer-web-template-modern-v1.md`.  
+Promos: `docs/slices/promo-system-v1.md`.
 
 ---
 
@@ -89,7 +91,8 @@ Open `/f/{franchiseId}` (e.g. `doughboyspizzeria`). Do not commit secrets.
 franchises/{id}/config/storefront
   templateId, heroImageUrl, heroHeadline, heroSubheadline
   storyBody, storefrontPhotoUrl
-franchises/{id}/config/store_ops   # hours
+franchises/{id}/config/store_ops   # hours, deliveryFee, taxRate
+franchises/{id}/promotions         # promo codes (Promo model)
 franchises/{id}                    # address, publicPhone, branding fields
 ```
 
@@ -114,3 +117,4 @@ Firebase Hosting target for the storefront (see `firebase.json` / CI). Prefer do
 - No invented schema; quote real files.  
 - Shared menu widgets: use `branded: true` only from Modern embeds.  
 - Public cart UX goes through `StorefrontShell` only.
+- Checkout discounts only via `PromoPricing` — do not hardcode promo codes.

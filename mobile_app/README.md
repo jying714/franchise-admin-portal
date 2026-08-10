@@ -3,22 +3,31 @@
 Customer-facing Flutter app (Android + iOS) for the multi-tenant white-label franchise platform.  
 **One published binary** that can serve unlimited franchises and restaurant types.
 
-## Current Status (July 20, 2026)
+## Current Status (August 9, 2026)
 
-**P2 – White-Label & Scalability: COMPLETE**  
-**P2.5 – Web-App Cleanup Sprint: COMPLETE**
-
-Core ordering flow is stable and device-tested on Samsung S25. The app now shares the same `shared_core` architecture as the web portal.
+**Soft-release software on main** with shared_core ordering, branding, and **promo apply**.  
+Prefer root **`STATUS.md`** / **`HANDOFF.md`**. iOS / TestFlight when Mac available; Android pilot stable.
 
 ### Key Features
-- Dynamic branding per franchise (colors, logo, name, theming) via shared configs
+- Dynamic branding per franchise via `shared_core`
 - Real-time menu with advanced customization
-- Cart, checkout, order history, and scheduled orders
+- Cart, checkout, order history, scheduled orders
+- **Promo codes** at checkout via `PromoPricing` (no hardcoded codes)
+- **Menu banners** → `pendingPromoCode` on `FranchiseProvider` → checkout auto-apply
 - Favorites & Loyalty system
-- QR Scanner + Deep Linking support for franchise claiming
-- Fully franchise-scoped data under `franchises/{franchiseId}/...`
-- **Dynamic UI** — transitioning from pizzeria-hardcoded to fully config-driven (restaurantType support, FeatureGate)
-- Configs are consumed directly from `shared_core` (no local config files).
+- QR Scanner + deep linking for franchise claiming
+- Franchise-scoped data under `franchises/{franchiseId}/...`
+
+### Promo paths
+
+| Path | File |
+|------|------|
+| Checkout apply | `lib/features/ordering/checkout_screen.dart` |
+| Banner tap | `lib/widgets/banner/banner_action_handler.dart` (`case 'promo'`) |
+| Carousel host | `lib/features/main_menu/main_menu_screen.dart` + `banner_carousel.dart` |
+| Engine | `package:shared_core` → `PromoPricing` |
+
+Authority: `docs/slices/promo-system-v1.md`
 
 ## Development
 
@@ -29,19 +38,18 @@ flutter pub get
 flutter gen-l10n
 flutter analyze
 flutter run
+```
 
-Architecture Notes
+## Architecture Notes
 
-All business logic, models, providers, and services come from shared_core
-UI is becoming fully dynamic based on configs, restaurantType, FeatureGate, and hybrid single/multi-location logic
-Offline support (menu cache + order queue) planned for MVP
-Agent work must follow strict scope rules (see AGENT_SYSTEM.md) with human review on major changes
+- Business logic/models/services from `shared_core`
+- UI config-driven (`restaurantType`, FeatureGate) where wired
+- Agent work follows `AGENT_SYSTEM.md` with human review on major changes
 
-Related Documentation
+## Related Documentation
 
-ARCHITECTURE.md
-MOBILE_DYNAMIC.md
-DASHBOARDS.md
-AGENT_SYSTEM.md (multi-agent governance)
+- Root `STATUS.md` · `HANDOFF.md`
+- `docs/MOBILE_DYNAMIC.md` · `docs/slices/promo-system-v1.md`
+- `AGENT_SYSTEM.md`
 
-Last Updated: July 20, 2026
+**Last Updated**: August 9, 2026

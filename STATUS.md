@@ -1,6 +1,6 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: August 8, 2026 (~19:40 CDT)  
+**Last Updated**: August 9, 2026 (~22:15 CDT)  
 **Hardware**: MINISFORUM AI X1 Pro-470  
 **Branch**: **`main`**  
 **Firebase**: `doughboyspizzeria-2b3d2`  
@@ -27,6 +27,7 @@
 | **Portal users (HQ)** | **COMPLETE** — invite create/accept, pending/revoke, RoleGuard HQ-only, Quick Link |
 | **Station staff permissions editor** | **COMPLETE** — role defaults + per-person grants; list shows grants |
 | **POS delivery close-out** | **COMPLETE** — Accept & deliver → in route → Returned → Close out (cash); card needs manager_override |
+| **Promos / Codes + Banners v1** | **COMPLETE on main** — shared engine, Admin templates, daypart, mobile+web apply, banner→pending code |
 | Station POS hardware · iOS Mac | **In transit** |
 | Soft parallel / manager burn-in | **Active** |
 | Portal invite email (SendGrid) | **Wired**; blocked on SendGrid **credits** until go-live billing |
@@ -41,6 +42,25 @@
 | **Staff/labor** | `docs/plans/mvp-ops-staff-labor-v1.md` | **COMPLETE** |
 
 Soft parallel OK. Hard swap after manager burn-in sign-off.
+
+---
+
+## Promotions (Codes + Banners)
+
+| Layer | State |
+|-------|--------|
+| Shared `Promo` model (types, BOGO, daypart, toppings) | **COMPLETE** |
+| `PromoPricing.evaluate` pure engine | **COMPLETE** |
+| Admin Codes hub + template picker | **COMPLETE** |
+| Admin Banners (promote deal / category / item) | **COMPLETE** |
+| Mobile checkout apply (no hardcoded PIZZA10) | **COMPLETE** |
+| customer_web checkout apply | **COMPLETE** |
+| Banner tap → `FranchiseProvider.pendingPromoCode` → checkout | **COMPLETE** |
+
+Authority: `docs/slices/promo-system-v1.md`  
+Paths: `packages/shared_core/.../promo.dart`, `promo_pricing.dart` · `web-app/lib/admin/promo/**` · mobile `checkout_screen` + `banner_action_handler`
+
+**Deferred:** combo/bundle type, prix-fixe, tiered spend-more-save-more, first-order-only flag, full category→item resolution in engine.
 
 ---
 
@@ -87,11 +107,11 @@ Authority: `pos_app/lib/features/orders/open_orders_screen.dart` · `OrderStatus
 
 | Priority | Focus |
 |----------|--------|
-| **1** | Manager burn-in (inventory 86, clock, web order, delivery COD, Modern if enabled) |
+| **1** | Manager burn-in (inventory 86, clock, web order, delivery COD, promo smoke, Modern if enabled) |
 | **2** | Soft parallel with Owner.com |
 | **3** | Hardware when devices arrive; customer iOS when Mac available |
 | **4** | SendGrid credits → portal invite email live |
-| **5** | Growth (promos, push, loyalty) after soft stability |
+| **5** | Promo polish residual (bundle type, auto-nav on banner promo) only if burn-in needs it |
 | **6** | Home composition Wave 2 (deferred) |
 
 ---
