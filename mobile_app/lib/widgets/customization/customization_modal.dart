@@ -926,7 +926,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
   }
 
   bool _isDoughIngredient(String? ingId) =>
-      ingId != null && DOUGH_IDS.contains(ingId.toLowerCase());
+      shared.MenuPricing.isDoughIngredient(ingId);
 
   bool _canDoubleCurrentIngredient(String? groupLabel) {
     final cat = widget.menuItem.category.toLowerCase();
@@ -1048,49 +1048,22 @@ class _CustomizationModalState extends State<CustomizationModal> {
   }
 
   double _getToppingUpcharge() {
-    final prices = widget.menuItem.additionalToppingPrices;
-    final key = _normalizeSizeKey(_selectedSize);
-    if (prices != null && key.isNotEmpty && prices[key] != null) {
-      return (prices[key] as num).toDouble();
-    }
-    final sizes = widget.menuItem.sizes;
-    if (sizes != null && _selectedSize != null) {
-      for (final s in sizes) {
-        if (s.label == _selectedSize || _normalizeSizeKey(s.label) == key) {
-          return s.toppingPrice;
-        }
-      }
-    }
-    return 0.0;
+    return shared.MenuPricing.toppingUpcharge(widget.menuItem, _selectedSize);
   }
 
   double _getIngredientUpcharge(shared.IngredientMetadata? meta) {
-    if (meta == null) return 0.0;
-    if (meta.upcharge != null && meta.upcharge!.isNotEmpty) {
-      return meta.upcharge!.values.first;
-    }
-    return 0.0;
+    return shared.MenuPricing.ingredientUpcharge(meta);
   }
 
   /// Price for an optional extra (not part of base included set).
   /// Order matches OptionalAddOnsGroup: dynamic size → meta.upcharge → optionalAddOns.price.
   double _resolveExtraIngredientPrice(String ingId) {
-    final usesDynamicToppingPricing = _selectedSize != null &&
-        (widget.menuItem.additionalToppingPrices != null ||
-            (widget.menuItem.sizes?.isNotEmpty ?? false));
-    if (usesDynamicToppingPricing) {
-      return _getToppingUpcharge();
-    }
-    final meta = _ingredientMetadata[ingId];
-    final fromMeta = _getIngredientUpcharge(meta);
-    if (fromMeta > 0) return fromMeta;
-    for (final addOn in widget.menuItem.optionalAddOns ?? const []) {
-      final id = (addOn['ingredientId'] ?? addOn['id'] ?? '').toString();
-      if (id == ingId) {
-        return (addOn['price'] as num?)?.toDouble() ?? 0.0;
-      }
-    }
-    return 0.0;
+    return shared.MenuPricing.resolveExtraIngredientPrice(
+      item: widget.menuItem,
+      selectedSize: _selectedSize,
+      ingId: ingId,
+      ingredientMetadata: _ingredientMetadata,
+    );
   }
 
   int _getFreeSauceCount() {
@@ -1140,86 +1113,16 @@ class _CustomizationModalState extends State<CustomizationModal> {
       sideDipCounts: Map<String, int>.from(_sideDipCounts),
     );
 
-    double total = shared.MenuPricing.customizationsTotalPartial(
+    return shared.MenuPricing.customizationsTotal(
       item: widget.menuItem,
       selection: selection,
       ingredientMetadata: _ingredientMetadata,
-      toppingUpcharge: _getToppingUpcharge,
-      ingredientUpcharge: _getIngredientUpcharge,
       wingSauceIds: _effectiveWingSauceIds(),
       maxFreeSaucesFromGroup: _maxFreeForGroupLabel('sauces'),
       maxFreeDressingsFromGroup: _maxFreeForGroupLabel('dressings'),
+      maxFreeToppingsFromGroup: _maxFreeForGroupLabel('toppings'),
+      maxFreeMeatsFromGroup: _maxFreeForGroupLabel('meats'),
     );
-
-    // 4. Ingredients (included or not) - handle doubles robustly!
-    final usesDynamicToppingPricing = _selectedSize != null &&
-        (widget.menuItem.additionalToppingPrices != null ||
-            (widget.menuItem.sizes?.isNotEmpty ?? false));
-
-    for (final ingId in _currentIngredients) {
-      if (_isDoughIngredient(ingId)) continue;
-      if (_selectedSauceCounts.containsKey(ingId)) continue; // skip sauces
-      if (_selectedDressingCounts.containsKey(ingId))
-        continue; // skip dressings
-
-      final meta = _ingredientMetadata[ingId];
-
-      // **NEW: skip Crust type (never charge for crust selection)**
-      if (meta?.type?.toLowerCase() == 'crust' ||
-          meta?.type?.toLowerCase() == 'cook') continue;
-
-      final cat = widget.menuItem.category.toLowerCase();
-      final isSalad = cat.contains('salad');
-      final wasIncluded = _wasIncludedIngredient(ingId);
-
-      double upcharge = usesDynamicToppingPricing
-          ? _getToppingUpcharge()
-          : _getIngredientUpcharge(meta);
-
-      // Dinner/salad extras: fall back to optionalAddOns[].price when meta has no upcharge
-      if (!wasIncluded && (_isDinner() || isSalad) && upcharge <= 0) {
-        upcharge = _resolveExtraIngredientPrice(ingId);
-      }
-
-      final isDouble = _doubleToppings[ingId] == true;
-
-      if (isSalad) {
-        // SALADS: Only apply upcharge for double, never for simple re-adding
-        if (wasIncluded) {
-          if (isDouble) total += upcharge;
-          // else no upcharge, even if toggled off/on
-        } else {
-          // Not included: always apply upcharge (regular/double)
-          total += upcharge * (isDouble ? 2 : 1);
-        }
-      } else {
-        if (_isPizzaOrCalzone() && !wasIncluded) {
-          final freeToppings = _maxFreeForGroupLabel('toppings') ??
-              _maxFreeForGroupLabel('meats') ??
-              0;
-          final extraIds = _currentIngredients.where((id) {
-            if (_isDoughIngredient(id)) return false;
-            if (_selectedSauceCounts.containsKey(id)) return false;
-            if (_selectedDressingCounts.containsKey(id)) return false;
-            return !_wasIncludedIngredient(id);
-          }).toList();
-          final indexAmongExtras = extraIds.indexOf(ingId);
-          final beyondFree =
-              freeToppings <= 0 || indexAmongExtras >= freeToppings;
-          if (beyondFree) {
-            total += upcharge * (isDouble ? 2 : 1);
-          } else if (isDouble) {
-            total += upcharge;
-          }
-        } else if (wasIncluded) {
-          if (isDouble) total += upcharge;
-        } else {
-          total += upcharge * (isDouble ? 2 : 1);
-        }
-      }
-    }
-
-    return total;
   }
 
   double get _basePrice {

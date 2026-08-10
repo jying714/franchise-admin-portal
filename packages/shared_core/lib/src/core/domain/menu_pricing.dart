@@ -324,4 +324,157 @@ class MenuPricing {
 
     return total;
   }
+
+  static const Set<String> doughIds = {
+    'dough_calzone',
+    'dough_pizza',
+    'dough',
+  };
+
+  static bool isDoughIngredient(String? ingId) =>
+      ingId != null && doughIds.contains(ingId.toLowerCase());
+
+  /// Mirrors modal _getToppingUpcharge.
+  static double toppingUpcharge(MenuItem item, String? selectedSize) {
+    final prices = item.additionalToppingPrices;
+    final key = normalizeSizeKey(item, selectedSize);
+    if (prices != null && key.isNotEmpty && prices[key] != null) {
+      return (prices[key] as num).toDouble();
+    }
+    final sizes = item.sizes;
+    if (sizes != null && selectedSize != null) {
+      for (final s in sizes) {
+        if (s.label == selectedSize || normalizeSizeKey(item, s.label) == key) {
+          return s.toppingPrice;
+        }
+      }
+    }
+    return 0.0;
+  }
+
+  /// Mirrors modal _getIngredientUpcharge.
+  static double ingredientUpcharge(IngredientMetadata? meta) {
+    if (meta == null) return 0.0;
+    if (meta.upcharge != null && meta.upcharge!.isNotEmpty) {
+      return meta.upcharge!.values.first;
+    }
+    return 0.0;
+  }
+
+  /// Mirrors modal _resolveExtraIngredientPrice.
+  static double resolveExtraIngredientPrice({
+    required MenuItem item,
+    required String? selectedSize,
+    required String ingId,
+    required Map<String, IngredientMetadata> ingredientMetadata,
+  }) {
+    final usesDynamic = selectedSize != null &&
+        (item.additionalToppingPrices != null ||
+            (item.sizes?.isNotEmpty ?? false));
+    if (usesDynamic) {
+      return toppingUpcharge(item, selectedSize);
+    }
+    final fromMeta = ingredientUpcharge(ingredientMetadata[ingId]);
+    if (fromMeta > 0) return fromMeta;
+    for (final addOn in item.optionalAddOns ?? const []) {
+      final id = (addOn['ingredientId'] ?? addOn['id'] ?? '').toString();
+      if (id == ingId) {
+        return (addOn['price'] as num?)?.toDouble() ?? 0.0;
+      }
+    }
+    return 0.0;
+  }
+
+  /// Full customizations total = partial (1–3 + wings) + ingredient loop (4).
+  static double customizationsTotal({
+    required MenuItem item,
+    required MenuCustomizationSelection selection,
+    required Map<String, IngredientMetadata> ingredientMetadata,
+    List<String>? wingSauceIds,
+    int? maxFreeSaucesFromGroup,
+    int? maxFreeDressingsFromGroup,
+    int? maxFreeToppingsFromGroup,
+    int? maxFreeMeatsFromGroup,
+  }) {
+    double total = customizationsTotalPartial(
+      item: item,
+      selection: selection,
+      ingredientMetadata: ingredientMetadata,
+      toppingUpcharge: () => toppingUpcharge(item, selection.selectedSize),
+      ingredientUpcharge: ingredientUpcharge,
+      wingSauceIds: wingSauceIds,
+      maxFreeSaucesFromGroup: maxFreeSaucesFromGroup,
+      maxFreeDressingsFromGroup: maxFreeDressingsFromGroup,
+    );
+
+    final selectedSize = selection.selectedSize;
+    final usesDynamicToppingPricing = selectedSize != null &&
+        (item.additionalToppingPrices != null ||
+            (item.sizes?.isNotEmpty ?? false));
+
+    for (final ingId in selection.currentIngredients) {
+      if (isDoughIngredient(ingId)) continue;
+      if (selection.selectedSauceCounts.containsKey(ingId)) continue;
+      if (selection.selectedDressingCounts.containsKey(ingId)) continue;
+
+      final meta = ingredientMetadata[ingId];
+
+      if (meta?.type?.toLowerCase() == 'crust' ||
+          meta?.type?.toLowerCase() == 'cook') {
+        continue;
+      }
+
+      final cat = item.category.toLowerCase();
+      final salad = cat.contains('salad');
+      final wasIncluded = wasIncludedIngredient(item, ingId);
+
+      double upcharge = usesDynamicToppingPricing
+          ? toppingUpcharge(item, selectedSize)
+          : ingredientUpcharge(meta);
+
+      if (!wasIncluded && (isDinner(item) || salad) && upcharge <= 0) {
+        upcharge = resolveExtraIngredientPrice(
+          item: item,
+          selectedSize: selectedSize,
+          ingId: ingId,
+          ingredientMetadata: ingredientMetadata,
+        );
+      }
+
+      final isDouble = selection.doubleToppings[ingId] == true;
+
+      if (salad) {
+        if (wasIncluded) {
+          if (isDouble) total += upcharge;
+        } else {
+          total += upcharge * (isDouble ? 2 : 1);
+        }
+      } else {
+        if (isPizzaOrCalzone(item) && !wasIncluded) {
+          final freeToppings =
+              maxFreeToppingsFromGroup ?? maxFreeMeatsFromGroup ?? 0;
+          final extraIds = selection.currentIngredients.where((id) {
+            if (isDoughIngredient(id)) return false;
+            if (selection.selectedSauceCounts.containsKey(id)) return false;
+            if (selection.selectedDressingCounts.containsKey(id)) return false;
+            return !wasIncludedIngredient(item, id);
+          }).toList();
+          final indexAmongExtras = extraIds.indexOf(ingId);
+          final beyondFree =
+              freeToppings <= 0 || indexAmongExtras >= freeToppings;
+          if (beyondFree) {
+            total += upcharge * (isDouble ? 2 : 1);
+          } else if (isDouble) {
+            total += upcharge;
+          }
+        } else if (wasIncluded) {
+          if (isDouble) total += upcharge;
+        } else {
+          total += upcharge * (isDouble ? 2 : 1);
+        }
+      }
+    }
+
+    return total;
+  }
 }
