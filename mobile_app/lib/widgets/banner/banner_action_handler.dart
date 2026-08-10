@@ -13,8 +13,8 @@ class BannerActionHandler {
     AppLocalizations? loc,
     List<shared.Category>? categories,
   }) async {
-    // FranchiseProvider injected for scoping (P1 Batch 1)
-    Provider.of<shared.FranchiseProvider>(context, listen: false);
+    final franchiseProvider =
+        Provider.of<shared.FranchiseProvider>(context, listen: false);
 
     // Fallback for localization and analytics.
     loc ??= AppLocalizations.of(context)!;
@@ -58,11 +58,13 @@ class BannerActionHandler {
         break;
 
       case 'promo':
-        if (banner.action.value != null) {
+        final code = banner.action.value?.trim() ?? '';
+        if (code.isNotEmpty) {
+          franchiseProvider.setPendingPromoCode(code);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                '${loc.applyPromo}: ${banner.action.value}',
+                '${loc.applyPromo}: ${code.toUpperCase()} — open checkout to use it',
                 style: TextStyle(color: shared.UiConfig.textColor),
               ),
               backgroundColor: shared.UiConfig.warningColor,

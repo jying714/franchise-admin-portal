@@ -168,6 +168,16 @@ class Promo {
   final DateTime endDate;
   final bool active;
 
+  /// Local daypart (happy hour). Empty [daysOfWeek] = every day.
+  /// Days: 1=Mon … 7=Sun (DateTime.weekday).
+  final List<int> daysOfWeek;
+
+  /// "HH:mm" 24h local, inclusive start. Null = no time window.
+  final String? daypartStart;
+
+  /// "HH:mm" 24h local, inclusive end. Null = no time window.
+  final String? daypartEnd;
+
   final String? imageUrl;
   final int sortOrder;
   final List<String> channels;
@@ -214,6 +224,9 @@ class Promo {
     required this.startDate,
     required this.endDate,
     required this.active,
+    this.daysOfWeek = const <int>[],
+    this.daypartStart,
+    this.daypartEnd,
     this.imageUrl,
     this.sortOrder = 0,
     this.channels = const <String>[],
@@ -258,7 +271,40 @@ class Promo {
     final n = DateTime(now.year, now.month, now.day);
     final s = DateTime(startDate.year, startDate.month, startDate.day);
     final e = DateTime(endDate.year, endDate.month, endDate.day);
-    return !n.isBefore(s) && !n.isAfter(e);
+    if (n.isBefore(s) || n.isAfter(e)) return false;
+    return isDaypartActiveAt(now);
+  }
+
+  /// Day-of-week + HH:mm window. Empty days = all days; null times = all day.
+  bool isDaypartActiveAt(DateTime now) {
+    if (daysOfWeek.isNotEmpty && !daysOfWeek.contains(now.weekday)) {
+      return false;
+    }
+    final start = daypartStart?.trim();
+    final end = daypartEnd?.trim();
+    if (start == null || start.isEmpty || end == null || end.isEmpty) {
+      return true;
+    }
+    final nowM = now.hour * 60 + now.minute;
+    final startM = _parseHhMm(start);
+    final endM = _parseHhMm(end);
+    if (startM == null || endM == null) return true;
+    if (startM <= endM) {
+      return nowM >= startM && nowM <= endM;
+    }
+    // Overnight window (e.g. 22:00–02:00)
+    return nowM >= startM || nowM <= endM;
+  }
+
+  static int? _parseHhMm(String raw) {
+    final parts = raw.split(':');
+    if (parts.length < 2) return null;
+    final h = int.tryParse(parts[0].trim());
+    final m = int.tryParse(parts[1].trim());
+    if (h == null || m == null || h < 0 || h > 23 || m < 0 || m > 59) {
+      return null;
+    }
+    return h * 60 + m;
   }
 
   bool isAvailableOnChannel(String channel) {
@@ -346,6 +392,21 @@ class Promo {
       startDate: (data['startDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
       endDate: (data['endDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
       active: data['active'] == true,
+      daysOfWeek: () {
+        final raw = data['daysOfWeek'];
+        if (raw is! List) return const <int>[];
+        return raw
+            .map((e) => e is int ? e : int.tryParse('$e'))
+            .whereType<int>()
+            .where((d) => d >= 1 && d <= 7)
+            .toList();
+      }(),
+      daypartStart: (data['daypartStart'] as String?)?.trim().isNotEmpty == true
+          ? (data['daypartStart'] as String).trim()
+          : null,
+      daypartEnd: (data['daypartEnd'] as String?)?.trim().isNotEmpty == true
+          ? (data['daypartEnd'] as String).trim()
+          : null,
       imageUrl: (image != null && image.isNotEmpty) ? image : null,
       sortOrder: _asInt(data['sortOrder']),
       channels: _asStringList(data['channels']),
@@ -428,6 +489,11 @@ class Promo {
       'target': target?.toMap(),
       'timeRules': timeRules?.toMap(),
       'updatedAt': FieldValue.serverTimestamp(),
+      'daysOfWeek': daysOfWeek,
+      if (daypartStart != null && daypartStart!.isNotEmpty)
+        'daypartStart': daypartStart,
+      if (daypartEnd != null && daypartEnd!.isNotEmpty)
+        'daypartEnd': daypartEnd,
     };
   }
 
@@ -466,6 +532,9 @@ class Promo {
     int? priority,
     Segment? target,
     TimeRule? timeRules,
+    List<int>? daysOfWeek,
+    String? daypartStart,
+    String? daypartEnd,
   }) {
     return Promo(
       id: id ?? this.id,
@@ -507,6 +576,9 @@ class Promo {
       priority: priority ?? this.priority,
       target: target ?? this.target,
       timeRules: timeRules ?? this.timeRules,
+      daysOfWeek: daysOfWeek ?? List<int>.from(this.daysOfWeek),
+      daypartStart: daypartStart ?? this.daypartStart,
+      daypartEnd: daypartEnd ?? this.daypartEnd,
     );
   }
 }

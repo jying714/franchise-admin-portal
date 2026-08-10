@@ -29,6 +29,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   bool _promoApplied = false;
   String? _promoError;
   bool _isPaying = false;
+  bool _pendingPromoConsumed = false;
 
   // P2.3: Wired MockPaymentService (foundations for real gateway later)
   late final shared.PaymentService _paymentService =
@@ -767,6 +768,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         if (_orderSubtotal == 0.0) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) _updateOrderTotals();
+          });
+        }
+
+        if (!_pendingPromoConsumed) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted || _pendingPromoConsumed) return;
+            _pendingPromoConsumed = true;
+            final pending = Provider.of<shared.FranchiseProvider>(
+              context,
+              listen: false,
+            ).pendingPromoCode;
+            if (pending == null || pending.isEmpty) return;
+            _promoController.text = pending;
+            _applyPromo(localizations);
+            Provider.of<shared.FranchiseProvider>(context, listen: false)
+                .clearPendingPromoCode();
           });
         }
 

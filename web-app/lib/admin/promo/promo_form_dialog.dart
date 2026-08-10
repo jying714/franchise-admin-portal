@@ -9,7 +9,17 @@ class PromoFormDialog extends StatefulWidget {
   final shared.Promo? promo;
   final Future<void> Function(shared.Promo)? onSave;
 
-  const PromoFormDialog({super.key, this.promo, this.onSave});
+  /// When adding (no [promo]), pre-select deal type from template picker.
+  final String? initialType;
+  final bool preferDaypart;
+
+  const PromoFormDialog({
+    super.key,
+    this.promo,
+    this.onSave,
+    this.initialType,
+    this.preferDaypart = false,
+  });
 
   @override
   State<PromoFormDialog> createState() => _PromoFormDialogState();
@@ -30,7 +40,13 @@ class _PromoFormDialogState extends State<PromoFormDialog> {
   late final TextEditingController _freeMenuItemId;
   late final TextEditingController _freeMaxPrice;
   late final TextEditingController _deliveryValue;
-  late final TextEditingController _minToppings;
+  late final TextEditingController _toppingCount;
+
+  /// min | max | exact
+  String _toppingMode = 'min';
+  final Set<int> _selectedDays = <int>{}; // DateTime.weekday 1=Mon … 7=Sun
+  late final TextEditingController _daypartStart;
+  late final TextEditingController _daypartEnd;
 
   late String _type;
   late String _maxUsesType;
@@ -85,9 +101,28 @@ class _PromoFormDialogState extends State<PromoFormDialog> {
           ? _trimNum(p!.deliveryDiscountValue)
           : '',
     );
-    _minToppings = TextEditingController(
-      text: p?.qualifyMinToppings?.toString() ?? '',
-    );
+    final minT = p?.qualifyMinToppings;
+    final maxT = p?.qualifyMaxToppings;
+    if (minT != null && maxT != null && minT == maxT) {
+      _toppingMode = 'exact';
+      _toppingCount = TextEditingController(text: '$minT');
+    } else if (maxT != null && minT == null) {
+      _toppingMode = 'max';
+      _toppingCount = TextEditingController(text: '$maxT');
+    } else if (minT != null) {
+      _toppingMode = 'min';
+      _toppingCount = TextEditingController(text: '$minT');
+    } else if (maxT != null) {
+      _toppingMode = 'max';
+      _toppingCount = TextEditingController(text: '$maxT');
+    } else {
+      _toppingMode = 'min';
+      _toppingCount = TextEditingController();
+    }
+
+    _selectedDays.addAll(p?.daysOfWeek ?? const <int>[]);
+    _daypartStart = TextEditingController(text: p?.daypartStart ?? '');
+    _daypartEnd = TextEditingController(text: p?.daypartEnd ?? '');
 
     _selectedCategoryIds.addAll(p?.qualifyCategoryIds ?? const []);
     final itemIds = (p?.qualifyMenuItemIds.isNotEmpty == true)
@@ -96,7 +131,9 @@ class _PromoFormDialogState extends State<PromoFormDialog> {
     _selectedMenuItemIds.addAll(itemIds);
     _selectedSizeLabels.addAll(p?.qualifySizeLabels ?? const []);
 
-    _type = shared.PromoType.normalize(p?.type ?? shared.PromoType.percent);
+    _type = shared.PromoType.normalize(
+      p?.type ?? widget.initialType ?? shared.PromoType.percent,
+    );
     if (!shared.PromoType.all.contains(_type)) {
       _type = shared.PromoType.percent;
     }
@@ -207,6 +244,30 @@ class _PromoFormDialogState extends State<PromoFormDialog> {
     return v.toStringAsFixed(2);
   }
 
+  String? _validateHhMm(String? v) {
+    final t = (v ?? '').trim();
+    if (t.isEmpty) return null;
+    final re = RegExp(r'^([01]?\d|2[0-3]):([0-5]\d)$');
+    if (!re.hasMatch(t)) return 'Use HH:mm (e.g. 15:00)';
+    return null;
+  }
+
+  Widget _dayChip(int weekday, String label) {
+    return FilterChip(
+      label: Text(label),
+      selected: _selectedDays.contains(weekday),
+      onSelected: (on) {
+        setState(() {
+          if (on) {
+            _selectedDays.add(weekday);
+          } else {
+            _selectedDays.remove(weekday);
+          }
+        });
+      },
+    );
+  }
+
   @override
   void dispose() {
     _catSub?.cancel();
@@ -223,7 +284,9 @@ class _PromoFormDialogState extends State<PromoFormDialog> {
     _freeMenuItemId.dispose();
     _freeMaxPrice.dispose();
     _deliveryValue.dispose();
-    _minToppings.dispose();
+    _toppingCount.dispose();
+    _daypartStart.dispose();
+    _daypartEnd.dispose();
     super.dispose();
   }
 
@@ -273,7 +336,24 @@ class _PromoFormDialogState extends State<PromoFormDialog> {
     final discountVal = double.tryParse(_discount.text.trim()) ?? 0.0;
     final minOrderVal = double.tryParse(_minOrder.text.trim()) ?? 0.0;
     final maxUsesVal = int.tryParse(_maxUses.text.trim()) ?? 0;
-    final minTop = int.tryParse(_minToppings.text.trim());
+    int? qualifyMin;
+    int? qualifyMax;
+    final toppingN = int.tryParse(_toppingCount.text.trim());
+    if (toppingN != null && toppingN >= 0) {
+      switch (_toppingMode) {
+        case 'max':
+          qualifyMax = toppingN;
+          break;
+        case 'exact':
+          qualifyMin = toppingN;
+          qualifyMax = toppingN;
+          break;
+        case 'min':
+        default:
+          qualifyMin = toppingN;
+          break;
+      }
+    }
     final menuIds = _selectedMenuItemIds.toList();
     final catIds = _selectedCategoryIds.toList();
     final sizes = _selectedSizeLabels.toList();
@@ -292,14 +372,19 @@ class _PromoFormDialogState extends State<PromoFormDialog> {
       startDate: _startDate,
       endDate: _endDate,
       active: _active,
+      daysOfWeek: _selectedDays.toList()..sort(),
+      daypartStart:
+          _daypartStart.text.trim().isEmpty ? null : _daypartStart.text.trim(),
+      daypartEnd:
+          _daypartEnd.text.trim().isEmpty ? null : _daypartEnd.text.trim(),
       imageUrl: widget.promo?.imageUrl,
       sortOrder: widget.promo?.sortOrder ?? 0,
       channels: widget.promo?.channels ?? const <String>[],
       qualifyMenuItemIds: menuIds,
       qualifyCategoryIds: catIds,
       qualifySizeLabels: sizes,
-      qualifyMinToppings: minTop,
-      qualifyMaxToppings: widget.promo?.qualifyMaxToppings,
+      qualifyMinToppings: qualifyMin,
+      qualifyMaxToppings: qualifyMax,
       excludeMenuItemIds: widget.promo?.excludeMenuItemIds ?? const <String>[],
       bogoBuyQty: int.tryParse(_bogoBuy.text.trim()) ?? 1,
       bogoGetQty: int.tryParse(_bogoGet.text.trim()) ?? 1,
@@ -707,10 +792,52 @@ class _PromoFormDialogState extends State<PromoFormDialog> {
                   },
                 ),
                 const SizedBox(height: 12),
-                _numField(
-                  controller: _minToppings,
-                  label: 'Min toppings (optional)',
-                  allowDecimal: false,
+                Text(
+                  'Toppings rule (optional)',
+                  style: Theme.of(context).textTheme.labelLarge,
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: DropdownButtonFormField<String>(
+                        value: _toppingMode,
+                        decoration: const InputDecoration(
+                          labelText: 'Rule',
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'min',
+                            child: Text('Minimum toppings'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'max',
+                            child: Text('Maximum toppings'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'exact',
+                            child: Text('Exact toppings'),
+                          ),
+                        ],
+                        onChanged: (v) {
+                          if (v != null) setState(() => _toppingMode = v);
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _numField(
+                        controller: _toppingCount,
+                        label: 'Count',
+                        helper: 'Leave empty = no topping rule',
+                        allowDecimal: false,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 const Divider(),
@@ -795,6 +922,67 @@ class _PromoFormDialogState extends State<PromoFormDialog> {
                     );
                     if (picked != null) setState(() => _endDate = picked);
                   },
+                ),
+                const Divider(),
+                Text(
+                  widget.preferDaypart
+                      ? 'Daypart / happy hour (set days & times)'
+                      : 'Daypart / happy hour (optional)',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Leave days empty = every day. Leave times empty = all day. '
+                  'Overnight windows allowed (e.g. 22:00–02:00).',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    _dayChip(1, 'Mon'),
+                    _dayChip(2, 'Tue'),
+                    _dayChip(3, 'Wed'),
+                    _dayChip(4, 'Thu'),
+                    _dayChip(5, 'Fri'),
+                    _dayChip(6, 'Sat'),
+                    _dayChip(7, 'Sun'),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _daypartStart,
+                        decoration: const InputDecoration(
+                          labelText: 'Start time',
+                          hintText: '15:00',
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                        ),
+                        validator: _validateHhMm,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _daypartEnd,
+                        decoration: const InputDecoration(
+                          labelText: 'End time',
+                          hintText: '18:00',
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                        ),
+                        validator: _validateHhMm,
+                      ),
+                    ),
+                  ],
                 ),
                 if (_error != null)
                   Padding(

@@ -18,6 +18,10 @@ class FranchiseProvider extends ChangeNotifier {
   admin_user.User? _adminUser;
   final LocalStorage _storage;
 
+  /// Set when customer taps a banner with action type `promo`.
+  /// Checkout should prefill/apply once, then [clearPendingPromoCode].
+  String? _pendingPromoCode;
+
   // Main getters
   String get currentFranchiseId =>
       _franchiseId.isEmpty ? 'unknown' : _franchiseId;
@@ -31,6 +35,28 @@ class FranchiseProvider extends ChangeNotifier {
   bool get isDeveloper => _adminUser?.isDeveloper ?? false;
   bool get hasValidFranchise =>
       _franchiseId.isNotEmpty && _franchiseId != 'unknown';
+
+  /// Uppercase code from banner tap, or null.
+  String? get pendingPromoCode {
+    final c = _pendingPromoCode?.trim();
+    if (c == null || c.isEmpty) return null;
+    return c.toUpperCase();
+  }
+
+  void setPendingPromoCode(String? code) {
+    final next = code?.trim();
+    final normalized =
+        (next == null || next.isEmpty) ? null : next.toUpperCase();
+    if (_pendingPromoCode == normalized) return;
+    _pendingPromoCode = normalized;
+    notifyListeners();
+  }
+
+  void clearPendingPromoCode() {
+    if (_pendingPromoCode == null) return;
+    _pendingPromoCode = null;
+    notifyListeners();
+  }
 
   FranchiseProvider(this._storage) : super() {
     _loadFranchiseId();
@@ -53,6 +79,7 @@ class FranchiseProvider extends ChangeNotifier {
 
     _franchiseId = id;
     _brandingData = const {}; // no stale primary/secondary
+    _pendingPromoCode = null;
     await _storage.setString('selectedFranchiseId', id);
     _bumpConfig();
   }
@@ -98,6 +125,7 @@ class FranchiseProvider extends ChangeNotifier {
     _franchiseId = 'unknown';
     _adminUser = null;
     _brandingData = const {};
+    _pendingPromoCode = null;
     await _storage.remove('selectedFranchiseId');
     _bumpConfig();
   }

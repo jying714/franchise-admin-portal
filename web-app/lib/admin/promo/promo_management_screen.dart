@@ -4,6 +4,7 @@ import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/admin/promo/promo_form_dialog.dart';
+import 'package:franchise_admin_portal/admin/promo/promo_template_picker_dialog.dart';
 import 'package:franchise_admin_portal/admin/promo/promo_banners_panel.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/widgets/admin/role_guard_widget.dart';
@@ -40,9 +41,17 @@ class _PromoManagementScreenState extends State<PromoManagementScreen>
     required String franchiseId,
     required shared.User user,
   }) async {
+    final choice = await showDialog<PromoTemplateChoice>(
+      context: context,
+      builder: (_) => const PromoTemplatePickerDialog(),
+    );
+    if (choice == null || !context.mounted) return;
+
     await showDialog<void>(
       context: context,
       builder: (_) => PromoFormDialog(
+        initialType: choice.type,
+        preferDaypart: choice.preferDaypart,
         onSave: (promo) async {
           try {
             await firestoreService.addPromo(franchiseId, promo);

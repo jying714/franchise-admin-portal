@@ -77,6 +77,23 @@ class PromoBannersPanel extends StatelessWidget {
     }
   }
 
+  String _actionSummaryLite(shared.Banner banner) {
+    final type = banner.action.type.trim();
+    final value = (banner.action.value ?? '').trim();
+    switch (type) {
+      case 'promo':
+        return value.isEmpty ? 'Promote a deal' : 'Promotes $value';
+      case 'linkCategory':
+        return value.isEmpty ? 'Opens a category' : 'Opens category ($value)';
+      case 'linkItem':
+        return value.isEmpty ? 'Opens a menu item' : 'Opens item ($value)';
+      case 'url':
+        return 'Opens a web link';
+      default:
+        return 'Image only';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -179,8 +196,8 @@ class PromoBannersPanel extends StatelessWidget {
                           subtitle: Text(
                             [
                               if (b.subtitle.isNotEmpty) b.subtitle,
+                              _actionSummaryLite(b),
                               'sort ${b.sortOrder}',
-                              b.action.type,
                               b.active ? 'Active' : 'Inactive',
                             ].join(' · '),
                             maxLines: 2,
