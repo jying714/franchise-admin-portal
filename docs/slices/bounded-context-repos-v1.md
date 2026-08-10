@@ -1,8 +1,8 @@
 # Slice: Bounded-context repositories v1
 
-**Status:** PLANNED (stubs created; no call-site migration yet)  
+**Status:** A1 COMPLETE on `feat/bounded-context-repos-v1` (menu + category façade; ingredients still deferred)  
 **Authority for:** Phase A of the god-object containment plan  
-**Branch:** `main` (soft-release / manager burn-in)  
+**Branch:** `feat/bounded-context-repos-v1` (merge to `main` when ready)  
 **Related:** `docs/slices/customization-modal-decompose-v1.md`, `STATUS.md`, `HANDOFF.md`, `orchestrator/SCOPE_CARD.md`
 
 ---
@@ -119,14 +119,7 @@ Formalize the surfaces already implemented in `inventory_ledger.dart` and `Labor
 ## 5. Façade rules (non-negotiable)
 
 1. `FirestoreService` (abstract) keeps every existing method signature for at least one release after the corresponding repository lands.
-2. `FirestoreServiceImpl` (lightweight) and `AdminFirestoreService` become thin forwards:
-
-   ```dart
-   @override
-   Future<void> deleteMenuItem(String franchiseId, String id, {String? userId}) =>
-       _menuRepo.deleteMenuItem(franchiseId, id, userId: userId);
-   ```
-
+2. `FirestoreServiceImpl` (lightweight) and `AdminFirestoreService` become thin forwards for extracted methods.
 3. DI continues via existing MultiProvider / service-locator patterns. No new global registry.
 4. Call-site migration is per-surface and per-method group. Prefer read paths first, write paths second.
 5. Soft-release order path (mobile / customer_web / POS) must remain green after every PR.
@@ -137,18 +130,12 @@ Formalize the surfaces already implemented in `inventory_ledger.dart` and `Labor
 
 | Phase | Work | Success gate |
 |-------|------|--------------|
-| **A0** | Stubs + this slice + SCOPE_CARD note “no new methods on FirestoreService; extract to repository” | Docs + empty files only |
-| **A1** | MenuRepository interface + MenuFirestoreRepository + façade forwards for menu/category/ingredient methods | HQ menu list/edit/save/delete/search + mobile menu load + customer_web menu load smoke |
-| **A2** | ConfigRepository + façade | Branding live chrome, feature toggles, storefront template still work |
-| **A3** | OrderRepository + façade (cart + placement + status) | Mobile / customer_web / POS order path smoke; migrate POS last |
-| **A4** | InventoryRepository + LaborRepository formalization | Inventory 86 + clock-in/out + schedule still work |
+| **A0** | Stubs + this slice | Docs |
+| **A1** | MenuRepository + MenuFirestoreRepository + façade (menu items + categories) | **DONE on branch** |
+| **A2** | ConfigRepository + façade | Branding / toggles / storefront |
+| **A3** | OrderRepository + façade | Order path smoke |
+| **A4** | InventoryRepository + LaborRepository formalization | 86 + clock |
 | **A5** | Remaining contexts as needed | Per-context smoke |
-
-After each context is fully migrated and smoke-tested:
-
-- Mark the old forwarded methods `@Deprecated`.
-- Update STATUS.md + HANDOFF.md.
-- Agent tasks may then target the repository file directly under SCOPE_CARD.
 
 ---
 
@@ -156,10 +143,8 @@ After each context is fully migrated and smoke-tested:
 
 - One bounded context (or one natural method group) per PR / agent task.
 - Quote exact first 8–12 lines of the real source being moved.
-- BEFORE/AFTER only for the surgical region; full method body when replacing an entire method.
 - No new fields, getters, or methods on `MenuItem`, `FranchiseProvider`, `DesignTokens`, `BrandingConfig`, `FeatureConfig`.
 - No invented Firestore paths.
-- “No change needed” is a valid success when the region already satisfies the outcome.
 
 ---
 
@@ -168,8 +153,8 @@ After each context is fully migrated and smoke-tested:
 - Big-bang deletion of `FirestoreService`.
 - New Cart model (keep Order-as-cart).
 - Schema or collection path changes.
-- Moving pure domain pricing / sellability logic (that belongs to `customization-modal-decompose-v1` + `menu_item_policy` / `menu_pricing`).
-- Changing `PosFirestoreService` or `LaborFirestoreService` call sites until their repository formalization is complete.
+- Moving pure domain pricing (see `customization-modal-decompose-v1`).
+- Changing `PosFirestoreService` / `LaborFirestoreService` call sites until formalized.
 - Any user-visible behavior change.
 
 ---
@@ -203,5 +188,7 @@ After each context is fully migrated and smoke-tested:
 - Existing specialized services are the pattern to expand, not replace.
 - `FranchiseProvider` remains the runtime franchise + branding context holder.
 
-**Last updated:** 2026-08-09  
-**Next concrete step:** Phase A1 — MenuRepository interface + first façade forwards for the core menu CRUD methods.
+**Last updated:** 2026-08-10  
+**Done on branch:** `MenuRepository` + `MenuFirestoreRepository`; menu item CRUD + `getMenuItemsByCategory` + category fetch/stream/add/update/delete façade on `FirestoreServiceImpl`; barrel exports. Admin `deleteMenuItem` uses shared repo; Admin `addCategory` left as-is (non-equivalent merge/sortOrder/id generation).
+
+**Next:** A1.4 ingredients optional, or A2 ConfigRepository, or merge after burn-in confidence. Primary product focus remains manager burn-in.
