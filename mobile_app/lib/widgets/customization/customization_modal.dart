@@ -232,32 +232,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
 
   // Helper to map UI size to Firestore key for upcharges
   String _normalizeSizeKey(String? uiSize) {
-    if (uiSize == null) return '';
-    final toppingPrices = widget.menuItem.additionalToppingPrices;
-    if (toppingPrices != null && toppingPrices.containsKey(uiSize)) {
-      return uiSize;
-    }
-    final pizzaSizeMap = <String, String>{
-      "Small 10\"": "Small 10\"",
-      "Medium 12\"": "Medium 12\"",
-      "Large 14\"": "Large 14\"",
-      "XL 16\"": "XL 16\"",
-      "Small": "Small 10\"",
-      "Medium": "Medium 12\"",
-      "Large": "Large 14\"",
-      "XL": "XL 16\"",
-    };
-    if (_isPizzaOrCalzone()) {
-      if (pizzaSizeMap.containsKey(uiSize)) return pizzaSizeMap[uiSize]!;
-      final lowerUi = uiSize.toLowerCase();
-      for (final key in pizzaSizeMap.keys) {
-        if (key.toLowerCase() == lowerUi ||
-            key.toLowerCase().contains(lowerUi)) {
-          return pizzaSizeMap[key]!;
-        }
-      }
-    }
-    return uiSize; // guaranteed not null by above
+    return shared.MenuPricing.normalizeSizeKey(widget.menuItem, uiSize);
   }
 
   bool _wasIncludedIngredient(String ingId) {
@@ -1340,24 +1315,15 @@ class _CustomizationModalState extends State<CustomizationModal> {
   }
 
   double get _basePrice {
-    final key = _normalizeSizeKey(_selectedSize);
-    if (key.isNotEmpty &&
-        widget.menuItem.sizePrices != null &&
-        widget.menuItem.sizePrices![key] != null) {
-      return (widget.menuItem.sizePrices![key] as num).toDouble();
-    }
-    final sizes = widget.menuItem.sizes;
-    if (sizes != null && _selectedSize != null) {
-      for (final s in sizes) {
-        if (s.label == _selectedSize || _normalizeSizeKey(s.label) == key) {
-          return s.basePrice;
-        }
-      }
-    }
-    return widget.menuItem.price;
+    return shared.MenuPricing.basePrice(widget.menuItem, _selectedSize);
   }
 
-  double get _totalPrice => (_basePrice + _customizationsTotal) * _quantity;
+  double get _totalPrice => shared.MenuPricing.lineTotal(
+        item: widget.menuItem,
+        selectedSize: _selectedSize,
+        customizationsTotal: _customizationsTotal,
+        quantity: _quantity,
+      );
 
   int get _doublesCount =>
       _doubleToppings.values.where((isDouble) => isDouble).length;

@@ -60,3 +60,6 @@ export 'src/core/services/enrichment/franchise_subscription_enricher.dart';
 
 // Firebase (for convenience in web-app)
 export 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth;
+
+// Domain exports
+export 'src/core/domain/menu_pricing.dart';
