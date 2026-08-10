@@ -1126,40 +1126,28 @@ class _CustomizationModalState extends State<CustomizationModal> {
 
   int _getFreeSauceCount() {
     final fromGroup = _maxFreeForGroupLabel('sauces');
-    if (fromGroup != null) return fromGroup;
-
-    final value = widget.menuItem.freeSauceCount;
-    if (value is Map) {
-      final key = _normalizeSizeKey(_selectedSize);
-      return (key.isNotEmpty && value[key] != null) ? value[key] as int : 0;
-    }
-    if (value is int) return value;
-    return 0;
+    return shared.MenuPricing.freeSauceCount(
+      widget.menuItem,
+      _selectedSize,
+      maxFreeFromGroup: fromGroup,
+    );
   }
 
   int _getFreeDressingCount() {
     final fromGroup = _maxFreeForGroupLabel('dressings');
-    if (fromGroup != null) return fromGroup;
-
-    final value =
-        widget.menuItem.freeDressingCount ?? widget.menuItem.freeSauceCount;
-    if (value is Map) {
-      final key = _normalizeSizeKey(_selectedSize);
-      return (key.isNotEmpty && value[key] != null) ? value[key] as int : 0;
-    }
-    if (value is int) return value;
-    return 0;
+    return shared.MenuPricing.freeDressingCount(
+      widget.menuItem,
+      _selectedSize,
+      maxFreeFromGroup: fromGroup,
+    );
   }
 
   double _getExtraSauceUpcharge() {
-    // Use extraSauceUpcharge if present, fallback to 0.95
-    return (widget.menuItem.extraSauceUpcharge as num?)?.toDouble() ?? 0.95;
+    return shared.MenuPricing.extraSauceUpcharge(widget.menuItem);
   }
 
   double _getExtraDressingUpcharge() {
-    return (widget.menuItem.extraDressingUpcharge as num?)?.toDouble() ??
-        (widget.menuItem.extraSauceUpcharge as num?)?.toDouble() ??
-        0.50;
+    return shared.MenuPricing.extraDressingUpcharge(widget.menuItem);
   }
 
   double _getSaladToppingUpcharge() {

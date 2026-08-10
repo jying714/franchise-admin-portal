@@ -80,4 +80,86 @@ class MenuPricing {
     final q = quantity < 1 ? 1 : quantity;
     return (basePrice(item, selectedSize) + customizationsTotal) * q;
   }
+
+  /// Free sauce count for size. Mirrors modal _getFreeSauceCount (without group max).
+  /// Pass [maxFreeFromGroup] when the UI already resolved modifier-group maxFree for "sauces".
+  static int freeSauceCount(
+    MenuItem item,
+    String? selectedSize, {
+    int? maxFreeFromGroup,
+  }) {
+    if (maxFreeFromGroup != null) return maxFreeFromGroup;
+
+    final value = item.freeSauceCount;
+    if (value is Map) {
+      final key = normalizeSizeKey(item, selectedSize);
+      if (key.isNotEmpty && value[key] != null) {
+        return (value[key] as num).toInt();
+      }
+      return 0;
+    }
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return 0;
+  }
+
+  /// Free dressing count for size. Mirrors modal _getFreeDressingCount (without group max).
+  static int freeDressingCount(
+    MenuItem item,
+    String? selectedSize, {
+    int? maxFreeFromGroup,
+  }) {
+    if (maxFreeFromGroup != null) return maxFreeFromGroup;
+
+    final value = item.freeDressingCount ?? item.freeSauceCount;
+    if (value is Map) {
+      final key = normalizeSizeKey(item, selectedSize);
+      if (key.isNotEmpty && value[key] != null) {
+        return (value[key] as num).toInt();
+      }
+      return 0;
+    }
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return 0;
+  }
+
+  /// Extra sauce upcharge. Mirrors modal _getExtraSauceUpcharge.
+  static double extraSauceUpcharge(MenuItem item) {
+    return (item.extraSauceUpcharge as num?)?.toDouble() ?? 0.95;
+  }
+
+  /// Extra dressing upcharge. Mirrors modal _getExtraDressingUpcharge.
+  static double extraDressingUpcharge(MenuItem item) {
+    return (item.extraDressingUpcharge as num?)?.toDouble() ??
+        (item.extraSauceUpcharge as num?)?.toDouble() ??
+        0.50;
+  }
+
+  /// Charge for sauces beyond free allowance.
+  static double extraSauceCharge({
+    required MenuItem item,
+    required String? selectedSize,
+    required int selectedSauceTotal,
+    int? maxFreeFromGroup,
+  }) {
+    final free =
+        freeSauceCount(item, selectedSize, maxFreeFromGroup: maxFreeFromGroup);
+    final extra = selectedSauceTotal > free ? (selectedSauceTotal - free) : 0;
+    return extra * extraSauceUpcharge(item);
+  }
+
+  /// Charge for dressings beyond free allowance.
+  static double extraDressingCharge({
+    required MenuItem item,
+    required String? selectedSize,
+    required int selectedDressingTotal,
+    int? maxFreeFromGroup,
+  }) {
+    final free = freeDressingCount(item, selectedSize,
+        maxFreeFromGroup: maxFreeFromGroup);
+    final extra =
+        selectedDressingTotal > free ? (selectedDressingTotal - free) : 0;
+    return extra * extraDressingUpcharge(item);
+  }
 }
