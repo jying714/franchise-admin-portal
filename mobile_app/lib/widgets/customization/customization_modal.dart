@@ -120,9 +120,10 @@ class _CustomizationModalState extends State<CustomizationModal> {
   late Map<String, bool> _cheeseIsDouble;
 
   // --- Wings-specific fields ---
-  late Map<String, String?> _selectedDippedSauces; // For split dipped choices
-  late bool _isAnyDipped; // True if any part is dipped
-  late Map<String, int> _sideDipCounts; // For extra dip cups per flavor
+  Map<String, String?> _selectedDippedSauces = {};
+  bool _isAnyDipped = false;
+  Map<String, int> _sideDipCounts = {};
+
   /// W2: franchise config/menu_profile_wings.sauceIngredientIds when item has none.
   List<String> _franchiseWingSauceIds = const [];
 
@@ -657,12 +658,14 @@ class _CustomizationModalState extends State<CustomizationModal> {
     _initializeSauceCounts();
     _initializeDressingCounts();
 
+    // Always init — pricing/syncSelection read these for every menu profile.
+    _selectedDippedSauces = {};
+    _sideDipCounts = {};
+    _isAnyDipped = false;
+
     if (_isWings()) {
       final wingSizes = widget.menuItem.sizes ?? [];
       _selectedSize ??= wingSizes.isNotEmpty ? wingSizes.first.label : null;
-      _selectedDippedSauces = {};
-      _sideDipCounts = {};
-      _isAnyDipped = false;
       _resyncWingsForSize(_selectedSize);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _loadFranchiseWingSaucePoolIfNeeded();
@@ -699,6 +702,22 @@ class _CustomizationModalState extends State<CustomizationModal> {
         _drinkFlavorCounts[ingId] = 0;
       }
     }
+
+    // Hydrate controller from post-init selection maps (B2.2.1).
+    _controller.syncSelection(
+      currentIngredients: _currentIngredients,
+      selectedAddOns: _selectedAddOns,
+      doubleAddOns: Map<String, bool>.from(_doubleAddOns),
+      doubleToppings: Map<String, bool>.from(_doubleToppings),
+      selectedSauceCounts: Map<String, int>.from(_selectedSauceCounts),
+      selectedDressingCounts: Map<String, int>.from(_selectedDressingCounts),
+      sideDipCounts: Map<String, int>.from(_sideDipCounts),
+      maxFreeSaucesFromGroup: _maxFreeForGroupLabel('sauces'),
+      maxFreeDressingsFromGroup: _maxFreeForGroupLabel('dressings'),
+      maxFreeToppingsFromGroup: _maxFreeForGroupLabel('toppings'),
+      maxFreeMeatsFromGroup: _maxFreeForGroupLabel('meats'),
+      wingSauceIds: _effectiveWingSauceIds(),
+    );
   }
 
   @override

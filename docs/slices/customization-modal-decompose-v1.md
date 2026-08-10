@@ -1,8 +1,8 @@
 # Slice: Customization modal decompose v1
 
-**Status:** PLANNED (stubs created; no behavior change yet)  
+**Status:** B1 + B2.1 + B2.2.1 COMPLETE on `feat/bounded-context-repos-v1` (smoke pass 2026-08-10)  
 **Authority for:** Phase B of the god-object containment plan  
-**Branch:** `main` (soft-release / manager burn-in)  
+**Branch:** `feat/bounded-context-repos-v1` (merge to `main` when ready)  
 **Depends on / pairs with:** `docs/slices/bounded-context-repos-v1.md` (pure helpers may land first or in parallel)  
 **Related:** Decision 10 menu-modifier rebuild, M5 dual-tree cutover comments, `STATUS.md`, `HANDOFF.md`
 
@@ -238,4 +238,8 @@ The pure functions in `menu_pricing.dart` receive the `MenuItem` plus the curren
 - Soft parallel / manager burn-in continues uninterrupted.
 
 **Last updated:** 2026-08-09  
-**Next concrete step:** Phase B1 — extract pure `menu_pricing` helpers that reproduce the current `_basePrice` and `_customizationsTotal` results for the same inputs.
+**Done on branch:** pure `MenuPricing` (base + full customizations), `MenuCustomizationSelection`, `CustomizationController` (pricing + topping/sauce/dressing/add-on mutations), end-of-init hydrate, wings map init for all profiles.
+
+**Deferred (not required for burn-in):** B2.2.2 cheeses / pizza-sauce state on controller; B2.2.3 drinks/wings UI state; delete modal lockstep copies.
+
+**Last smoke:** 2026-08-10 — pizza / calzone / salad / dinner / wings path green after `_sideDipCounts` always-init fix.
