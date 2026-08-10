@@ -1,8 +1,8 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: August 9, 2026 (~22:15 CDT)  
+**Last Updated**: August 10, 2026 (~12:35 CDT)  
 **Hardware**: MINISFORUM AI X1 Pro-470  
-**Branch**: **`main`**  
+**Branch**: **`main`** (soft-release); extract work on **`feat/bounded-context-repos-v1`**  
 **Firebase**: `doughboyspizzeria-2b3d2`  
 **Storefront**: https://franchise-storefront.web.app  
 **Admin/HQ**: franchisehq.io
@@ -100,6 +100,17 @@ Returned (paid)      → delivered
 ```
 
 Authority: `pos_app/lib/features/orders/open_orders_screen.dart` · `OrderStatus`
+
+---
+
+## God-object containment (extract branch)
+
+| Slice | State |
+|-------|--------|
+| `docs/slices/bounded-context-repos-v1.md` | **A1 in progress on branch** — `MenuRepository` + `MenuFirestoreRepository`; menu item CRUD + categories façade on `FirestoreServiceImpl` |
+| `docs/slices/customization-modal-decompose-v1.md` | **B1 + B2.1 + B2.2.1 COMPLETE on branch** — `MenuPricing`, selection snapshot, `CustomizationController` (pricing + topping/sauce/dressing/add-on mutations); smoke pass 2026-08-10 |
+
+Branch: `feat/bounded-context-repos-v1`. Merge when ready. Cheeses / pizza-sauce controller ownership deferred. Not required for burn-in.
 
 ---
 

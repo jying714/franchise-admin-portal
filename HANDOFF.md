@@ -1,7 +1,7 @@
 # HANDOFF.md — Agent Context & Project Status
 
-**Last Updated**: August 9, 2026 (~22:15 CDT)  
-**Active branch**: **`main`**  
+**Last Updated**: August 10, 2026 (~12:35 CDT)  
+**Active branch**: **`main`** (ops); extract: **`feat/bounded-context-repos-v1`**  
 **Repo**: https://github.com/jying714/franchise-admin-portal  
 **Local path**: `C:\\projects\\franchise-admin-portal`  
 **Firebase**: `doughboyspizzeria-2b3d2`  
@@ -34,12 +34,17 @@ Prefer **STATUS.md + this handoff + `docs/plans/*` + `docs/slices/*` + app READM
 | `docs/slices/promo-system-v1.md` | **COMPLETE** (v1 product; residuals listed in slice) |
 | `docs/plans/home-page-composition-engine-v1.md` | Deferred |
 
+**Extract branch (`feat/bounded-context-repos-v1`):** MenuRepository A1 + customization B1–B2.2.1 (smoke green 2026-08-10). Merge when ready. Cheeses/pizza-sauce controller move deferred. Authority: `docs/slices/bounded-context-repos-v1.md`, `docs/slices/customization-modal-decompose-v1.md`.
+
 **Operator next:** Manager burn-in → soft parallel → hard Owner.com off on sign-off.
 
 ```powershell
 cd C:\projects\franchise-admin-portal
 git checkout main
 git pull origin main
+# extract work:
+git checkout feat/bounded-context-repos-v1
+git pull origin feat/bounded-context-repos-v1
 ```
 
 ---
@@ -68,6 +73,9 @@ git pull origin main
 | **Banner → code** | `mobile_app/lib/widgets/banner/banner_action_handler.dart` |
 | **Pending code** | `FranchiseProvider.pendingPromoCode` / `setPendingPromoCode` / `clearPendingPromoCode` |
 | **Web checkout promo** | `customer_web/lib/features/checkout/checkout_screen.dart` |
+| **MenuPricing / selection** | `packages/shared_core/.../domain/menu_pricing.dart`, `menu_customization_selection.dart` |
+| **MenuRepository** | `packages/shared_core/.../repositories/menu_repository.dart`, `menu_firestore_repository.dart` |
+| **CustomizationController** | `mobile_app/lib/widgets/customization/customization_controller.dart` |
 
 ---
 
@@ -98,7 +106,9 @@ git pull origin main
 | `mobile_app/README.md` | Customer mobile, **promo checkout + banner handoff** |
 | `docs/DASHBOARDS.md` | Dashboard IA |
 | `docs/slices/promo-system-v1.md` | Promo product authority |
+| `docs/slices/bounded-context-repos-v1.md` | MenuRepository / god-service extract |
+| `docs/slices/customization-modal-decompose-v1.md` | MenuPricing + CustomizationController |
 
 ---
 
-**Bottom line:** Ops gates + Modern + portal users HQ + station perms + delivery COD + **promos v1** on main. Next = burn-in / soft parallel; hardware & iOS when available.
+**Bottom line:** Ops gates + Modern + portal users HQ + station perms + delivery COD + **promos v1** on main. Extract branch has MenuRepository A1 + customization pricing/controller (smoke green). Next = burn-in / soft parallel; merge extract when ready; hardware & iOS when available.
