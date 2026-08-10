@@ -122,4 +122,86 @@ class CustomizationController extends ChangeNotifier {
         customizationsTotal: customizationsTotal,
         quantity: _quantity,
       );
+
+  void toggleIngredient({
+    required String ingId,
+    required String groupLabel,
+    required List<Map<String, dynamic>> groupsForUi,
+    required bool isPizzaOrCalzone,
+  }) {
+    if (currentIngredients.contains(ingId)) {
+      currentIngredients.remove(ingId);
+      doubleToppings.remove(ingId);
+      notifyListeners();
+      return;
+    }
+
+    final group = groupsForUi.firstWhere(
+      (g) => (g['label']?.toString() ?? '') == groupLabel,
+      orElse: () => <String, dynamic>{},
+    );
+    final max = (group['max'] as int?) ?? 0;
+    if (max > 0) {
+      final ids = (group['ingredientIds'] as List<dynamic>? ?? [])
+          .map((e) => e.toString())
+          .toSet();
+      if (currentIngredients.where((id) => ids.contains(id)).length >= max) {
+        return;
+      }
+    }
+
+    currentIngredients.add(ingId);
+    if (isPizzaOrCalzone) {
+      doubleToppings[ingId] = false;
+    }
+    notifyListeners();
+  }
+
+  void setDoubleTopping(String ingId, bool value, {int maxDoubles = 4}) {
+    if (!value && doubleToppings[ingId] != true) return;
+    if (value) {
+      final count = doubleToppings.values.where((v) => v).length;
+      if (count >= maxDoubles) return;
+    }
+    doubleToppings[ingId] = value;
+    notifyListeners();
+  }
+
+  void setSauceCount(String ingId, int count) {
+    selectedSauceCounts[ingId] = count.clamp(0, 100);
+    notifyListeners();
+  }
+
+  void setDressingCount(String ingId, int count) {
+    selectedDressingCounts[ingId] = count.clamp(0, 100);
+    notifyListeners();
+  }
+
+  void toggleAddOn(
+    String ingId,
+    bool val, {
+    required bool addToCurrentIngredients,
+  }) {
+    if (val) {
+      selectedAddOns.add(ingId);
+      doubleAddOns[ingId] = false;
+      if (addToCurrentIngredients) {
+        currentIngredients.add(ingId);
+        doubleToppings[ingId] = false;
+      }
+    } else {
+      selectedAddOns.remove(ingId);
+      doubleAddOns.remove(ingId);
+      if (addToCurrentIngredients) {
+        currentIngredients.remove(ingId);
+        doubleToppings.remove(ingId);
+      }
+    }
+    notifyListeners();
+  }
+
+  void setSideDipCount(String ingId, int count) {
+    sideDipCounts[ingId] = count.clamp(0, 1000);
+    notifyListeners();
+  }
 }

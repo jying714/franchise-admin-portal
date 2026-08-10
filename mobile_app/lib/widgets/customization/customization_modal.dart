@@ -1121,20 +1121,11 @@ class _CustomizationModalState extends State<CustomizationModal> {
   }
 
   void _syncControllerSelection() {
-    _controller.syncSelection(
-      currentIngredients: _currentIngredients,
-      selectedAddOns: _selectedAddOns,
-      doubleAddOns: Map<String, bool>.from(_doubleAddOns),
-      doubleToppings: Map<String, bool>.from(_doubleToppings),
-      selectedSauceCounts: Map<String, int>.from(_selectedSauceCounts),
-      selectedDressingCounts: Map<String, int>.from(_selectedDressingCounts),
-      sideDipCounts: Map<String, int>.from(_sideDipCounts),
-      maxFreeSaucesFromGroup: _maxFreeForGroupLabel('sauces'),
-      maxFreeDressingsFromGroup: _maxFreeForGroupLabel('dressings'),
-      maxFreeToppingsFromGroup: _maxFreeForGroupLabel('toppings'),
-      maxFreeMeatsFromGroup: _maxFreeForGroupLabel('meats'),
-      wingSauceIds: _effectiveWingSauceIds(),
-    );
+    _controller.maxFreeSaucesFromGroup = _maxFreeForGroupLabel('sauces');
+    _controller.maxFreeDressingsFromGroup = _maxFreeForGroupLabel('dressings');
+    _controller.maxFreeToppingsFromGroup = _maxFreeForGroupLabel('toppings');
+    _controller.maxFreeMeatsFromGroup = _maxFreeForGroupLabel('meats');
+    _controller.wingSauceIds = _effectiveWingSauceIds();
   }
 
   double get _basePrice {
@@ -1157,40 +1148,26 @@ class _CustomizationModalState extends State<CustomizationModal> {
 
   void _toggleIngredient(String ingId, String groupLabel) {
     setState(() {
-      if (_currentIngredients.contains(ingId)) {
-        _currentIngredients.remove(ingId);
-        _doubleToppings.remove(ingId);
-        _ingredientPortions.remove(ingId);
-        return;
-      }
-
-      final group = _groupsForUi().firstWhere(
-        (g) => (g['label']?.toString() ?? '') == groupLabel,
-        orElse: () => <String, dynamic>{},
+      _controller.toggleIngredient(
+        ingId: ingId,
+        groupLabel: groupLabel,
+        groupsForUi: _groupsForUi(),
+        isPizzaOrCalzone: _isPizzaOrCalzone(),
       );
-      final max = (group['max'] as int?) ?? 0;
-      if (max > 0) {
-        final ids = (group['ingredientIds'] as List<dynamic>? ?? [])
-            .map((e) => e.toString())
-            .toSet();
-        if (_currentIngredients.where((id) => ids.contains(id)).length >= max) {
-          return;
-        }
-      }
-
-      _currentIngredients.add(ingId);
-      if (_isPizzaOrCalzone()) {
-        _doubleToppings[ingId] = false;
-        _ingredientPortions[ingId] = Portion.whole;
-      }
+      _currentIngredients = Set<String>.from(_controller.currentIngredients);
+      // keep local maps in lockstep until full cutover
+      _doubleToppings
+        ..clear()
+        ..addAll(_controller.doubleToppings);
     });
   }
 
   void _handleDoubleChanged(String ingId, bool value) {
-    if (!value && _doubleToppings[ingId] != true) return;
     setState(() {
-      if (value && _doublesCount >= MAX_DOUBLES) return;
-      _doubleToppings[ingId] = value;
+      _controller.setDoubleTopping(ingId, value, maxDoubles: MAX_DOUBLES);
+      _doubleToppings
+        ..clear()
+        ..addAll(_controller.doubleToppings);
     });
   }
 
@@ -2474,9 +2451,14 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                   selectedDressingCounts:
                                       _selectedDressingCounts,
                                   onCountChanged: (ingId, newCount) {
-                                    setState(() =>
-                                        _selectedDressingCounts[ingId] =
-                                            newCount);
+                                    setState(() {
+                                      _controller.setDressingCount(
+                                          ingId, newCount);
+                                      _selectedDressingCounts
+                                        ..clear()
+                                        ..addAll(
+                                            _controller.selectedDressingCounts);
+                                    });
                                   },
                                   getFreeDressingCount: _getFreeDressingCount,
                                   getExtraDressingUpcharge:
@@ -2520,22 +2502,22 @@ class _CustomizationModalState extends State<CustomizationModal> {
                               getIngredientUpcharge: _getIngredientUpcharge,
                               onToggleAddOn: (ingId, val) {
                                 setState(() {
-                                  if (val == true) {
-                                    _selectedAddOns.add(ingId);
-                                    _doubleAddOns[ingId] = false;
-                                    // Salad/dinner/sub: show under Current Toppings
-                                    if (_isSalad() || _isDinner() || _isSub()) {
-                                      _currentIngredients.add(ingId);
-                                      _doubleToppings[ingId] = false;
-                                    }
-                                  } else {
-                                    _selectedAddOns.remove(ingId);
-                                    _doubleAddOns.remove(ingId);
-                                    if (_isSalad() || _isDinner() || _isSub()) {
-                                      _currentIngredients.remove(ingId);
-                                      _doubleToppings.remove(ingId);
-                                    }
-                                  }
+                                  _controller.toggleAddOn(
+                                    ingId,
+                                    val == true,
+                                    addToCurrentIngredients:
+                                        _isSalad() || _isDinner() || _isSub(),
+                                  );
+                                  _selectedAddOns = Set<String>.from(
+                                      _controller.selectedAddOns);
+                                  _doubleAddOns
+                                    ..clear()
+                                    ..addAll(_controller.doubleAddOns);
+                                  _currentIngredients = Set<String>.from(
+                                      _controller.currentIngredients);
+                                  _doubleToppings
+                                    ..clear()
+                                    ..addAll(_controller.doubleToppings);
                                 });
                               },
                               onChangeSauceCount: (ingId, delta) {
