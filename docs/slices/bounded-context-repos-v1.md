@@ -132,7 +132,7 @@ Formalize the surfaces already implemented in `inventory_ledger.dart` and `Labor
 |-------|------|--------------|
 | **A0** | Stubs + this slice | Docs |
 | **A1** | MenuRepository + MenuFirestoreRepository + façade (menu items + categories) | **DONE on branch** |
-| **A2** | ConfigRepository + façade | Branding / toggles / storefront |
+| **A2** | ConfigRepository + façade | **A2.1–A2.2 DONE on `feat/bounded-context-repos-a2-config`** — feature toggles + getFranchiseInfo + business hours |
 | **A3** | OrderRepository + façade | Order path smoke |
 | **A4** | InventoryRepository + LaborRepository formalization | 86 + clock |
 | **A5** | Remaining contexts as needed | Per-context smoke |
@@ -191,4 +191,8 @@ Formalize the surfaces already implemented in `inventory_ledger.dart` and `Labor
 **Last updated:** 2026-08-10  
 **Done on branch:** `MenuRepository` + `MenuFirestoreRepository`; menu item CRUD + `getMenuItemsByCategory` + category fetch/stream/add/update/delete façade on `FirestoreServiceImpl`; barrel exports. Admin `deleteMenuItem` uses shared repo; Admin `addCategory` left as-is (non-equivalent merge/sortOrder/id generation).
 
-**Next:** A1.4 ingredients optional, or A2 ConfigRepository, or merge after burn-in confidence. Primary product focus remains manager burn-in.
+**Done (A2 on `feat/bounded-context-repos-a2-config`):** ConfigRepository feature toggles + franchise info + business hours; façade on FirestoreServiceImpl.
+
+**Deferred in ConfigRepository:** user franchise_profiles; storefront/ui_config if/when centralized on the service.
+
+**Next:** smoke toggles + hours; merge A2 branch when green. Primary product focus remains manager burn-in. OrderRepository = A3 only if extract continues.
