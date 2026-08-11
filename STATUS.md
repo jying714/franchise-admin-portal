@@ -29,7 +29,7 @@
 | **POS delivery close-out** | **COMPLETE** — Accept & deliver → in route → Returned → Close out (cash); card needs manager_override |
 | **Promos / Codes + Banners v1** | **COMPLETE on main** — shared engine, Admin templates, daypart, mobile+web apply, banner→pending code |
 | Station POS hardware · iOS Mac | **In transit** |
-| Soft parallel / manager burn-in | **Active** — authority `docs/slices/manager-burn-in-v1.md` on `feat/manager-burn-in-fixes` |
+| Soft parallel / manager burn-in | **Burn-in checklist GREEN 2026-08-10** — soft parallel OK; hard Owner.com cutover still needs sign-off |
 | Portal invite email (SendGrid) | **Wired**; blocked on SendGrid **credits** until go-live billing |
 
 ---

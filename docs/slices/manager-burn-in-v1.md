@@ -1,6 +1,6 @@
 # Slice: Manager burn-in v1
 
-**Status:** ACTIVE on `feat/manager-burn-in-fixes`  
+**Status:** CHECKLIST GREEN (2026-08-10) on `feat/manager-burn-in-fixes`
 **Authority for:** Soft-release manager burn-in gaps only  
 **Branch:** `feat/manager-burn-in-fixes`  
 **Does not:** schema invent, net-new product surfaces, extract refactors (repos / customization)
