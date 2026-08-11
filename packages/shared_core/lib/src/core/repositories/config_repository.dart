@@ -5,6 +5,8 @@
 // Does not replace FirestoreService; call sites migrate gradually.
 // Zero behavior change: signatures mirror existing FirestoreService methods.
 
+import '../models/franchise_info.dart'; // adjust path if FranchiseInfo lives elsewhere
+
 abstract class ConfigRepository {
   // --- Feature toggles (A2.1) ---
   Future<Map<String, dynamic>> getGlobalFeatureToggles();
@@ -19,4 +21,15 @@ abstract class ConfigRepository {
 
   Future<void> updateFeatureToggle(
       String franchiseId, String key, dynamic value);
+
+  // --- Franchise doc config (A2.2) ---
+  Future<FranchiseInfo?> getFranchiseInfo(String franchiseId);
+
+  Future<void> saveFranchiseBusinessHours({
+    required String franchiseId,
+    required List<Map<String, dynamic>> hours,
+  });
+
+  Future<List<Map<String, dynamic>>> getFranchiseBusinessHours(
+      String franchiseId);
 }

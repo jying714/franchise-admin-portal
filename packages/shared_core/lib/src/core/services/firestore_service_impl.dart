@@ -1180,55 +1180,20 @@ class FirestoreServiceImpl implements FirestoreService {
   }
 
   @override
-  Future<void> saveFranchiseBusinessHours(
-      {required String franchiseId,
-      required List<Map<String, dynamic>> hours}) async {
-    if (franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return;
-    }
-
-    try {
-      await _db.collection('franchises').doc(franchiseId).update({
-        'businessHours': hours,
-        'updatedAt': firestore.FieldValue.serverTimestamp(),
-      });
-    } catch (e, stack) {
-      await ErrorLogger.log(
-        message: 'Failed to saveFranchiseBusinessHours',
-        source: 'FirestoreServiceImpl',
-        severity: 'error',
-        stack: stack.toString(),
-        contextData: {'franchiseId': franchiseId},
-      );
-    }
+  Future<void> saveFranchiseBusinessHours({
+    required String franchiseId,
+    required List<Map<String, dynamic>> hours,
+  }) {
+    return _configRepo!.saveFranchiseBusinessHours(
+      franchiseId: franchiseId,
+      hours: hours,
+    );
   }
 
   @override
   Future<List<Map<String, dynamic>>> getFranchiseBusinessHours(
-      String franchiseId) async {
-    if (franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return [];
-    }
-
-    try {
-      final doc = await _db.collection('franchises').doc(franchiseId).get();
-      final data = doc.data();
-      return (data?['businessHours'] as List?)?.cast<Map<String, dynamic>>() ??
-          [];
-    } catch (e, stack) {
-      await ErrorLogger.log(
-        message: 'Failed to getFranchiseBusinessHours',
-        source: 'FirestoreServiceImpl',
-        severity: 'error',
-        stack: stack.toString(),
-        contextData: {'franchiseId': franchiseId},
-      );
-      return [];
-    }
+      String franchiseId) {
+    return _configRepo!.getFranchiseBusinessHours(franchiseId);
   }
 
   @override
@@ -1268,27 +1233,8 @@ class FirestoreServiceImpl implements FirestoreService {
 
   // ===================== ONBOARDING PROGRESS =====================
   @override
-  Future<FranchiseInfo?> getFranchiseInfo(String franchiseId) async {
-    if (franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return null;
-    }
-
-    try {
-      final doc = await _db.collection('franchises').doc(franchiseId).get();
-      if (!doc.exists) return null;
-      return FranchiseInfo.fromMap(doc.data()!, franchiseId);
-    } catch (e, stack) {
-      await ErrorLogger.log(
-        message: 'Failed to getFranchiseInfo',
-        source: 'FirestoreServiceImpl',
-        severity: 'error',
-        stack: stack.toString(),
-        contextData: {'franchiseId': franchiseId},
-      );
-      return null;
-    }
+  Future<FranchiseInfo?> getFranchiseInfo(String franchiseId) {
+    return _configRepo!.getFranchiseInfo(franchiseId);
   }
 
   @override

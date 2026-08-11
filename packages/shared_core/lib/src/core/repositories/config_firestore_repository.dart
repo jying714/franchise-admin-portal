@@ -6,7 +6,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 
 import '../utils/error_logger.dart';
-import 'config_repository.dart';
+import 'package:shared_core/shared_core.dart';
 
 class ConfigFirestoreRepository implements ConfigRepository {
   ConfigFirestoreRepository({firestore.FirebaseFirestore? db})
@@ -111,6 +111,71 @@ class ConfigFirestoreRepository implements ConfigRepository {
         stack: stack.toString(),
         contextData: {'franchiseId': franchiseId, 'key': key},
       );
+    }
+  }
+
+  @override
+  Future<FranchiseInfo?> getFranchiseInfo(String franchiseId) async {
+    if (_badFranchise(franchiseId)) return null;
+
+    try {
+      final doc = await _db.collection('franchises').doc(franchiseId).get();
+      if (!doc.exists) return null;
+      return FranchiseInfo.fromMap(doc.data()!, franchiseId);
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to getFranchiseInfo',
+        source: 'ConfigFirestoreRepository',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {'franchiseId': franchiseId},
+      );
+      return null;
+    }
+  }
+
+  @override
+  Future<void> saveFranchiseBusinessHours({
+    required String franchiseId,
+    required List<Map<String, dynamic>> hours,
+  }) async {
+    if (_badFranchise(franchiseId)) return;
+
+    try {
+      await _db.collection('franchises').doc(franchiseId).update({
+        'businessHours': hours,
+        'updatedAt': firestore.FieldValue.serverTimestamp(),
+      });
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to saveFranchiseBusinessHours',
+        source: 'ConfigFirestoreRepository',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {'franchiseId': franchiseId},
+      );
+    }
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getFranchiseBusinessHours(
+      String franchiseId) async {
+    if (_badFranchise(franchiseId)) return [];
+
+    try {
+      final doc = await _db.collection('franchises').doc(franchiseId).get();
+      final data = doc.data();
+      return (data?['businessHours'] as List?)?.cast<Map<String, dynamic>>() ??
+          [];
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to getFranchiseBusinessHours',
+        source: 'ConfigFirestoreRepository',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {'franchiseId': franchiseId},
+      );
+      return [];
     }
   }
 }
