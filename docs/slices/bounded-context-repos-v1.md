@@ -19,7 +19,7 @@ Extract bounded repositories behind `FirestoreService` façades. No schema chang
 | **A1** | MenuRepository + façade | DONE |
 | **A2** | ConfigRepository + façade | DONE (toggles + franchise info + business hours) |
 | **A3** | OrderRepository + façade | **DONE on `feat/bounded-context-repos-a3-orders`** — cart + core order methods |
-| **A4** | Inventory + Labor formalize | **NEXT** — see `docs/slices/bounded-context-repos-a4-inventory-labor.md` |
+| **A4** | Inventory + Labor formalize | **DONE on `feat/bounded-context-repos-a4-inventory-labor`** — thin repos over `InventoryLedger` + `LaborFirestoreService` |
 | **A5** | Remaining contexts as needed | Later |
 
 ---

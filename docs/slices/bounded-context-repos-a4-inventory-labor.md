@@ -1,6 +1,6 @@
 # Slice: Bounded-context repos A4 — Inventory + Labor formalization
 
-**Status:** NEXT on `feat/bounded-context-repos-a4-inventory-labor`  
+**Status:** A4.1–A4.2 COMPLETE on `feat/bounded-context-repos-a4-inventory-labor` (2026-08-11)
 **Authority for:** Phase A4 of god-object containment  
 **Depends on:** A1 Menu, A2 Config, A3 Order (merge A3 to main first)  
 **Parent:** `docs/slices/bounded-context-repos-v1.md`
@@ -31,11 +31,13 @@ Empty stub files `inventory_repository.dart` / `labor_repository.dart` (if prese
 
 ## 3. Steps
 
-1. Quote real public APIs on `InventoryLedger` / `LaborFirestoreService`.
-2. Define `InventoryRepository` / `LaborRepository` abstracts that match those APIs.
-3. Implement or typedef concrete classes that delegate to existing services.
-4. Optional: façade any overlapping methods still on `FirestoreServiceImpl`.
-5. Smoke: inventory 86 + POS clock (same as burn-in checks).
+1. ~~Quote real public APIs~~ **DONE**
+2. ~~Define abstracts~~ **DONE** — `inventory_repository.dart`, `labor_repository.dart`
+3. ~~Concrete delegates~~ **DONE** — `InventoryFirestoreRepository` → `InventoryLedger`; `LaborFirestoreRepository` → `LaborFirestoreService`
+4. Optional call-site injection — **deferred** (direct service/ledger calls remain valid)
+5. Smoke: inventory 86 + POS clock after merge
+
+**Barrel:** both pairs exported from `shared_core.dart`.
 
 ---
 

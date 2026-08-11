@@ -22,7 +22,7 @@
 | Manager burn-in checklist | **GREEN 2026-08-10** |
 | Soft parallel / hard Owner.com cutover | Soft parallel OK; hard cutover after sign-off + hardware |
 | **OrderRepository (A3)** | **DONE** on `feat/bounded-context-repos-a3-orders` — merge to main |
-| **A4 Inventory + Labor formalize** | **NEXT** — `docs/slices/bounded-context-repos-a4-inventory-labor.md` |
+| **A4 Inventory + Labor formalize** | **DONE** on `feat/bounded-context-repos-a4-inventory-labor` — merge to main |
 | Portal invite email (SendGrid) | Wired; blocked on credits |
 | Station hardware · iOS | Waiting / postponed |
 
