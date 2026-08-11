@@ -879,6 +879,31 @@ class _CustomizationModalState extends State<CustomizationModal> {
     }
   }
 
+  void _lockstepPizzaSaucesFromController() {
+    for (var i = 0; i < _pizzaSauceSelections.length; i++) {
+      final id = _pizzaSauceSelections[i].id;
+      final m = _controller.pizzaSauceSelections
+          .cast<Map<String, dynamic>?>()
+          .firstWhere(
+            (e) => e?['id'] == id,
+            orElse: () => null,
+          );
+      if (m == null) continue;
+      final portionName = (m['portion'] as String? ?? 'whole').toLowerCase();
+      final portion = portionName == 'left'
+          ? Portion.left
+          : portionName == 'right'
+              ? Portion.right
+              : Portion.whole;
+      _pizzaSauceSelections[i] = _pizzaSauceSelections[i].copyWith(
+        selected: m['selected'] == true,
+        portion: portion,
+        amount: (m['amount'] as String?) ?? 'regular',
+      );
+    }
+    _sauceSplitValidationError = _controller.sauceSplitValidationError;
+  }
+
   void _sortCustomizationGroups() {
     _checkboxGroups = [];
     _radioGroups = [];
@@ -2372,11 +2397,12 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                                           onPressed: () {
                                                             if (idx < 0) return;
                                                             setState(() {
-                                                              _pizzaSauceSelections[
-                                                                      idx] =
-                                                                  sauce.copyWith(
-                                                                      selected:
-                                                                          false);
+                                                              _controller
+                                                                  .setPizzaSauceSelected(
+                                                                sauce.id,
+                                                                false,
+                                                              );
+                                                              _lockstepPizzaSaucesFromController();
                                                             });
                                                           },
                                                           child: Text('Remove'),
@@ -2386,23 +2412,13 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                                           onPressed: () {
                                                             if (idx < 0) return;
                                                             setState(() {
-                                                              final selectedCount =
-                                                                  _pizzaSauceSelections
-                                                                      .where((s) =>
-                                                                          s.selected)
-                                                                      .length;
-                                                              if (selectedCount >=
-                                                                  2) {
-                                                                return;
-                                                              }
-                                                              _pizzaSauceSelections[
-                                                                      idx] =
-                                                                  sauce
-                                                                      .copyWith(
-                                                                selected: true,
-                                                                portion: Portion
-                                                                    .whole,
+                                                              _controller
+                                                                  .setPizzaSauceSelected(
+                                                                sauce.id,
+                                                                true,
+                                                                max: 2,
                                                               );
+                                                              _lockstepPizzaSaucesFromController();
                                                             });
                                                           },
                                                           child: Text(
@@ -2437,15 +2453,17 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                                                     return;
                                                                   }
                                                                   setState(() {
-                                                                    _pizzaSauceSelections[
-                                                                            idx] =
-                                                                        sauce
-                                                                            .copyWith(
-                                                                      portion:
-                                                                          portion,
-                                                                      selected:
-                                                                          true,
+                                                                    final name = portion
+                                                                        .toString()
+                                                                        .split(
+                                                                            '.')
+                                                                        .last;
+                                                                    _controller
+                                                                        .setPizzaSaucePortion(
+                                                                      sauce.id,
+                                                                      name,
                                                                     );
+                                                                    _lockstepPizzaSaucesFromController();
                                                                   });
                                                                 },
                                                               ),
@@ -2468,23 +2486,11 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                                                   return;
                                                                 }
                                                                 setState(() {
-                                                                  final isDouble = sauce
-                                                                              .amount
-                                                                              .toLowerCase() ==
-                                                                          'extra' ||
-                                                                      sauce.amount
-                                                                              .toLowerCase() ==
-                                                                          'double';
-                                                                  _pizzaSauceSelections[
-                                                                          idx] =
-                                                                      sauce
-                                                                          .copyWith(
-                                                                    amount: isDouble
-                                                                        ? 'regular'
-                                                                        : 'extra',
-                                                                    selected:
-                                                                        true,
+                                                                  _controller
+                                                                      .togglePizzaSauceAmountDouble(
+                                                                    sauce.id,
                                                                   );
+                                                                  _lockstepPizzaSaucesFromController();
                                                                 });
                                                               },
                                                             ),

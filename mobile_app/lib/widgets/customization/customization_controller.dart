@@ -271,4 +271,72 @@ class CustomizationController extends ChangeNotifier {
     cheeseIsDouble[cheeseId] = !(cheeseIsDouble[cheeseId] ?? false);
     notifyListeners();
   }
+
+  int get _selectedPizzaSauceCount =>
+      pizzaSauceSelections.where((s) => s['selected'] == true).length;
+
+  void setPizzaSauceSelected(String sauceId, bool selected, {int max = 2}) {
+    final idx = pizzaSauceSelections.indexWhere((s) => s['id'] == sauceId);
+    if (idx < 0) return;
+    if (selected && _selectedPizzaSauceCount >= max) return;
+    final next = Map<String, dynamic>.from(pizzaSauceSelections[idx]);
+    next['selected'] = selected;
+    if (selected) {
+      next['portion'] = next['portion'] ?? 'whole';
+    }
+    pizzaSauceSelections[idx] = next;
+    sauceSplitValidationError = false;
+    notifyListeners();
+  }
+
+  void setPizzaSaucePortion(String sauceId, String portion) {
+    final idx = pizzaSauceSelections.indexWhere((s) => s['id'] == sauceId);
+    if (idx < 0) return;
+    final next = Map<String, dynamic>.from(pizzaSauceSelections[idx]);
+    next['portion'] = portion;
+    next['selected'] = true;
+    pizzaSauceSelections[idx] = next;
+
+    if (portion == 'whole') {
+      for (var i = 0; i < pizzaSauceSelections.length; i++) {
+        if (i == idx) continue;
+        final other = Map<String, dynamic>.from(pizzaSauceSelections[i]);
+        other['selected'] = false;
+        other['portion'] = 'whole';
+        pizzaSauceSelections[i] = other;
+      }
+    } else {
+      for (var i = 0; i < pizzaSauceSelections.length; i++) {
+        if (i == idx) continue;
+        final other = pizzaSauceSelections[i];
+        if (other['selected'] == true && other['portion'] == portion) {
+          final cleared = Map<String, dynamic>.from(other);
+          cleared['selected'] = false;
+          cleared['portion'] = 'whole';
+          pizzaSauceSelections[i] = cleared;
+        }
+      }
+    }
+    sauceSplitValidationError = false;
+    notifyListeners();
+  }
+
+  void setPizzaSauceAmount(String sauceId, String amount) {
+    final idx = pizzaSauceSelections.indexWhere((s) => s['id'] == sauceId);
+    if (idx < 0) return;
+    final next = Map<String, dynamic>.from(pizzaSauceSelections[idx]);
+    next['amount'] = amount;
+    next['selected'] = true;
+    pizzaSauceSelections[idx] = next;
+    notifyListeners();
+  }
+
+  void togglePizzaSauceAmountDouble(String sauceId) {
+    final idx = pizzaSauceSelections.indexWhere((s) => s['id'] == sauceId);
+    if (idx < 0) return;
+    final cur = (pizzaSauceSelections[idx]['amount'] as String? ?? 'regular')
+        .toLowerCase();
+    final isDouble = cur == 'extra' || cur == 'double';
+    setPizzaSauceAmount(sauceId, isDouble ? 'regular' : 'extra');
+  }
 }
