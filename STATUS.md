@@ -107,7 +107,7 @@ Authority: `pos_app/lib/features/orders/open_orders_screen.dart` · `OrderStatus
 
 | Slice | State |
 |-------|--------|
-| `docs/slices/bounded-context-repos-v1.md` | **A1 in progress on branch** — `MenuRepository` + `MenuFirestoreRepository`; menu item CRUD + categories façade on `FirestoreServiceImpl` |
+| `docs/slices/bounded-context-repos-v1.md` | **A1 COMPLETE on branch** — `MenuRepository` + `MenuFirestoreRepository`; menu item CRUD + categories façade on `FirestoreServiceImpl` |
 | `docs/slices/customization-modal-decompose-v1.md` | **B1 + B2.1 + B2.2.1 COMPLETE on branch** — `MenuPricing`, selection snapshot, `CustomizationController` (pricing + topping/sauce/dressing/add-on mutations); smoke pass 2026-08-10 |
 
 Branch: `feat/bounded-context-repos-v1`. Merge when ready. Cheeses / pizza-sauce controller ownership deferred. Not required for burn-in.
