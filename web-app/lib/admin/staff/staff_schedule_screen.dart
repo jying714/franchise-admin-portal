@@ -7,7 +7,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html show window;
 
-/// LAB.2 — week schedule editor (HQ). Assign staff to shifts via LaborFirestoreService.
+/// LAB.2 — week schedule editor (HQ). Assign staff to shifts via LaborRepository.
 class StaffScheduleScreen extends StatefulWidget {
   const StaffScheduleScreen({super.key});
 
@@ -16,7 +16,7 @@ class StaffScheduleScreen extends StatefulWidget {
 }
 
 class _StaffScheduleScreenState extends State<StaffScheduleScreen> {
-  final _labor = shared.LaborFirestoreService();
+  final shared.LaborRepository _labor = shared.LaborFirestoreRepository();
   final _posFs = shared.PosFirestoreService();
 
   late DateTime _weekStart; // Monday 00:00 local

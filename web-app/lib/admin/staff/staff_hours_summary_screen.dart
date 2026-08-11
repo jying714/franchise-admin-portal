@@ -17,7 +17,7 @@ class StaffHoursSummaryScreen extends StatefulWidget {
 }
 
 class _StaffHoursSummaryScreenState extends State<StaffHoursSummaryScreen> {
-  final _labor = shared.LaborFirestoreService();
+  final shared.LaborRepository _labor = shared.LaborFirestoreRepository();
   final _posFs = shared.PosFirestoreService();
 
   late DateTime _rangeStart;

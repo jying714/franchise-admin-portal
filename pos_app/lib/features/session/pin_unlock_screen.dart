@@ -22,7 +22,7 @@ class PinUnlockScreen extends StatefulWidget {
 class _PinUnlockScreenState extends State<PinUnlockScreen> {
   final _pinController = TextEditingController();
   final _posFs = PosFirestoreService();
-  final _labor = LaborFirestoreService();
+  final LaborRepository _labor = LaborFirestoreRepository();
   final _pinFocus = FocusNode();
 
   bool _busy = false;
