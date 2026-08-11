@@ -216,4 +216,30 @@ class CustomizationController extends ChangeNotifier {
     sideDipCounts[ingId] = count.clamp(0, 1000);
     notifyListeners();
   }
+
+  void addCheese(String cheeseId, {int max = 0}) {
+    if (max > 0 && selectedCheeses.length >= max) return;
+    if (selectedCheeses.contains(cheeseId)) return;
+    selectedCheeses.add(cheeseId);
+    cheeseIsDouble[cheeseId] = false;
+    notifyListeners();
+  }
+
+  void removeCheese(String cheeseId) {
+    selectedCheeses.remove(cheeseId);
+    cheeseIsDouble.remove(cheeseId);
+    notifyListeners();
+  }
+
+  void setCheeseDouble(String cheeseId, bool value) {
+    if (!selectedCheeses.contains(cheeseId)) return;
+    cheeseIsDouble[cheeseId] = value;
+    notifyListeners();
+  }
+
+  void toggleCheeseDouble(String cheeseId) {
+    if (!selectedCheeses.contains(cheeseId)) return;
+    cheeseIsDouble[cheeseId] = !(cheeseIsDouble[cheeseId] ?? false);
+    notifyListeners();
+  }
 }

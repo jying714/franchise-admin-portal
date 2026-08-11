@@ -2060,14 +2060,18 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                                           // AFTER
                                                           onPressed: () {
                                                             setState(() {
-                                                              // AFTER
-                                                              _selectedCheeses
-                                                                  .remove(
+                                                              _controller
+                                                                  .removeCheese(
                                                                       cheeseId);
-                                                              _cheesePortions
-                                                                  .remove(
-                                                                      cheeseId);
+                                                              _selectedCheeses =
+                                                                  Set<String>.from(
+                                                                      _controller
+                                                                          .selectedCheeses);
                                                               _cheeseIsDouble
+                                                                ..clear()
+                                                                ..addAll(_controller
+                                                                    .cheeseIsDouble);
+                                                              _cheesePortions
                                                                   .remove(
                                                                       cheeseId);
                                                             });
@@ -2082,23 +2086,27 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                                                           'max']
                                                                       as int?) ??
                                                                   0;
-                                                              if (max > 0 &&
-                                                                  _selectedCheeses
-                                                                          .length >=
-                                                                      max) {
-                                                                return;
+                                                              _controller
+                                                                  .addCheese(
+                                                                cheeseId,
+                                                                max: max,
+                                                              );
+                                                              _selectedCheeses =
+                                                                  Set<String>.from(
+                                                                      _controller
+                                                                          .selectedCheeses);
+                                                              _cheeseIsDouble
+                                                                ..clear()
+                                                                ..addAll(_controller
+                                                                    .cheeseIsDouble);
+                                                              if (_selectedCheeses
+                                                                  .contains(
+                                                                      cheeseId)) {
+                                                                _cheesePortions[
+                                                                        cheeseId] =
+                                                                    Portion
+                                                                        .whole;
                                                               }
-                                                              // AFTER
-                                                              // AFTER
-                                                              _selectedCheeses
-                                                                  .add(
-                                                                      cheeseId);
-                                                              _cheesePortions[
-                                                                      cheeseId] =
-                                                                  Portion.whole;
-                                                              _cheeseIsDouble[
-                                                                      cheeseId] =
-                                                                  false;
                                                             });
                                                           },
                                                           child: Text(
@@ -2150,11 +2158,14 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                                                       true,
                                                               onTap: () {
                                                                 setState(() {
-                                                                  _cheeseIsDouble[
-                                                                          cheeseId] =
-                                                                      !(_cheeseIsDouble[
-                                                                              cheeseId] ??
-                                                                          false);
+                                                                  _controller
+                                                                      .toggleCheeseDouble(
+                                                                          cheeseId);
+                                                                  _cheeseIsDouble
+                                                                    ..clear()
+                                                                    ..addAll(
+                                                                        _controller
+                                                                            .cheeseIsDouble);
                                                                 });
                                                               },
                                                             ),
