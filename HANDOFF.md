@@ -1,7 +1,7 @@
 # HANDOFF.md — Agent Context & Project Status
 
-**Last Updated**: August 11, 2026 (~10:35 CDT)  
-**Active branch**: **`main`** (ops); extract A3: **`feat/bounded-context-repos-a3-orders`**  
+**Last Updated**: August 11, 2026 (~11:10 CDT)  
+**Active branch**: **`main`** (soft-release)  
 **Repo**: https://github.com/jying714/franchise-admin-portal  
 **Local path**: `C:\\projects\\franchise-admin-portal`  
 **Firebase**: `doughboyspizzeria-2b3d2`  
@@ -13,24 +13,30 @@ Prefer **STATUS.md + this handoff + `docs/plans/*` + `docs/slices/*` + app READM
 
 ## 1. Where we are
 
-**main:** soft-release order path, Modern storefront, inventory + staff/labor, promos v1, portal users HQ, POS delivery COD. Burn-in checklist **GREEN** 2026-08-10.
+**Product:** Soft-release on main. Burn-in checklist **GREEN** 2026-08-10. Soft parallel OK. Hard Owner.com cutover waits on sign-off + hardware.
 
-**Extract:**
+**Containment extract (plan baseline ~2026-08-08 → 2026-08-11):**
 
-| Phase | Branch / state |
-|-------|----------------|
-| A1 MenuRepository | Done |
-| A2 ConfigRepository | Done |
-| A3 OrderRepository | **DONE** on `feat/bounded-context-repos-a3-orders` — merge to main |
-| A4 Inventory + Labor formalize | **NEXT** — `docs/slices/bounded-context-repos-a4-inventory-labor.md` |
-| Customization B1–B2.2.3 | Complete on main |
+| Phase | State |
+|-------|--------|
+| A1 MenuRepository | **DONE** |
+| A2 ConfigRepository | **DONE** |
+| A3 OrderRepository + façade | **DONE** |
+| A4 Inventory + Labor repos + call sites | **DONE** |
+| B1–B2 MenuPricing + CustomizationController | **Mostly DONE** |
+| B3–B4 Thin modal composition root | **Partial** — file still large |
+| C BrandingFacade | **Open** |
+| D Convergence / local user.dart | **Open** |
+| A5 Other god-service contexts | **Optional / open** |
 
-**Operator next:** Soft parallel with Owner.com; merge A3; start A4 on `feat/bounded-context-repos-a4-inventory-labor`. Hardware pilot when devices arrive. Hard Owner.com cutover after sign-off + hardware.
+Full progress write-up: `docs/architecture/containment-progress-2026-08-11.md`
+
+**Operator next:** Soft parallel. Optional next extract branch: `feat/customization-modal-composition-root` (finish Phase B). Hardware when devices arrive.
 
 ```powershell
 cd C:\projects\franchise-admin-portal
-git checkout feat/bounded-context-repos-a3-orders
-git pull origin feat/bounded-context-repos-a3-orders
+git checkout main
+git pull origin main
 ```
 
 ---
@@ -39,22 +45,22 @@ git pull origin feat/bounded-context-repos-a3-orders
 
 | Surface | Path |
 |---------|------|
-| OrderRepository | `packages/shared_core/.../repositories/order_repository.dart` |
-| OrderFirestoreRepository | `packages/shared_core/.../repositories/order_firestore_repository.dart` |
-| Inventory ledger (A4 wrap) | `packages/shared_core/.../services/inventory_ledger.dart` |
-| Labor service (A4 wrap) | `packages/shared_core/.../services/labor_firestore_service.dart` |
+| Menu / Config / Order / Inventory / Labor repos | `packages/shared_core/lib/src/core/repositories/` |
+| MenuPricing | `packages/shared_core/.../domain/menu_pricing.dart` |
 | CustomizationController | `mobile_app/lib/widgets/customization/customization_controller.dart` |
-| A4 authority | `docs/slices/bounded-context-repos-a4-inventory-labor.md` |
+| Customization modal (still large) | `mobile_app/lib/widgets/customization/customization_modal.dart` |
+| Inventory ledger (impl) | `packages/shared_core/.../services/inventory_ledger.dart` |
+| Labor service (impl) | `packages/shared_core/.../services/labor_firestore_service.dart` |
 
 ---
 
 ## 3. Locks
 
 - Human is merge gate; no invented schema
-- A4 formalizes existing services — do not reimplement inventory/labor
+- Extract = rewire only; zero intentional behavior change
 - Soft parallel ≠ hard Owner.com cutover
-- Zero behavior change on repository extracts
+- A5 / dual-tree removal / Phase E not required for hardware cutover
 
 ---
 
-**Bottom line:** Burn-in green. Merge A3 OrderRepository, then A4 inventory/labor formalize. Soft parallel until hardware + sign-off for hard cutover.
+**Bottom line:** A1–A4 + customization controller/pricing done. Remaining large extract wins: thin modal, optional Order call sites, BrandingFacade. Ops: soft parallel until hardware + sign-off.
