@@ -516,7 +516,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       await fs.updateCart(order.copyWith(items: []));
 
       try {
-        await shared.InventoryLedger.applySaleDecrement(
+        await const shared.InventoryFirestoreRepository().applySaleDecrement(
           db: FirebaseFirestore.instance,
           franchiseId: franchiseId,
           orderId: orderId,

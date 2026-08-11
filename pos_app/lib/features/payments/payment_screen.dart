@@ -412,7 +412,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       final orderForInv = _order;
       if (orderForInv != null) {
         try {
-          await InventoryLedger.applySaleDecrement(
+          await const InventoryFirestoreRepository().applySaleDecrement(
             db: FirebaseFirestore.instance,
             franchiseId: widget.franchiseId,
             orderId: widget.orderId,
@@ -563,7 +563,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       final orderForInv = _order;
       if (orderForInv != null) {
         try {
-          await InventoryLedger.applySaleDecrement(
+          await const InventoryFirestoreRepository().applySaleDecrement(
             db: FirebaseFirestore.instance,
             franchiseId: widget.franchiseId,
             orderId: widget.orderId,

@@ -348,7 +348,7 @@ class OrderDetailDialog extends StatelessWidget {
       final restoreKey =
           'void|${liveOrder.id}|${item.cartItemKey ?? lineIndex}|$qty|$now';
       try {
-        await InventoryLedger.applySaleRestore(
+        await const InventoryFirestoreRepository().applySaleRestore(
           db: FirebaseFirestore.instance,
           franchiseId: franchiseId,
           orderId: liveOrder.id,
@@ -589,7 +589,7 @@ class OrderDetailDialog extends StatelessWidget {
     final restoreKey =
         'refund|$orderId|${item.cartItemKey ?? lineIndex}|$q|$now';
     try {
-      await InventoryLedger.applySaleRestore(
+      await const InventoryFirestoreRepository().applySaleRestore(
         db: FirebaseFirestore.instance,
         franchiseId: franchiseId,
         orderId: orderId,

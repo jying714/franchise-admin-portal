@@ -514,7 +514,7 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
         if (isAppend) {
           final decrementKey =
               'append_${DateTime.now().millisecondsSinceEpoch}';
-          await InventoryLedger.applyAppendSaleDecrement(
+          await const InventoryFirestoreRepository().applyAppendSaleDecrement(
             db: FirebaseFirestore.instance,
             franchiseId: widget.franchiseId,
             orderId: id,
@@ -522,7 +522,7 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
             decrementKey: decrementKey,
           );
         } else {
-          await InventoryLedger.applySaleDecrement(
+          await const InventoryFirestoreRepository().applySaleDecrement(
             db: FirebaseFirestore.instance,
             franchiseId: widget.franchiseId,
             orderId: id,
