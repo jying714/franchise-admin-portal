@@ -2219,12 +2219,16 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                     isDouble: _doubleToppings[ingId] == true,
                                     onTap: () {
                                       setState(() {
-                                        if (_doubleToppings[ingId] == true) {
-                                          _doubleToppings[ingId] = false;
-                                        } else {
-                                          if (_doublesCount < MAX_DOUBLES)
-                                            _doubleToppings[ingId] = true;
-                                        }
+                                        final next =
+                                            _doubleToppings[ingId] != true;
+                                        _controller.setDoubleTopping(
+                                          ingId,
+                                          next,
+                                          maxDoubles: MAX_DOUBLES,
+                                        );
+                                        _doubleToppings
+                                          ..clear()
+                                          ..addAll(_controller.doubleToppings);
                                       });
                                     },
                                   ),
@@ -2568,9 +2572,14 @@ class _CustomizationModalState extends State<CustomizationModal> {
                               onChangeSauceCount: (ingId, delta) {
                                 setState(() {
                                   final count =
-                                      _selectedSauceCounts[ingId] ?? 0;
-                                  _selectedSauceCounts[ingId] =
-                                      (count + delta).clamp(0, 100);
+                                      _controller.selectedSauceCounts[ingId] ??
+                                          _selectedSauceCounts[ingId] ??
+                                          0;
+                                  _controller.setSauceCount(
+                                      ingId, count + delta);
+                                  _selectedSauceCounts
+                                    ..clear()
+                                    ..addAll(_controller.selectedSauceCounts);
                                 });
                               },
                               buildAddOnDoublePill: (ingId, isDouble, onTap) =>
