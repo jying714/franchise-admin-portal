@@ -26,6 +26,8 @@ import '../models/banner.dart';
 import 'dart:async';
 import '../repositories/menu_repository.dart';
 import '../repositories/menu_firestore_repository.dart';
+import '../repositories/order_repository.dart';
+import '../repositories/order_firestore_repository.dart';
 
 class FirestoreServiceImpl implements FirestoreService {
   late final firestore.FirebaseFirestore _db;
@@ -34,6 +36,7 @@ class FirestoreServiceImpl implements FirestoreService {
 
   MenuRepository? _menuRepo;
   ConfigRepository? _configRepo;
+  OrderRepository? _orderRepo;
 
   FirestoreServiceImpl({
     firestore.FirebaseFirestore? db,
@@ -41,12 +44,14 @@ class FirestoreServiceImpl implements FirestoreService {
     FirebaseFunctions? functions,
     MenuRepository? menuRepository,
     ConfigRepository? configRepository,
+    OrderRepository? orderRepository,
   }) {
     _db = db ?? firestore.FirebaseFirestore.instance;
     _auth = auth ?? fb_auth.FirebaseAuth.instance;
     _functions = functions ?? FirebaseFunctions.instance;
     _menuRepo = menuRepository ?? MenuFirestoreRepository(db: _db);
     _configRepo = configRepository ?? ConfigFirestoreRepository(db: _db);
+    _orderRepo = orderRepository ?? OrderFirestoreRepository(db: _db);
   }
 
   @override
@@ -1653,122 +1658,31 @@ class FirestoreServiceImpl implements FirestoreService {
   // ===================== ORDERS (admin + customer) =====================
   @override
   Future<void> updateOrderStatus(
-      String franchiseId, String orderId, String newStatus) async {
-    if (franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return;
-    }
-
-    try {
-      await _franchiseCollection(franchiseId, _orders).doc(orderId).update({
-        'status': newStatus,
-        'updatedAt': firestore.FieldValue.serverTimestamp(),
-      });
-    } catch (e, stack) {
-      await ErrorLogger.log(
-        message: 'Failed to updateOrderStatus',
-        source: 'FirestoreServiceImpl',
-        severity: 'error',
-        stack: stack.toString(),
-        contextData: {'franchiseId': franchiseId, 'orderId': orderId},
-      );
-    }
+      String franchiseId, String orderId, String newStatus) {
+    return _orderRepo!.updateOrderStatus(franchiseId, orderId, newStatus);
   }
 
   @override
   Future<void> refundOrder(String franchiseId, String orderId,
-      {double? amount, String? refundReason}) async {
-    if (franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return;
-    }
-
-    try {
-      await _franchiseCollection(franchiseId, _orders).doc(orderId).update({
-        'status': 'Refunded',
-        'refundStatus': 'refunded',
-        'refundAmount': amount,
-        'refundReason': refundReason,
-        'updatedAt': firestore.FieldValue.serverTimestamp(),
-      });
-    } catch (e, stack) {
-      await ErrorLogger.log(
-        message: 'Failed to refundOrder',
-        source: 'FirestoreServiceImpl',
-        severity: 'error',
-        stack: stack.toString(),
-        contextData: {'franchiseId': franchiseId, 'orderId': orderId},
-      );
-    }
+      {double? amount, String? refundReason}) {
+    return _orderRepo!.refundOrder(franchiseId, orderId,
+        amount: amount, refundReason: refundReason);
   }
 
   @override
   Stream<List<Order>> getAllOrdersStream(String franchiseId) {
-    if (franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return Stream.value(<Order>[]);
-    }
-
-    return _franchiseCollection(franchiseId, _orders)
-        .orderBy('timestamp', descending: true)
-        .snapshots()
-        .map((s) => s.docs
-            .map((d) =>
-                Order.fromFirestore(d.data() as Map<String, dynamic>, d.id))
-            .toList());
+    return _orderRepo!.getAllOrdersStream(franchiseId);
   }
 
   // ===================== CART (customer) =====================
   @override
   Stream<Order?> getCart(String userId, {String? franchiseId}) {
-    if (userId.isEmpty ||
-        franchiseId == null ||
-        franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return Stream.value(null);
-    }
-
-    return _franchiseCollection(franchiseId, _carts)
-        .doc(userId)
-        .snapshots()
-        .map((doc) {
-      if (!doc.exists || doc.data() == null) {
-        return null;
-      }
-
-      final data = {...doc.data()!, 'status': 'cart'};
-      return Order.fromFirestore(data, doc.id);
-    });
+    return _orderRepo!.getCart(userId, franchiseId: franchiseId);
   }
 
   @override
-  Future<void> updateCart(Order cart) async {
-    final franchiseId = cart.storeId;
-    if (franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return;
-    }
-
-    try {
-      await _franchiseCollection(franchiseId, _carts).doc(cart.userId).set({
-        ...cart.toFirestore(),
-        'status': 'cart',
-        'updatedAt': firestore.FieldValue.serverTimestamp(),
-      }, firestore.SetOptions(merge: true));
-    } catch (e, stack) {
-      await ErrorLogger.log(
-        message: 'Failed to updateCart',
-        source: 'FirestoreServiceImpl',
-        severity: 'error',
-        stack: stack.toString(),
-        contextData: {'franchiseId': franchiseId, 'userId': cart.userId},
-      );
-    }
+  Future<void> updateCart(Order cart) {
+    return _orderRepo!.updateCart(cart);
   }
 
   @override
@@ -1780,186 +1694,50 @@ class FirestoreServiceImpl implements FirestoreService {
     required int quantity,
     required double price,
     String? specialInstructions,
-  }) async {
-    if (franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return;
-    }
-
-    try {
-      final cartRef = _franchiseCollection(franchiseId, _carts).doc(userId);
-      final cartDoc = await cartRef.get();
-
-      Order current;
-      if (cartDoc.exists && cartDoc.data() != null) {
-        current = Order.fromFirestore(
-            {...cartDoc.data()!, 'status': 'cart'}, cartDoc.id);
-      } else {
-        current = Order(
-          id: userId,
-          userId: userId,
-          storeId: franchiseId,
-          items: [],
-          subtotal: 0,
-          tax: 0,
-          deliveryFee: 0,
-          discount: 0,
-          total: 0,
-          deliveryType: 'pickup',
-          time: '',
-          status: 'cart',
-          timestamp: DateTime.now(),
-          estimatedTime: 30,
-          timestamps: {},
-        );
-      }
-
-      final newItem = OrderItem(
-        menuItemId: menuItem.id,
-        name: menuItem.name,
-        price: price,
-        quantity: quantity,
-        customizations: {
-          'groups': customizations.map((c) => c.toMap()).toList()
-        },
-        specialInstructions: specialInstructions,
-        image: menuItem.image,
-        cartItemKey: '${DateTime.now().microsecondsSinceEpoch}_${menuItem.id}',
-      );
-
-      final updatedItems = [...current.items, newItem];
-      final newSubtotal =
-          updatedItems.fold(0.0, (sum, i) => sum + i.price * i.quantity);
-
-      final updated = current.copyWith(
-        items: updatedItems,
-        subtotal: newSubtotal,
-        total: newSubtotal +
-            current.tax +
-            current.deliveryFee -
-            (current.discount ?? 0.0),
-        storeId: franchiseId,
-      );
-
-      await updateCart(updated);
-    } catch (e, stack) {
-      await ErrorLogger.log(
-        message: 'Failed to addToCart',
-        source: 'FirestoreServiceImpl',
-        severity: 'error',
-        stack: stack.toString(),
-        contextData: {'franchiseId': franchiseId, 'userId': userId},
-      );
-    }
+  }) {
+    return _orderRepo!.addToCart(
+      userId: userId,
+      franchiseId: franchiseId,
+      menuItem: menuItem,
+      customizations: customizations,
+      quantity: quantity,
+      price: price,
+      specialInstructions: specialInstructions,
+    );
   }
 
   @override
   Future<void> removeFromCart(String userId, String cartItemKey,
-      {String? franchiseId}) async {
-    if (franchiseId == null ||
-        franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return;
-    }
-
-    try {
-      final cart = await getCart(userId, franchiseId: franchiseId).first;
-      if (cart == null) return;
-
-      final filtered = cart.items
-          .where((i) => (i.cartItemKey ?? i.menuItemId) != cartItemKey)
-          .toList();
-
-      final newSub = filtered.fold(0.0, (s, i) => s + i.price * i.quantity);
-
-      await updateCart(cart.copyWith(
-        items: filtered,
-        subtotal: newSub,
-        total: newSub + cart.tax + cart.deliveryFee - cart.discount,
-      ));
-    } catch (e, stack) {
-      await ErrorLogger.log(
-        message: 'Failed to removeFromCart',
-        source: 'FirestoreServiceImpl',
-        severity: 'error',
-        stack: stack.toString(),
-        contextData: {'franchiseId': franchiseId, 'userId': userId},
-      );
-    }
+      {String? franchiseId}) {
+    return _orderRepo!
+        .removeFromCart(userId, cartItemKey, franchiseId: franchiseId);
   }
 
   @override
   Stream<int> getCartItemCountStream(String userId, {String? franchiseId}) {
-    if (userId.isEmpty ||
-        franchiseId == null ||
-        franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return Stream.value(0);
-    }
-
-    return getCart(userId, franchiseId: franchiseId)
-        .map((c) => c?.items.fold<int>(0, (s, i) => s + i.quantity) ?? 0);
+    return _orderRepo!.getCartItemCountStream(userId, franchiseId: franchiseId);
   }
 
   @override
-  Future<void> clearCart(String userId, {String? franchiseId}) async {
-    if (franchiseId == null || franchiseId.isEmpty) return;
-    await _franchiseCollection(franchiseId, _carts).doc(userId).delete();
+  Future<void> clearCart(String userId, {String? franchiseId}) {
+    return _orderRepo!.clearCart(userId, franchiseId: franchiseId);
   }
 
   @override
-  Future<void> addOrder(Order order) async {
-    final fid = order.storeId;
-    if (fid.isEmpty || fid == 'unknown' || fid == 'default') {
-      return;
-    }
-
-    await _franchiseCollection(fid, _orders)
-        .doc(order.id)
-        .set(order.toFirestore());
+  Future<void> addOrder(Order order) {
+    return _orderRepo!.addOrder(order);
   }
 
   @override
   Stream<List<Order>> getOrdersForUser(String userId,
       {String? franchiseId, int limit = 20}) {
-    if (franchiseId == null ||
-        franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return Stream.value(<Order>[]);
-    }
-
-    final q = _franchiseCollection(franchiseId, _orders)
-        .where('userId', isEqualTo: userId)
-        .orderBy('timestamp', descending: true)
-        .limit(limit);
-
-    return q.snapshots().map((s) => s.docs
-        .map((d) => Order.fromFirestore(d.data() as Map<String, dynamic>, d.id))
-        .toList());
+    return _orderRepo!
+        .getOrdersForUser(userId, franchiseId: franchiseId, limit: limit);
   }
 
   @override
   Stream<List<Order>> getOrders({String? userId, String? franchiseId}) {
-    if (userId == null) return Stream.value([]);
-
-    if (franchiseId == null ||
-        franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return Stream.value(<Order>[]);
-    }
-
-    final q = _franchiseCollection(franchiseId, _orders)
-        .where('userId', isEqualTo: userId)
-        .orderBy('timestamp', descending: true);
-
-    return q.snapshots().map((s) => s.docs
-        .map((d) => Order.fromFirestore(d.data() as Map<String, dynamic>, d.id))
-        .toList());
+    return _orderRepo!.getOrders(userId: userId, franchiseId: franchiseId);
   }
 
   @override

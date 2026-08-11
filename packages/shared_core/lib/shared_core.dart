@@ -57,6 +57,7 @@ export 'src/core/repositories/menu_firestore_repository.dart';
 export 'src/core/repositories/config_repository.dart';
 export 'src/core/repositories/config_firestore_repository.dart';
 export 'src/core/repositories/order_repository.dart';
+export 'src/core/repositories/order_firestore_repository.dart';
 
 // Enrichment
 export 'src/core/services/enrichment/franchise_subscription_enricher.dart';
