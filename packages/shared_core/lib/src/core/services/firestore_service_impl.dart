@@ -33,17 +33,20 @@ class FirestoreServiceImpl implements FirestoreService {
   late final FirebaseFunctions _functions;
 
   MenuRepository? _menuRepo;
+  ConfigRepository? _configRepo;
 
   FirestoreServiceImpl({
     firestore.FirebaseFirestore? db,
     fb_auth.FirebaseAuth? auth,
     FirebaseFunctions? functions,
     MenuRepository? menuRepository,
+    ConfigRepository? configRepository,
   }) {
     _db = db ?? firestore.FirebaseFirestore.instance;
     _auth = auth ?? fb_auth.FirebaseAuth.instance;
     _functions = functions ?? FirebaseFunctions.instance;
     _menuRepo = menuRepository ?? MenuFirestoreRepository(db: _db);
+    _configRepo = configRepository ?? ConfigFirestoreRepository(db: _db);
   }
 
   @override
@@ -1026,108 +1029,31 @@ class FirestoreServiceImpl implements FirestoreService {
 
   // ===================== FEATURE TOGGLES / CONFIG =====================
   @override
-  Future<Map<String, dynamic>> getGlobalFeatureToggles() async {
-    try {
-      final doc = await _db.collection('config').doc('features').get();
-      return doc.exists ? Map<String, dynamic>.from(doc.data()!) : {};
-    } catch (e, stack) {
-      await ErrorLogger.log(
-        message: 'Failed to getGlobalFeatureToggles',
-        source: 'FirestoreServiceImpl',
-        severity: 'error',
-        stack: stack.toString(),
-      );
-      return {};
-    }
+  Future<Map<String, dynamic>> getGlobalFeatureToggles() {
+    return _configRepo!.getGlobalFeatureToggles();
   }
 
   @override
-  Future<Map<String, dynamic>> getFranchiseFeatureToggles(
-      String franchiseId) async {
-    if (franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return {};
-    }
-
-    try {
-      final doc = await _franchiseCollection(franchiseId, 'config')
-          .doc('features')
-          .get();
-      return doc.exists ? Map<String, dynamic>.from(doc.data()!) : {};
-    } catch (e, stack) {
-      await ErrorLogger.log(
-        message: 'Failed to getFranchiseFeatureToggles',
-        source: 'FirestoreServiceImpl',
-        severity: 'error',
-        stack: stack.toString(),
-        contextData: {'franchiseId': franchiseId},
-      );
-      return {};
-    }
+  Future<Map<String, dynamic>> getFranchiseFeatureToggles(String franchiseId) {
+    return _configRepo!.getFranchiseFeatureToggles(franchiseId);
   }
 
   @override
   Future<void> setFranchiseFeatureToggles(
-      String franchiseId, Map<String, dynamic> toggles) async {
-    if (franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return;
-    }
-
-    try {
-      await _franchiseCollection(franchiseId, 'config')
-          .doc('features')
-          .set(toggles, firestore.SetOptions(merge: true));
-    } catch (e, stack) {
-      await ErrorLogger.log(
-        message: 'Failed to setFranchiseFeatureToggles',
-        source: 'FirestoreServiceImpl',
-        severity: 'error',
-        stack: stack.toString(),
-        contextData: {'franchiseId': franchiseId},
-      );
-    }
+      String franchiseId, Map<String, dynamic> toggles) {
+    return _configRepo!.setFranchiseFeatureToggles(franchiseId, toggles);
   }
 
   @override
   Stream<Map<String, dynamic>> streamFranchiseFeatureToggles(
       String franchiseId) {
-    if (franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return Stream.value({});
-    }
-
-    return _franchiseCollection(franchiseId, 'config')
-        .doc('features')
-        .snapshots()
-        .map((d) => d.data() ?? {});
+    return _configRepo!.streamFranchiseFeatureToggles(franchiseId);
   }
 
   @override
   Future<void> updateFeatureToggle(
-      String franchiseId, String key, dynamic value) async {
-    if (franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return;
-    }
-
-    try {
-      await _franchiseCollection(franchiseId, 'config')
-          .doc('features')
-          .set({key: value}, firestore.SetOptions(merge: true));
-    } catch (e, stack) {
-      await ErrorLogger.log(
-        message: 'Failed to updateFeatureToggle',
-        source: 'FirestoreServiceImpl',
-        severity: 'error',
-        stack: stack.toString(),
-        contextData: {'franchiseId': franchiseId, 'key': key},
-      );
-    }
+      String franchiseId, String key, dynamic value) {
+    return _configRepo!.updateFeatureToggle(franchiseId, key, value);
   }
 
   // =============================================================================
