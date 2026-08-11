@@ -56,6 +56,11 @@ class CustomizationController extends ChangeNotifier {
   String? get selectedSize => _selectedSize;
   Map<String, shared.IngredientMetadata> get ingredientMap => _ingredientMap;
 
+  // Pizza sauces (B2.2.3) — parallel to modal PizzaSauceSelection
+  /// Each entry: id, name, selected, portion ('whole'|'left'|'right'), amount
+  List<Map<String, dynamic>> pizzaSauceSelections = <Map<String, dynamic>>[];
+  bool sauceSplitValidationError = false;
+
   void setQuantity(int value) {
     final q = value < 1 ? 1 : value;
     if (q == _quantity) return;
@@ -86,6 +91,8 @@ class CustomizationController extends ChangeNotifier {
     int? maxFreeToppingsFromGroup,
     int? maxFreeMeatsFromGroup,
     List<String>? wingSauceIds,
+    List<Map<String, dynamic>>? pizzaSauceSelections,
+    bool? sauceSplitValidationError,
   }) {
     this.currentIngredients = currentIngredients;
     this.selectedAddOns = selectedAddOns;
@@ -108,6 +115,13 @@ class CustomizationController extends ChangeNotifier {
     this.maxFreeToppingsFromGroup = maxFreeToppingsFromGroup;
     this.maxFreeMeatsFromGroup = maxFreeMeatsFromGroup;
     if (wingSauceIds != null) this.wingSauceIds = wingSauceIds;
+    if (pizzaSauceSelections != null) {
+      this.pizzaSauceSelections =
+          List<Map<String, dynamic>>.from(pizzaSauceSelections);
+    }
+    if (sauceSplitValidationError != null) {
+      this.sauceSplitValidationError = sauceSplitValidationError;
+    }
   }
 
   shared.MenuCustomizationSelection get selectionSnapshot =>

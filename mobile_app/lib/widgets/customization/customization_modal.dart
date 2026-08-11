@@ -703,7 +703,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
       }
     }
 
-    // Hydrate controller from post-init selection maps (B2.2.1).
+    // Hydrate controller from post-init selection maps (B2.2.1 + B2.2.3.1).
     _controller.syncSelection(
       currentIngredients: _currentIngredients,
       selectedAddOns: _selectedAddOns,
@@ -723,6 +723,16 @@ class _CustomizationModalState extends State<CustomizationModal> {
         for (final e in _cheesePortions.entries)
           e.key: e.value.toString().split('.').last,
       },
+      pizzaSauceSelections: _pizzaSauceSelections
+          .map((s) => <String, dynamic>{
+                'id': s.id,
+                'name': s.name,
+                'selected': s.selected,
+                'portion': s.portion.toString().split('.').last,
+                'amount': s.amount,
+              })
+          .toList(),
+      sauceSplitValidationError: _sauceSplitValidationError,
     );
   }
 
