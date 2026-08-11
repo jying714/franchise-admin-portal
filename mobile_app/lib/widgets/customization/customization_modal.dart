@@ -149,87 +149,48 @@ class _CustomizationModalState extends State<CustomizationModal> {
   late final CustomizationController _controller;
   // AFTER
   void _handleSauceTap(int index) {
+    if (index < 0 || index >= _pizzaSauceSelections.length) return;
+    final id = _pizzaSauceSelections[index].id;
+    final currentlySelected = _pizzaSauceSelections[index].selected;
     setState(() {
-      final selectedCount =
-          _pizzaSauceSelections.where((s) => s.selected).length;
-      final current = _pizzaSauceSelections[index];
-
-      // Max 2 sauces (same spirit as cheeses max)
-      if (!current.selected && selectedCount >= 2) {
-        return;
-      }
-
-      final nextSelected = !current.selected;
-      _pizzaSauceSelections[index] = current.copyWith(
-        selected: nextSelected,
-        portion: nextSelected ? Portion.whole : current.portion,
+      _controller.setPizzaSauceSelected(
+        id,
+        !currentlySelected,
+        max: 2,
       );
-
-      // Do not force a sauce to stay selected (parity with cheeses)
-      // Do not touch _currentIngredients — sauces stay in Sauces section only
-      _sauceSplitValidationError = false;
+      _lockstepPizzaSaucesFromController();
     });
   }
 
 // This function ensures only valid splits
   void _handleSaucePortionChange(int index, Portion portion) {
+    if (index < 0 || index >= _pizzaSauceSelections.length) return;
+    final id = _pizzaSauceSelections[index].id;
+    final name = portion.toString().split('.').last;
     setState(() {
-      _pizzaSauceSelections[index] = _pizzaSauceSelections[index]
-          .copyWith(portion: portion, selected: true);
-
-      // If setting to 'whole', clear all other sauce selections except this one
-      if (portion == Portion.whole) {
-        for (int i = 0; i < _pizzaSauceSelections.length; i++) {
-          if (i != index) {
-            _pizzaSauceSelections[i] = _pizzaSauceSelections[i]
-                .copyWith(selected: false, portion: Portion.whole);
-          }
-        }
-      } else {
-        // If now split, allow one more 'half' selection only
-        int halfCount = _pizzaSauceSelections
-            .where((s) => s.selected && s.portion != Portion.whole)
-            .length;
-        if (halfCount == 2) {
-          // Lock out any other selections
-          for (int i = 0; i < _pizzaSauceSelections.length; i++) {
-            if (i != index &&
-                _pizzaSauceSelections[i].selected &&
-                _pizzaSauceSelections[i].portion == portion) {
-              // Prevent both selected sauces from being on the same side
-              _pizzaSauceSelections[i] = _pizzaSauceSelections[i]
-                  .copyWith(selected: false, portion: Portion.whole);
-            }
-          }
-        }
-      }
-      _sauceSplitValidationError = false;
+      _controller.setPizzaSaucePortion(id, name);
+      _lockstepPizzaSaucesFromController();
     });
   }
 
   void _resetPizzaSauceSelections() {
     setState(() {
-      for (var s in _pizzaSauceSelections) {
-        s.selected = false;
-        s.portion = Portion.whole;
-        s.amount = 'regular';
+      for (final s in _controller.pizzaSauceSelections) {
+        final id = s['id']?.toString() ?? '';
+        if (id.isEmpty) continue;
+        _controller.setPizzaSauceSelected(id, false);
       }
-      // AFTER
       final includedSauceId =
           widget.menuItem.includedIngredients?.firstWhereOrNull((ing) {
         final t = (ing['typeId'] ?? ing['type'] ?? '').toString().toLowerCase();
         return t == 'sauces' || t == 'sauce';
       })?['ingredientId']?.toString();
-      if (includedSauceId != null) {
-        final idx =
-            _pizzaSauceSelections.indexWhere((s) => s.id == includedSauceId);
-        if (idx >= 0) {
-          _pizzaSauceSelections[idx].selected = true;
-          _pizzaSauceSelections[idx].portion = Portion.whole;
-          _pizzaSauceSelections[idx].amount = 'regular';
-        }
+      if (includedSauceId != null && includedSauceId.isNotEmpty) {
+        _controller.setPizzaSauceSelected(includedSauceId, true, max: 2);
+        _controller.setPizzaSaucePortion(includedSauceId, 'whole');
+        _controller.setPizzaSauceAmount(includedSauceId, 'regular');
       }
-      _sauceSplitValidationError = false;
+      _lockstepPizzaSaucesFromController();
     });
   }
 
@@ -2284,18 +2245,32 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                 if (sauceIds.isEmpty) {
                                   return const SizedBox.shrink();
                                 }
-                                final selectedSauces = _pizzaSauceSelections
-                                    .where((s) => s.selected)
+                                final selectedSauces = _controller
+                                    .pizzaSauceSelections
+                                    .where((s) => s['selected'] == true)
                                     .toList();
                                 final summary = selectedSauces.isEmpty
                                     ? "None"
                                     : selectedSauces.map((s) {
-                                        final name =
-                                            _ingredientMetadata[s.id]?.name ??
-                                                s.name;
-                                        final portion = s.portion;
-                                        return "$name"
-                                            "${(!_isCalzone() && portion != Portion.whole) ? " (${portionNames[portion]})" : ""}";
+                                        final name = _ingredientMetadata[
+                                                    s['id']?.toString()]
+                                                ?.name ??
+                                            s['name']?.toString() ??
+                                            '';
+                                        final portionStr =
+                                            (s['portion'] as String? ?? 'whole')
+                                                .toLowerCase();
+                                        final showPortion = !_isCalzone() &&
+                                            portionStr != 'whole';
+                                        final portionLabel = portionStr ==
+                                                'left'
+                                            ? portionNames[Portion.left]
+                                            : portionStr == 'right'
+                                                ? portionNames[Portion.right]
+                                                : portionNames[Portion.whole];
+                                        return showPortion
+                                            ? "$name ($portionLabel)"
+                                            : name;
                                       }).join(", ");
                                 return Padding(
                                   padding: const EdgeInsets.only(bottom: 10.0),
