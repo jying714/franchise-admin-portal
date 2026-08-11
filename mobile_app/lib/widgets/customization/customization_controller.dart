@@ -38,9 +38,12 @@ class CustomizationController extends ChangeNotifier {
   Map<String, int> selectedDressingCounts = <String, int>{};
   Map<String, int> sideDipCounts = <String, int>{};
 
-  // Cheeses (B2.2.2.1 — hydrate only; mutations still modal until B2.2.2.2)
+  // Cheeses (B2.2.2)
   Set<String> selectedCheeses = <String>{};
   Map<String, bool> cheeseIsDouble = <String, bool>{};
+
+  /// Values are portion name strings: 'whole' | 'left' | 'right'
+  Map<String, String> cheesePortions = <String, String>{};
 
   // UI-resolved maxFree (from _groupsForUi) — set by modal before reading totals.
   int? maxFreeSaucesFromGroup;
@@ -77,6 +80,7 @@ class CustomizationController extends ChangeNotifier {
     required Map<String, int> sideDipCounts,
     Set<String>? selectedCheeses,
     Map<String, bool>? cheeseIsDouble,
+    Map<String, String>? cheesePortions,
     int? maxFreeSaucesFromGroup,
     int? maxFreeDressingsFromGroup,
     int? maxFreeToppingsFromGroup,
@@ -95,6 +99,9 @@ class CustomizationController extends ChangeNotifier {
     }
     if (cheeseIsDouble != null) {
       this.cheeseIsDouble = cheeseIsDouble;
+    }
+    if (cheesePortions != null) {
+      this.cheesePortions = cheesePortions;
     }
     this.maxFreeSaucesFromGroup = maxFreeSaucesFromGroup;
     this.maxFreeDressingsFromGroup = maxFreeDressingsFromGroup;
@@ -222,12 +229,20 @@ class CustomizationController extends ChangeNotifier {
     if (selectedCheeses.contains(cheeseId)) return;
     selectedCheeses.add(cheeseId);
     cheeseIsDouble[cheeseId] = false;
+    cheesePortions[cheeseId] = 'whole';
     notifyListeners();
   }
 
   void removeCheese(String cheeseId) {
     selectedCheeses.remove(cheeseId);
     cheeseIsDouble.remove(cheeseId);
+    cheesePortions.remove(cheeseId);
+    notifyListeners();
+  }
+
+  void setCheesePortion(String cheeseId, String portion) {
+    if (!selectedCheeses.contains(cheeseId)) return;
+    cheesePortions[cheeseId] = portion;
     notifyListeners();
   }
 

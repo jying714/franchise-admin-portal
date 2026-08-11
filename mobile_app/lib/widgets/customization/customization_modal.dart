@@ -719,6 +719,10 @@ class _CustomizationModalState extends State<CustomizationModal> {
       maxFreeToppingsFromGroup: _maxFreeForGroupLabel('toppings'),
       maxFreeMeatsFromGroup: _maxFreeForGroupLabel('meats'),
       wingSauceIds: _effectiveWingSauceIds(),
+      cheesePortions: {
+        for (final e in _cheesePortions.entries)
+          e.key: e.value.toString().split('.').last,
+      },
     );
   }
 
@@ -1309,11 +1313,10 @@ class _CustomizationModalState extends State<CustomizationModal> {
 
     // Add cheese selections to submission result
     final Map<String, dynamic> cheeseOptions = {};
-    for (final cheeseId in _selectedCheeses) {
+    for (final cheeseId in _controller.selectedCheeses) {
       cheeseOptions[cheeseId] = {
-        'portion':
-            _cheesePortions[cheeseId]?.toString().split('.').last ?? 'whole',
-        'double': _cheeseIsDouble[cheeseId] == true,
+        'portion': _controller.cheesePortions[cheeseId] ?? 'whole',
+        'double': _controller.cheeseIsDouble[cheeseId] == true,
       };
     }
 
@@ -1336,7 +1339,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
       'size': _selectedSize,
       ..._radioSelections,
       if (ingredientOptions.isNotEmpty) 'ingredientOptions': ingredientOptions,
-      if (_selectedCheeses.isNotEmpty) 'cheeses': _selectedCheeses.toList(),
+      if (_controller.selectedCheeses.isNotEmpty)
+        'cheeses': _controller.selectedCheeses.toList(),
       if (cheeseOptions.isNotEmpty) 'cheeseOptions': cheeseOptions,
       if (nonZeroSauces.isNotEmpty) 'sauces': nonZeroSauces,
       if (nonZeroDressings.isNotEmpty) 'dressings': nonZeroDressings,
@@ -2139,6 +2143,15 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                                                 onChanged:
                                                                     (portion) {
                                                                   setState(() {
+                                                                    final name = portion
+                                                                        .toString()
+                                                                        .split(
+                                                                            '.')
+                                                                        .last;
+                                                                    _controller
+                                                                        .setCheesePortion(
+                                                                            cheeseId,
+                                                                            name);
                                                                     _cheesePortions[
                                                                             cheeseId] =
                                                                         portion;
