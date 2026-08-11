@@ -1,8 +1,8 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: August 11, 2026 (~11:00 CDT)  
+**Last Updated**: August 11, 2026 (~11:10 CDT)  
 **Hardware**: MINISFORUM AI X1 Pro-470  
-**Branch**: **`main`** (soft-release); extract A4: **`feat/bounded-context-repos-a4-inventory-labor`**  
+**Branch**: **`main`** (soft-release)  
 **Firebase**: `doughboyspizzeria-2b3d2`  
 **Storefront**: https://franchise-storefront.web.app  
 **Admin/HQ**: franchisehq.io
@@ -21,36 +21,45 @@
 | POS clock / delivery COD / portal users / promos v1 | **COMPLETE** |
 | Manager burn-in checklist | **GREEN 2026-08-10** |
 | Soft parallel / hard Owner.com cutover | Soft parallel OK; hard cutover after sign-off + hardware |
-| OrderRepository (A3) | **DONE** (merged / on main) |
-| **A4 Inventory + Labor** | **COMPLETE** on `feat/bounded-context-repos-a4-inventory-labor` — repos + call-site migration; **merge to main** |
 | Portal invite email (SendGrid) | Wired; blocked on credits |
 | Station hardware · iOS | Waiting / postponed |
 
 ---
 
-## God-object containment (extract)
+## God-object containment (original plan → reality)
 
-| Slice | State |
-|-------|--------|
-| A1 MenuRepository | DONE |
-| A2 ConfigRepository | DONE |
-| A3 OrderRepository | DONE |
-| A4 Inventory + Labor | **COMPLETE** — wrappers + call sites (checkout, POS, Admin schedule/hours, PIN clock) |
-| Customization B1–B2.2.3 | COMPLETE on main |
+Authority: `docs/slices/bounded-context-repos-v1.md`, `docs/slices/customization-modal-decompose-v1.md`, `docs/slices/bounded-context-repos-a4-inventory-labor.md`, `docs/architecture/containment-progress-2026-08-11.md`
 
-Authority: `docs/slices/bounded-context-repos-v1.md`, `docs/slices/bounded-context-repos-a4-inventory-labor.md`
+| Phase | Intent | State |
+|-------|--------|--------|
+| **0** Guardrails + slice docs | Living authority | **DONE** |
+| **A1** MenuRepository | Interface + impl + façade | **DONE** |
+| **A2** ConfigRepository | Toggles / franchise info / hours | **DONE** (user franchise_profiles deferred) |
+| **A3** OrderRepository | Cart + core orders + façade | **DONE** |
+| **A4** Inventory + Labor | Wrappers + **call-site migration** | **DONE** (exceeded plan) |
+| **A5** Other contexts | Billing, audit, etc. | **Not started** (optional) |
+| **B1** MenuPricing + selection snapshot | Pure domain | **DONE** |
+| **B2** CustomizationController | State + pricing + mutations | **Mostly done** (modal still large + lockstep) |
+| **B3–B4** Thin composition-root modal | ~20–30 KB wiring | **Partial** |
+| **C** BrandingFacade / DesignTokens hygiene | Single live path | **Not started** |
+| **D** Surface convergence + local user.dart | Shared helpers | **Not started** |
+| **E** Caching / N+1 / agent templates | Post-containment | **Not started** |
+
+**Scorecard (honest):** A1–A4 exceeded start plan; customization business rules ~70% out of modal (file still fat); MenuItem policy ~30%; branding hygiene ~10%; god service contained at key seams ~40% (not eliminated); burn-in safety **met**.
+
+**Not required for hardware cutover:** A5, dual-tree deletion, shared_ui, Phase E.
 
 ---
 
-## Next product focus
+## Next product / extract focus
 
 | Priority | Focus |
 |----------|--------|
-| **1** | Merge A4 → main; soft parallel with Owner.com |
-| **2** | Hard cutover after sign-off + hardware |
-| **3** | Hardware pilot when devices arrive; iOS when Mac available |
-| **4** | SendGrid credits → portal invite email |
-| **5** | Promo residuals only if needed |
+| **1** | Soft parallel; hard cutover after sign-off + hardware |
+| **2** | Optional extract: Phase B composition-root modal (`feat/customization-modal-composition-root`) |
+| **3** | Optional: OrderRepository call-site migration (make A3 as real as A4) |
+| **4** | Optional: Phase C BrandingFacade |
+| **5** | Hardware pilot; iOS when Mac; SendGrid credits |
 
 ---
 
