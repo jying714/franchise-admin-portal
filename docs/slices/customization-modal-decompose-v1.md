@@ -38,7 +38,9 @@
 | **B2.2.1** | Controller mutations: toggleIngredient, setDoubleTopping, toggleAddOn, setSauceCount, setDressingCount, setSideDipCount; end-of-init `syncSelection` hydrate; always-init `_sideDipCounts` (fix LateInitializationError on non-wings) |
 | **Smoke** | Pizza / calzone / salad / dinner / wings path green |
 
-**Deferred (not required for burn-in):** B2.2.2 cheeses / pizza-sauce state on controller; B2.2.3 drinks/wings UI ownership; delete modal lockstep copies.
+**Done on branch (through 2026-08-10):** B1 pricing; B2.1 controller pricing; B2.2.1–B2.2.2 cheeses + topping/sauce/dressing/add-on/double mutations; residual sauce-count + double-pill wired through controller.
+
+**Deferred (not required for burn-in):** B2.2.3 pizza `_pizzaSauceSelections` on controller; drinks/wings UI ownership; delete modal lockstep copies.
 
 ---
 
