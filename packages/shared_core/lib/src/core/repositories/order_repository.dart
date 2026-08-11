@@ -1,37 +1,49 @@
 // packages/shared_core/lib/src/core/repositories/order_repository.dart
 //
-// Bounded-context repository for orders + cart (Order-as-cart).
+// Bounded-context repository for cart + orders (Order-as-cart).
 // Authority: docs/slices/bounded-context-repos-v1.md (Phase A3)
-// Does not replace FirestoreService; call sites migrate gradually.
+// Signatures mirror FirestoreService — zero behavior change.
 
-import '../models/order.dart'; // adjust if Order path differs
+import '../models/order.dart';
+import '../models/menu_item.dart';
+import '../models/customization.dart';
 
 abstract class OrderRepository {
-  // --- Cart (status == 'cart') ---
-  Future<Order?> getCart(String franchiseId, String userId);
-  Future<void> updateCart(String franchiseId, String userId, Order cart);
-  Future<void> addToCart(
-    String franchiseId,
-    String userId,
-    Map<String, dynamic> line, {
-    String? menuItemId,
+  // --- Cart ---
+  Stream<Order?> getCart(String userId, {String? franchiseId});
+
+  Future<void> updateCart(Order cart);
+
+  Future<void> addToCart({
+    required String userId,
+    required String franchiseId,
+    required MenuItem menuItem,
+    required List<Customization> customizations,
+    required int quantity,
+    required double price,
+    String? specialInstructions,
   });
-  Future<void> removeFromCart(
-    String franchiseId,
-    String userId,
-    String lineId,
-  );
-  Future<void> clearCart(String franchiseId, String userId);
-  Stream<int> getCartItemCountStream(String franchiseId, String userId);
+
+  Future<void> removeFromCart(String userId, String cartItemKey,
+      {String? franchiseId});
+
+  Stream<int> getCartItemCountStream(String userId, {String? franchiseId});
+
+  Future<void> clearCart(String userId, {String? franchiseId});
 
   // --- Orders ---
-  Future<void> addOrder(String franchiseId, Order order);
+  Future<void> addOrder(Order order);
+
+  Stream<List<Order>> getOrdersForUser(String userId,
+      {String? franchiseId, int limit = 20});
+
   Future<void> updateOrderStatus(
-    String franchiseId,
-    String orderId,
-    String status, {
-    Map<String, dynamic>? extra,
-  });
-  Stream<List<Order>> getOrdersForUser(String franchiseId, String userId);
+      String franchiseId, String orderId, String newStatus);
+
+  Future<void> refundOrder(String franchiseId, String orderId,
+      {double? amount, String? refundReason});
+
   Stream<List<Order>> getAllOrdersStream(String franchiseId);
+
+  Stream<List<Order>> getOrders({String? userId, String? franchiseId});
 }
