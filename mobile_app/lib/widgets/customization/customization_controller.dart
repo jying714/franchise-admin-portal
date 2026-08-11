@@ -29,7 +29,7 @@ class CustomizationController extends ChangeNotifier {
   int _quantity = 1;
   String? _selectedSize;
 
-  // Selection maps — populated/synced by modal until B2.2 owns mutations.
+  // Selection maps — populated/synced by modal; mutations migrate in B2.2.x.
   Set<String> currentIngredients = <String>{};
   Set<String> selectedAddOns = <String>{};
   Map<String, bool> doubleAddOns = <String, bool>{};
@@ -37,6 +37,10 @@ class CustomizationController extends ChangeNotifier {
   Map<String, int> selectedSauceCounts = <String, int>{};
   Map<String, int> selectedDressingCounts = <String, int>{};
   Map<String, int> sideDipCounts = <String, int>{};
+
+  // Cheeses (B2.2.2.1 — hydrate only; mutations still modal until B2.2.2.2)
+  Set<String> selectedCheeses = <String>{};
+  Map<String, bool> cheeseIsDouble = <String, bool>{};
 
   // UI-resolved maxFree (from _groupsForUi) — set by modal before reading totals.
   int? maxFreeSaucesFromGroup;
@@ -71,6 +75,8 @@ class CustomizationController extends ChangeNotifier {
     required Map<String, int> selectedSauceCounts,
     required Map<String, int> selectedDressingCounts,
     required Map<String, int> sideDipCounts,
+    Set<String>? selectedCheeses,
+    Map<String, bool>? cheeseIsDouble,
     int? maxFreeSaucesFromGroup,
     int? maxFreeDressingsFromGroup,
     int? maxFreeToppingsFromGroup,
@@ -84,6 +90,12 @@ class CustomizationController extends ChangeNotifier {
     this.selectedSauceCounts = selectedSauceCounts;
     this.selectedDressingCounts = selectedDressingCounts;
     this.sideDipCounts = sideDipCounts;
+    if (selectedCheeses != null) {
+      this.selectedCheeses = selectedCheeses;
+    }
+    if (cheeseIsDouble != null) {
+      this.cheeseIsDouble = cheeseIsDouble;
+    }
     this.maxFreeSaucesFromGroup = maxFreeSaucesFromGroup;
     this.maxFreeDressingsFromGroup = maxFreeDressingsFromGroup;
     this.maxFreeToppingsFromGroup = maxFreeToppingsFromGroup;

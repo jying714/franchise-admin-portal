@@ -712,6 +712,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
       selectedSauceCounts: Map<String, int>.from(_selectedSauceCounts),
       selectedDressingCounts: Map<String, int>.from(_selectedDressingCounts),
       sideDipCounts: Map<String, int>.from(_sideDipCounts),
+      selectedCheeses: Set<String>.from(_selectedCheeses),
+      cheeseIsDouble: Map<String, bool>.from(_cheeseIsDouble),
       maxFreeSaucesFromGroup: _maxFreeForGroupLabel('sauces'),
       maxFreeDressingsFromGroup: _maxFreeForGroupLabel('dressings'),
       maxFreeToppingsFromGroup: _maxFreeForGroupLabel('toppings'),
