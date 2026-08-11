@@ -1,8 +1,8 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: August 10, 2026 (~12:35 CDT)  
+**Last Updated**: August 10, 2026 (~21:30 CDT)  
 **Hardware**: MINISFORUM AI X1 Pro-470  
-**Branch**: **`main`** (soft-release); extract work on **`feat/bounded-context-repos-v1`**  
+**Branch**: **`main`** (soft-release); burn-in: **`feat/manager-burn-in-fixes`**  
 **Firebase**: `doughboyspizzeria-2b3d2`  
 **Storefront**: https://franchise-storefront.web.app  
 **Admin/HQ**: franchisehq.io
@@ -29,7 +29,7 @@
 | **POS delivery close-out** | **COMPLETE** — Accept & deliver → in route → Returned → Close out (cash); card needs manager_override |
 | **Promos / Codes + Banners v1** | **COMPLETE on main** — shared engine, Admin templates, daypart, mobile+web apply, banner→pending code |
 | Station POS hardware · iOS Mac | **In transit** |
-| Soft parallel / manager burn-in | **Active** |
+| Soft parallel / manager burn-in | **Active** — authority `docs/slices/manager-burn-in-v1.md` on `feat/manager-burn-in-fixes` |
 | Portal invite email (SendGrid) | **Wired**; blocked on SendGrid **credits** until go-live billing |
 
 ---
@@ -103,14 +103,13 @@ Authority: `pos_app/lib/features/orders/open_orders_screen.dart` · `OrderStatus
 
 ---
 
-## God-object containment (extract branch)
+## God-object containment (extract)
 
 | Slice | State |
 |-------|--------|
-| `docs/slices/bounded-context-repos-v1.md` | **A1 COMPLETE on branch** — `MenuRepository` + `MenuFirestoreRepository`; menu item CRUD + categories façade on `FirestoreServiceImpl` |
-| `docs/slices/customization-modal-decompose-v1.md` | **B1 + B2.1 + B2.2.1 COMPLETE on branch** — `MenuPricing`, selection snapshot, `CustomizationController` (pricing + topping/sauce/dressing/add-on mutations); smoke pass 2026-08-10 |
-
-Branch: `feat/bounded-context-repos-v1`. Merge when ready. Cheeses / pizza-sauce controller ownership deferred. Not required for burn-in.
+| `docs/slices/bounded-context-repos-v1.md` | MenuRepository A1 + ConfigRepository A2.1–A2.2 on extract branches |
+| `docs/slices/customization-modal-decompose-v1.md` | B1–B2.2 customization pricing/controller (smoke 2026-08-10) |
+| `docs/slices/manager-burn-in-v1.md` | **ACTIVE** — burn-in checklist; no extract on this branch |
 
 ---
 
@@ -118,7 +117,7 @@ Branch: `feat/bounded-context-repos-v1`. Merge when ready. Cheeses / pizza-sauce
 
 | Priority | Focus |
 |----------|--------|
-| **1** | Manager burn-in (inventory 86, clock, web order, delivery COD, promo smoke, Modern if enabled) |
+| **1** | Manager burn-in — checklist in `docs/slices/manager-burn-in-v1.md`; code only for logged gaps on `feat/manager-burn-in-fixes` |
 | **2** | Soft parallel with Owner.com |
 | **3** | Hardware when devices arrive; customer iOS when Mac available |
 | **4** | SendGrid credits → portal invite email live |

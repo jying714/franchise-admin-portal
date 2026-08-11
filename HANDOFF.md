@@ -1,7 +1,7 @@
 # HANDOFF.md — Agent Context & Project Status
 
-**Last Updated**: August 10, 2026 (~12:35 CDT)  
-**Active branch**: **`main`** (ops); extract: **`feat/bounded-context-repos-v1`**  
+**Last Updated**: August 10, 2026 (~21:30 CDT)  
+**Active branch**: **`main`** (ops); burn-in: **`feat/manager-burn-in-fixes`**  
 **Repo**: https://github.com/jying714/franchise-admin-portal  
 **Local path**: `C:\\projects\\franchise-admin-portal`  
 **Firebase**: `doughboyspizzeria-2b3d2`  
@@ -33,18 +33,14 @@ Prefer **STATUS.md + this handoff + `docs/plans/*` + `docs/slices/*` + app READM
 | POS delivery close-out product rule | **COMPLETE** |
 | `docs/slices/promo-system-v1.md` | **COMPLETE** (v1 product; residuals listed in slice) |
 | `docs/plans/home-page-composition-engine-v1.md` | Deferred |
+| `docs/slices/manager-burn-in-v1.md` | **ACTIVE** on `feat/manager-burn-in-fixes` |
 
-**Extract branch (`feat/bounded-context-repos-v1`):** MenuRepository A1 + customization B1–B2.2.1 (smoke green 2026-08-10). Merge when ready. Cheeses/pizza-sauce controller move deferred. Authority: `docs/slices/bounded-context-repos-v1.md`, `docs/slices/customization-modal-decompose-v1.md`.
-
-**Operator next:** Manager burn-in → soft parallel → hard Owner.com off on sign-off.
+**Operator next:** Manager burn-in (`docs/slices/manager-burn-in-v1.md` on `feat/manager-burn-in-fixes`) → soft parallel → hard Owner.com off on sign-off. Code fixes only for logged checklist gaps.
 
 ```powershell
 cd C:\projects\franchise-admin-portal
-git checkout main
-git pull origin main
-# extract work:
-git checkout feat/bounded-context-repos-v1
-git pull origin feat/bounded-context-repos-v1
+git checkout feat/manager-burn-in-fixes
+git pull origin feat/manager-burn-in-fixes
 ```
 
 ---
@@ -73,9 +69,7 @@ git pull origin feat/bounded-context-repos-v1
 | **Banner → code** | `mobile_app/lib/widgets/banner/banner_action_handler.dart` |
 | **Pending code** | `FranchiseProvider.pendingPromoCode` / `setPendingPromoCode` / `clearPendingPromoCode` |
 | **Web checkout promo** | `customer_web/lib/features/checkout/checkout_screen.dart` |
-| **MenuPricing / selection** | `packages/shared_core/.../domain/menu_pricing.dart`, `menu_customization_selection.dart` |
-| **MenuRepository** | `packages/shared_core/.../repositories/menu_repository.dart`, `menu_firestore_repository.dart` |
-| **CustomizationController** | `mobile_app/lib/widgets/customization/customization_controller.dart` |
+| **Burn-in authority** | `docs/slices/manager-burn-in-v1.md` |
 
 ---
 
@@ -90,6 +84,7 @@ git pull origin feat/bounded-context-repos-v1
 - Delivery close-out **cash-only** unless `manager_override`  
 - **Promos**: Codes = pricing rules; Banners = marketing that may *promote* a code — do not merge models  
 - **PromoPricing** is the single apply path for mobile + customer_web (no hardcoded codes)  
+- Burn-in fixes branch: surgical fixes for logged gaps only; no extract  
 - Growth after soft stability  
 
 ---
@@ -108,7 +103,8 @@ git pull origin feat/bounded-context-repos-v1
 | `docs/slices/promo-system-v1.md` | Promo product authority |
 | `docs/slices/bounded-context-repos-v1.md` | MenuRepository / god-service extract |
 | `docs/slices/customization-modal-decompose-v1.md` | MenuPricing + CustomizationController |
+| `docs/slices/manager-burn-in-v1.md` | Soft-release manager burn-in checklist + gap log |
 
 ---
 
-**Bottom line:** Ops gates + Modern + portal users HQ + station perms + delivery COD + **promos v1** on main. Extract branch has MenuRepository A1 + customization pricing/controller (smoke green). Next = burn-in / soft parallel; merge extract when ready; hardware & iOS when available.
+**Bottom line:** Ops gates + Modern + portal users HQ + station perms + delivery COD + **promos v1** on main. Active focus: manager burn-in checklist (`docs/slices/manager-burn-in-v1.md`). Next = soft parallel after burn-in sign-off; hardware & iOS when available.
