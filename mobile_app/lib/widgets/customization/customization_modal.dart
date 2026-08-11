@@ -148,34 +148,27 @@ class _CustomizationModalState extends State<CustomizationModal> {
 
   late final CustomizationController _controller;
   // AFTER
-  void _handleSauceTap(int index) {
-    if (index < 0 || index >= _pizzaSauceSelections.length) return;
-    final id = _pizzaSauceSelections[index].id;
-    final currentlySelected = _pizzaSauceSelections[index].selected;
+  void _handleSauceTap(String sauceId, bool currentlySelected) {
     setState(() {
       _controller.setPizzaSauceSelected(
-        id,
+        sauceId,
         !currentlySelected,
         max: 2,
       );
-      _lockstepPizzaSaucesFromController();
     });
   }
 
-// This function ensures only valid splits
-  void _handleSaucePortionChange(int index, Portion portion) {
-    if (index < 0 || index >= _pizzaSauceSelections.length) return;
-    final id = _pizzaSauceSelections[index].id;
+  void _handleSaucePortionChange(String sauceId, Portion portion) {
     final name = portion.toString().split('.').last;
     setState(() {
-      _controller.setPizzaSaucePortion(id, name);
-      _lockstepPizzaSaucesFromController();
+      _controller.setPizzaSaucePortion(sauceId, name);
     });
   }
 
   void _resetPizzaSauceSelections() {
     setState(() {
-      for (final s in _controller.pizzaSauceSelections) {
+      for (final s in List<Map<String, dynamic>>.from(
+          _controller.pizzaSauceSelections)) {
         final id = s['id']?.toString() ?? '';
         if (id.isEmpty) continue;
         _controller.setPizzaSauceSelected(id, false);
@@ -190,7 +183,6 @@ class _CustomizationModalState extends State<CustomizationModal> {
         _controller.setPizzaSaucePortion(includedSauceId, 'whole');
         _controller.setPizzaSauceAmount(includedSauceId, 'regular');
       }
-      _lockstepPizzaSaucesFromController();
     });
   }
 
@@ -840,31 +832,6 @@ class _CustomizationModalState extends State<CustomizationModal> {
     }
   }
 
-  void _lockstepPizzaSaucesFromController() {
-    for (var i = 0; i < _pizzaSauceSelections.length; i++) {
-      final id = _pizzaSauceSelections[i].id;
-      final m = _controller.pizzaSauceSelections
-          .cast<Map<String, dynamic>?>()
-          .firstWhere(
-            (e) => e?['id'] == id,
-            orElse: () => null,
-          );
-      if (m == null) continue;
-      final portionName = (m['portion'] as String? ?? 'whole').toLowerCase();
-      final portion = portionName == 'left'
-          ? Portion.left
-          : portionName == 'right'
-              ? Portion.right
-              : Portion.whole;
-      _pizzaSauceSelections[i] = _pizzaSauceSelections[i].copyWith(
-        selected: m['selected'] == true,
-        portion: portion,
-        amount: (m['amount'] as String?) ?? 'regular',
-      );
-    }
-    _sauceSplitValidationError = _controller.sauceSplitValidationError;
-  }
-
   void _sortCustomizationGroups() {
     _checkboxGroups = [];
     _radioGroups = [];
@@ -1263,20 +1230,26 @@ class _CustomizationModalState extends State<CustomizationModal> {
 
     // --- PIZZA SAUCE SPLIT VALIDATION ---
     if (_isPizzaOrCalzone()) {
-      final selected = _pizzaSauceSelections.where((s) => s.selected).toList();
+      final selected = _controller.pizzaSauceSelections
+          .where((s) => s['selected'] == true)
+          .toList();
 
-      final halves = selected.where((s) => s.portion != Portion.whole).toList();
+      final halves = selected.where((s) {
+        final p = (s['portion'] as String? ?? 'whole').toLowerCase();
+        return p != 'whole';
+      }).toList();
       if (halves.length == 1) {
         setState(() => _sauceSplitValidationError = true);
-        return; // Must choose both halves or none!
+        return;
       }
       if (selected.length > 2) {
         setState(() => _sauceSplitValidationError = true);
-        return; // No more than 2!
+        return;
       }
-      // Validate no duplicate side selection (can't have two 'lefts' or two 'rights')
       if (halves.length == 2) {
-        final sides = halves.map((s) => s.portion).toSet();
+        final sides = halves
+            .map((s) => (s['portion'] as String? ?? 'whole').toLowerCase())
+            .toSet();
         if (sides.length < 2) {
           setState(() => _sauceSplitValidationError = true);
           return;
@@ -1357,12 +1330,14 @@ class _CustomizationModalState extends State<CustomizationModal> {
 
     // --- PIZZA: Capture full split sauce selection ---
     if (_isPizzaOrCalzone()) {
-      final selected = _pizzaSauceSelections.where((s) => s.selected).toList();
+      final selected = _controller.pizzaSauceSelections
+          .where((s) => s['selected'] == true)
+          .toList();
       result['sauce'] = selected
           .map((s) => {
-                'id': s.id,
-                'portion': s.portion.toString().split('.').last,
-                'amount': s.amount,
+                'id': s['id'],
+                'portion': s['portion'] ?? 'whole',
+                'amount': s['amount'] ?? 'regular',
               })
           .toList();
     }
@@ -2239,8 +2214,10 @@ class _CustomizationModalState extends State<CustomizationModal> {
                               // AFTER
                               if (label == 'sauces' && _isPizzaOrCalzone()) {
                                 // Same UX as Cheeses: list + Click to Add / Remove + portion
-                                final sauceIds = _pizzaSauceSelections
-                                    .map((s) => s.id)
+                                final sauceIds = _controller
+                                    .pizzaSauceSelections
+                                    .map((s) => s['id']?.toString() ?? '')
+                                    .where((id) => id.isNotEmpty)
                                     .toList();
                                 if (sauceIds.isEmpty) {
                                   return const SizedBox.shrink();
@@ -2329,14 +2306,29 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                             ),
                                           ),
                                         ),
-                                        children:
-                                            _pizzaSauceSelections.map((sauce) {
-                                          final meta =
-                                              _ingredientMetadata[sauce.id];
-                                          final selected = sauce.selected;
-                                          final idx =
-                                              _pizzaSauceSelections.indexWhere(
-                                                  (s) => s.id == sauce.id);
+                                        children: _controller
+                                            .pizzaSauceSelections
+                                            .map((sauce) {
+                                          final id =
+                                              sauce['id']?.toString() ?? '';
+                                          final displayName =
+                                              sauce['name']?.toString() ?? id;
+                                          final meta = _ingredientMetadata[id];
+                                          final selected =
+                                              sauce['selected'] == true;
+                                          final portionStr =
+                                              (sauce['portion'] as String? ??
+                                                      'whole')
+                                                  .toLowerCase();
+                                          final portion = portionStr == 'left'
+                                              ? Portion.left
+                                              : portionStr == 'right'
+                                                  ? Portion.right
+                                                  : Portion.whole;
+                                          final amount =
+                                              (sauce['amount'] as String? ??
+                                                      'regular')
+                                                  .toLowerCase();
                                           return Card(
                                             margin: EdgeInsets.symmetric(
                                                 vertical: 2, horizontal: 0),
@@ -2355,7 +2347,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                                       Expanded(
                                                         child: Text(
                                                           meta?.name ??
-                                                              sauce.name,
+                                                              displayName,
                                                           style: theme.textTheme
                                                               .bodyLarge,
                                                         ),
@@ -2370,14 +2362,12 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                                                     .error,
                                                           ),
                                                           onPressed: () {
-                                                            if (idx < 0) return;
                                                             setState(() {
                                                               _controller
                                                                   .setPizzaSauceSelected(
-                                                                sauce.id,
+                                                                id,
                                                                 false,
                                                               );
-                                                              _lockstepPizzaSaucesFromController();
                                                             });
                                                           },
                                                           child: Text('Remove'),
@@ -2385,15 +2375,13 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                                       else
                                                         TextButton(
                                                           onPressed: () {
-                                                            if (idx < 0) return;
                                                             setState(() {
                                                               _controller
                                                                   .setPizzaSauceSelected(
-                                                                sauce.id,
+                                                                id,
                                                                 true,
                                                                 max: 2,
                                                               );
-                                                              _lockstepPizzaSaucesFromController();
                                                             });
                                                           },
                                                           child: Text(
@@ -2406,7 +2394,6 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                                         ),
                                                     ],
                                                   ),
-                                                  // AFTER
                                                   if (selected)
                                                     Padding(
                                                       padding:
@@ -2420,25 +2407,18 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                                                   FlexFit.tight,
                                                               child:
                                                                   PortionSelector(
-                                                                value: sauce
-                                                                    .portion,
-                                                                onChanged:
-                                                                    (portion) {
-                                                                  if (idx < 0) {
-                                                                    return;
-                                                                  }
+                                                                value: portion,
+                                                                onChanged: (p) {
                                                                   setState(() {
-                                                                    final name = portion
-                                                                        .toString()
-                                                                        .split(
-                                                                            '.')
-                                                                        .last;
                                                                     _controller
                                                                         .setPizzaSaucePortion(
-                                                                      sauce.id,
-                                                                      name,
+                                                                      id,
+                                                                      p
+                                                                          .toString()
+                                                                          .split(
+                                                                              '.')
+                                                                          .last,
                                                                     );
-                                                                    _lockstepPizzaSaucesFromController();
                                                                   });
                                                                 },
                                                               ),
@@ -2449,23 +2429,16 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                                             fit: FlexFit.tight,
                                                             child:
                                                                 PortionPillToggle(
-                                                              isDouble: sauce
-                                                                          .amount
-                                                                          .toLowerCase() ==
+                                                              isDouble: amount ==
                                                                       'extra' ||
-                                                                  sauce.amount
-                                                                          .toLowerCase() ==
+                                                                  amount ==
                                                                       'double',
                                                               onTap: () {
-                                                                if (idx < 0) {
-                                                                  return;
-                                                                }
                                                                 setState(() {
                                                                   _controller
                                                                       .togglePizzaSauceAmountDouble(
-                                                                    sauce.id,
+                                                                    id,
                                                                   );
-                                                                  _lockstepPizzaSaucesFromController();
                                                                 });
                                                               },
                                                             ),
