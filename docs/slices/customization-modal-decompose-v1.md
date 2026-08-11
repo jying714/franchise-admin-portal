@@ -40,7 +40,9 @@
 
 **Done on branch (through 2026-08-10):** B1 pricing; B2.1 controller pricing; B2.2.1–B2.2.2 cheeses + topping/sauce/dressing/add-on/double mutations; residual sauce-count + double-pill wired through controller.
 
-**Deferred (not required for burn-in):** B2.2.3 pizza `_pizzaSauceSelections` on controller; drinks/wings UI ownership; delete modal lockstep copies.
+**Done through B2.2.3 (2026-08-10):** pricing pure; toppings/cheeses/sauces/dressings/add-ons/doubles; pizza sauce select/portion/amount/reset via `CustomizationController`; summary string-portion fix.
+
+**Deferred (optional):** drinks/wings UI ownership on controller; delete modal lockstep copies; move `PizzaSauceSelection` type into shared/controller-only.
 
 ---
 
