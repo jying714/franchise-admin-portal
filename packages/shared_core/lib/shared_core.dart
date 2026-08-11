@@ -60,6 +60,8 @@ export 'src/core/repositories/order_repository.dart';
 export 'src/core/repositories/order_firestore_repository.dart';
 export 'src/core/repositories/inventory_repository.dart';
 export 'src/core/repositories/inventory_firestore_repository.dart';
+export 'src/core/repositories/labor_repository.dart';
+export 'src/core/repositories/labor_firestore_repository.dart';
 
 // Enrichment
 export 'src/core/services/enrichment/franchise_subscription_enricher.dart';
