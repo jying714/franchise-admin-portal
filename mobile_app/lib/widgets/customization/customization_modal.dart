@@ -92,7 +92,6 @@ class _CustomizationModalState extends State<CustomizationModal> {
   int _drinkMaxPerFlavor = 10; // Default, overwritten by Firestore value
 
   // --- Pizza Sauce State ---
-  bool _sauceSplitValidationError = false;
 
   // --- grouped tabs for meats and veggies for pizzas / calzones ---
   late List<String>
@@ -610,7 +609,6 @@ class _CustomizationModalState extends State<CustomizationModal> {
       wingSauceIds: _effectiveWingSauceIds(),
       cheesePortions: initCheesePortions,
       pizzaSauceSelections: initPizzaSauceSelections,
-      sauceSplitValidationError: _sauceSplitValidationError,
     );
   }
 
@@ -1108,11 +1106,11 @@ class _CustomizationModalState extends State<CustomizationModal> {
         return p != 'whole';
       }).toList();
       if (halves.length == 1) {
-        setState(() => _sauceSplitValidationError = true);
+        setState(() => _controller.sauceSplitValidationError = true);
         return;
       }
       if (selected.length > 2) {
-        setState(() => _sauceSplitValidationError = true);
+        setState(() => _controller.sauceSplitValidationError = true);
         return;
       }
       if (halves.length == 2) {
@@ -1120,11 +1118,11 @@ class _CustomizationModalState extends State<CustomizationModal> {
             .map((s) => (s['portion'] as String? ?? 'whole').toLowerCase())
             .toSet();
         if (sides.length < 2) {
-          setState(() => _sauceSplitValidationError = true);
+          setState(() => _controller.sauceSplitValidationError = true);
           return;
         }
       }
-      setState(() => _sauceSplitValidationError = false);
+      setState(() => _controller.sauceSplitValidationError = false);
     }
 
     final Map<String, dynamic> ingredientOptions = {};
