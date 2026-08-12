@@ -1,6 +1,6 @@
 # Slice: Customization modal decompose v1
 
-**Status:** B1–B2.2.3 COMPLETE on main; **B3 dual-write removal COMPLETE** on `feat/customization-modal-composition-root` (2026-08-12); B4 thin file / dead-field delete still open  
+**Status:** B1–B2.2.3 COMPLETE on main; **B3 COMPLETE**; **B4 partial** on `feat/customization-modal-composition-root` (2026-08-12) — dual init maps, PizzaSauceSelection class, sauceSplit flag, SauceSelectorGroup maps; smoke before merge
 **Authority for:** Phase B of the god-object containment plan  
 **Related:** `docs/slices/bounded-context-repos-v1.md`, `docs/architecture/containment-progress-2026-08-11.md`, `STATUS.md`, `HANDOFF.md`
 
