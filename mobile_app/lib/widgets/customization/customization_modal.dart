@@ -1004,56 +1004,6 @@ class _CustomizationModalState extends State<CustomizationModal> {
     return cat.contains('pizza');
   }
 
-  Map<String, bool> _getPizzaSaucePortionDisables(int sauceIdx) {
-    if (!_isPizza()) return {};
-    final selected = _pizzaSauceSelections;
-    // Find which sides (left/right/whole) are already used
-    int leftIdx = -1, rightIdx = -1, wholeIdx = -1;
-    for (int i = 0; i < selected.length; i++) {
-      if (!selected[i].selected) continue;
-      if (selected[i].portion == Portion.whole) wholeIdx = i;
-      if (selected[i].portion == Portion.left) leftIdx = i;
-      if (selected[i].portion == Portion.right) rightIdx = i;
-    }
-
-    // Default: nothing disabled
-    bool disableLeft = false, disableRight = false, disableWhole = false;
-
-    // If another sauce is selected as whole, only allow this to be whole if this is that sauce, otherwise disable all toggles
-    if (wholeIdx != -1 && wholeIdx != sauceIdx) {
-      disableLeft = true;
-      disableRight = true;
-      disableWhole = true;
-    } else if ((leftIdx != -1 && leftIdx != sauceIdx) &&
-        (rightIdx != -1 && rightIdx != sauceIdx)) {
-      // If both halves are taken and this isn't one of them, everything disabled
-      disableLeft = true;
-      disableRight = true;
-      disableWhole = true;
-    } else if (leftIdx != -1 && leftIdx != sauceIdx) {
-      // If Left is taken elsewhere, only Right is allowed here
-      disableLeft = true;
-      disableWhole = true;
-    } else if (rightIdx != -1 && rightIdx != sauceIdx) {
-      // If Right is taken elsewhere, only Left is allowed here
-      disableRight = true;
-      disableWhole = true;
-    }
-    // If this sauce isn't selected, and 2 sauces are already selected, don't allow selecting more
-    if (!selected[sauceIdx].selected &&
-        selected.where((s) => s.selected).length >= 2) {
-      disableLeft = true;
-      disableRight = true;
-      disableWhole = true;
-    }
-
-    return {
-      'left': disableLeft,
-      'right': disableRight,
-      'whole': disableWhole,
-    };
-  }
-
   double _getToppingUpcharge() {
     return shared.MenuPricing.toppingUpcharge(widget.menuItem, _selectedSize);
   }
@@ -1202,7 +1152,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
           .map((e) => e.toString())
           .toSet();
       var totalSelected =
-          _currentIngredients.where((id) => ids.contains(id)).length;
+          _controller.currentIngredients.where((id) => ids.contains(id)).length;
       if (groupLabel.toLowerCase() == 'cheeses') {
         totalSelected =
             _controller.selectedCheeses.where((id) => ids.contains(id)).length;
@@ -1267,10 +1217,10 @@ class _CustomizationModalState extends State<CustomizationModal> {
 
     // Only include sauces with a count > 0
     final nonZeroSauces = Map.fromEntries(
-      _selectedSauceCounts.entries.where((e) => e.value > 0),
+      _controller.selectedSauceCounts.entries.where((e) => e.value > 0),
     );
     final nonZeroDressings = Map.fromEntries(
-      _selectedDressingCounts.entries.where((e) => e.value > 0),
+      _controller.selectedDressingCounts.entries.where((e) => e.value > 0),
     );
 
     // Add cheese selections to submission result
@@ -1284,8 +1234,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
 
     final Map<String, dynamic> result = {
       'currentIngredients': _controller.currentIngredients.where((id) {
-        if (_selectedDressingCounts.containsKey(id)) return false;
-        if (_selectedSauceCounts.containsKey(id)) return false;
+        if (_controller.selectedDressingCounts.containsKey(id)) return false;
+        if (_controller.selectedSauceCounts.containsKey(id)) return false;
         if (_radioSelections.values.contains(id)) return false;
         final lower = id.toLowerCase();
         if (lower.startsWith('crust_') ||
@@ -1297,7 +1247,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
       }).toList(),
       'groupSelections':
           _groupSelections.map((k, v) => MapEntry(k, v.toList())),
-      'selectedAddOns': _selectedAddOns.toList(),
+      'selectedAddOns': _controller.selectedAddOns.toList(),
       'size': _selectedSize,
       ..._radioSelections,
       if (ingredientOptions.isNotEmpty) 'ingredientOptions': ingredientOptions,
@@ -1460,7 +1410,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
                               theme: theme,
                               loc: loc,
                               ingredientMetadata: _ingredientMetadata,
-                              selectedSauceCounts: _selectedSauceCounts,
+                              selectedSauceCounts:
+                                  _controller.selectedSauceCounts,
                               setState: setState,
                             )
                           else if (_showsCurrentIngredients())
@@ -1493,17 +1444,21 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                     return false;
                                   }
                                   // Also hide if this id is a selected pizza sauce
-                                  if (_pizzaSauceSelections
-                                      .any((s) => s.id == id && s.selected)) {
+                                  // Also hide if this id is a selected pizza sauce
+                                  if (_controller.pizzaSauceSelections.any(
+                                      (s) =>
+                                          s['id']?.toString() == id &&
+                                          s['selected'] == true)) {
                                     return false;
                                   }
                                   if (_controller.selectedCheeses
                                       .contains(id)) {
                                     return false;
                                   }
-                                  return !_selectedDressingCounts
+                                  return !_controller.selectedDressingCounts
                                           .containsKey(id) &&
-                                      !_selectedSauceCounts.containsKey(id) &&
+                                      !_controller.selectedSauceCounts
+                                          .containsKey(id) &&
                                       type != 'crust' &&
                                       type != 'cook' &&
                                       type != 'cut';
@@ -1586,38 +1541,29 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                                     ),
                                                     onPressed: () {
                                                       setState(() {
-                                                        _currentIngredients
-                                                            .remove(ingId);
-                                                        _doubleToppings
-                                                            .remove(ingId);
+                                                        _controller
+                                                            .toggleIngredient(
+                                                          ingId: ingId,
+                                                          groupLabel: '',
+                                                          groupsForUi:
+                                                              _groupsForUi(),
+                                                          isPizzaOrCalzone:
+                                                              _isPizzaOrCalzone(),
+                                                        );
                                                         _ingredientPortions
                                                             .remove(ingId);
                                                         _controller
                                                             .removeCheese(
                                                                 ingId);
                                                         // Return to optional list (salad/dinner add-ons)
-                                                        _selectedAddOns
+                                                        _controller
+                                                            .selectedAddOns
                                                             .remove(ingId);
-                                                        _doubleAddOns
+                                                        _controller.doubleAddOns
                                                             .remove(ingId);
-                                                        for (var i = 0;
-                                                            i <
-                                                                _pizzaSauceSelections
-                                                                    .length;
-                                                            i++) {
-                                                          if (_pizzaSauceSelections[
-                                                                      i]
-                                                                  .id ==
-                                                              ingId) {
-                                                            _pizzaSauceSelections[
-                                                                    i] =
-                                                                _pizzaSauceSelections[
-                                                                        i]
-                                                                    .copyWith(
-                                                                        selected:
-                                                                            false);
-                                                          }
-                                                        }
+                                                        _controller
+                                                            .setPizzaSauceSelected(
+                                                                ingId, false);
                                                       });
                                                     },
                                                     child: Text(loc.remove),
@@ -1651,14 +1597,15 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                                     Flexible(
                                                       fit: FlexFit.tight,
                                                       child: PortionPillToggle(
-                                                        isDouble:
-                                                            _doubleToppings[
-                                                                    ingId] ==
-                                                                true,
+                                                        isDouble: _controller
+                                                                    .doubleToppings[
+                                                                ingId] ==
+                                                            true,
                                                         onTap: () =>
                                                             _handleDoubleChanged(
                                                                 ingId,
-                                                                !(_doubleToppings[
+                                                                !(_controller
+                                                                            .doubleToppings[
                                                                         ingId] ??
                                                                     false)),
                                                       ),
@@ -1797,7 +1744,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                       ),
                                     ),
                                     ...ingredientIds
-                                        .where((ingId) => !_currentIngredients
+                                        .where((ingId) => !_controller
+                                            .currentIngredients
                                             .contains(ingId))
                                         .map((ingId) {
                                       final meta = _ingredientMetadata[ingId];
@@ -1841,7 +1789,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                                                   e.toString())
                                                               .toSet();
                                                       final selectedInGroup =
-                                                          _currentIngredients
+                                                          _controller
+                                                              .currentIngredients
                                                               .where((id) => ids
                                                                   .contains(id))
                                                               .length;
@@ -1850,10 +1799,17 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                                         return;
                                                       }
                                                     }
-                                                    _currentIngredients
-                                                        .add(ingId);
-                                                    _doubleToppings[ingId] =
-                                                        false;
+                                                    _controller
+                                                        .toggleIngredient(
+                                                      ingId: ingId,
+                                                      groupLabel:
+                                                          (group['label'] ?? '')
+                                                              .toString(),
+                                                      groupsForUi:
+                                                          _groupsForUi(),
+                                                      isPizzaOrCalzone:
+                                                          _isPizzaOrCalzone(),
+                                                    );
                                                     _ingredientPortions[ingId] =
                                                         Portion.whole;
                                                   });
@@ -2436,15 +2392,11 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                   theme: theme,
                                   loc: loc,
                                   selectedDressingCounts:
-                                      _selectedDressingCounts,
+                                      _controller.selectedDressingCounts,
                                   onCountChanged: (ingId, newCount) {
                                     setState(() {
                                       _controller.setDressingCount(
                                           ingId, newCount);
-                                      _selectedDressingCounts
-                                        ..clear()
-                                        ..addAll(
-                                            _controller.selectedDressingCounts);
                                     });
                                   },
                                   getFreeDressingCount: _getFreeDressingCount,
@@ -2477,10 +2429,12 @@ class _CustomizationModalState extends State<CustomizationModal> {
                               theme: theme,
                               loc: loc,
                               ingredientMetadata: _ingredientMetadata,
-                              selectedAddOns: _selectedAddOns,
-                              currentIngredientIds: _currentIngredients,
-                              doubleAddOns: _doubleAddOns,
-                              selectedSauceCounts: _selectedSauceCounts,
+                              selectedAddOns: _controller.selectedAddOns,
+                              currentIngredientIds:
+                                  _controller.currentIngredients,
+                              doubleAddOns: _controller.doubleAddOns,
+                              selectedSauceCounts:
+                                  _controller.selectedSauceCounts,
                               usesDynamicToppingPricing:
                                   widget.menuItem.additionalToppingPrices !=
                                           null &&
@@ -2495,29 +2449,15 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                     addToCurrentIngredients:
                                         _isSalad() || _isDinner() || _isSub(),
                                   );
-                                  _selectedAddOns = Set<String>.from(
-                                      _controller.selectedAddOns);
-                                  _doubleAddOns
-                                    ..clear()
-                                    ..addAll(_controller.doubleAddOns);
-                                  _currentIngredients = Set<String>.from(
-                                      _controller.currentIngredients);
-                                  _doubleToppings
-                                    ..clear()
-                                    ..addAll(_controller.doubleToppings);
                                 });
                               },
                               onChangeSauceCount: (ingId, delta) {
                                 setState(() {
                                   final count =
                                       _controller.selectedSauceCounts[ingId] ??
-                                          _selectedSauceCounts[ingId] ??
                                           0;
                                   _controller.setSauceCount(
                                       ingId, count + delta);
-                                  _selectedSauceCounts
-                                    ..clear()
-                                    ..addAll(_controller.selectedSauceCounts);
                                 });
                               },
                               buildAddOnDoublePill: (ingId, isDouble, onTap) =>
