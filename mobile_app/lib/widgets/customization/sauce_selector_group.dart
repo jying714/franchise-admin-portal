@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/widgets/portion_selector.dart';
-import 'package:franchise_mobile_app/widgets/customization/customization_modal.dart';
 import 'package:franchise_mobile_app/generated/app_localizations.dart';
 
 typedef GetToppingUpcharge = double Function();
@@ -13,7 +12,7 @@ class SauceSelectorGroup extends StatelessWidget {
   final ThemeData theme;
   final AppLocalizations loc;
   final bool Function() isPizza;
-  final List<PizzaSauceSelection> pizzaSauceSelections;
+  final List<Map<String, dynamic>> pizzaSauceSelections;
   final Map<String, shared.IngredientMetadata> ingredientMetadata;
   final bool sauceSplitValidationError;
   final VoidCallback resetPizzaSauceSelections;
@@ -41,28 +40,34 @@ class SauceSelectorGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isPizza()) {
-      int selectedCount =
-          pizzaSauceSelections.where((s) => s?.selected == true).length;
+      final int selectedCount =
+          pizzaSauceSelections.where((s) => s['selected'] == true).length;
 
       Portion? _takenPortion([int? ignoreIdx]) {
         for (int i = 0; i < pizzaSauceSelections.length; i++) {
           if (i == ignoreIdx) continue;
           final s = pizzaSauceSelections[i];
-          if (s?.selected == true && s?.portion != Portion.whole) {
-            return s?.portion;
+          if (s['selected'] == true) {
+            final p = (s['portion'] as String? ?? 'whole').toLowerCase();
+            if (p == 'left') return Portion.left;
+            if (p == 'right') return Portion.right;
           }
         }
         return null;
       }
 
-      final int wholeSelectedIdx = pizzaSauceSelections.indexWhere(
-        (s) => s?.selected == true && s?.portion == Portion.whole,
-      );
+      final int wholeSelectedIdx = pizzaSauceSelections.indexWhere((s) {
+        if (s['selected'] != true) return false;
+        final p = (s['portion'] as String? ?? 'whole').toLowerCase();
+        return p == 'whole';
+      });
 
       final hasCustom =
-          pizzaSauceSelections.skip(1).any((s) => s?.selected == true) ||
+          pizzaSauceSelections.skip(1).any((s) => s['selected'] == true) ||
               (pizzaSauceSelections.isNotEmpty &&
-                  pizzaSauceSelections[0]?.portion != Portion.whole);
+                  (pizzaSauceSelections[0]['portion'] as String? ?? 'whole')
+                          .toLowerCase() !=
+                      'whole');
 
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -100,7 +105,19 @@ class SauceSelectorGroup extends StatelessWidget {
             ...pizzaSauceSelections.asMap().entries.map((entry) {
               final i = entry.key;
               final sauce = entry.value;
-              final meta = ingredientMetadata[sauce.id];
+              final sauceId = sauce['id']?.toString() ?? '';
+              final sauceName = sauce['name']?.toString() ?? sauceId;
+              final sauceSelected = sauce['selected'] == true;
+              final portionStr =
+                  (sauce['portion'] as String? ?? 'whole').toLowerCase();
+              final saucePortion = portionStr == 'left'
+                  ? Portion.left
+                  : portionStr == 'right'
+                      ? Portion.right
+                      : Portion.whole;
+              final sauceAmount =
+                  (sauce['amount'] as String? ?? 'regular').toLowerCase();
+              final meta = ingredientMetadata[sauceId];
               final outOfStock = meta?.outOfStock == true;
 
               Portion? otherPortion = _takenPortion(i);
@@ -111,7 +128,7 @@ class SauceSelectorGroup extends StatelessWidget {
                 Portion.whole: false,
               };
 
-              if (sauce.selected) {
+              if (sauceSelected) {
                 if (otherPortion != null) {
                   disables = {
                     Portion.left: otherPortion == Portion.left,
@@ -120,12 +137,12 @@ class SauceSelectorGroup extends StatelessWidget {
                   };
                 } else if (selectedCount == 2) {
                   disables = {
-                    Portion.left: sauce.portion != Portion.left,
-                    Portion.right: sauce.portion != Portion.right,
+                    Portion.left: saucePortion != Portion.left,
+                    Portion.right: saucePortion != Portion.right,
                     Portion.whole: true,
                   };
                 } else if (selectedCount == 1 &&
-                    sauce.portion != Portion.whole) {
+                    saucePortion != Portion.whole) {
                   disables[Portion.whole] = true;
                 }
               } else {
@@ -139,7 +156,7 @@ class SauceSelectorGroup extends StatelessWidget {
               }
 
               bool canSelect =
-                  sauce.selected || (selectedCount < 2 && !outOfStock);
+                  sauceSelected || (selectedCount < 2 && !outOfStock);
               if (wholeSelectedIdx != -1 && wholeSelectedIdx != i) {
                 canSelect = false;
                 disables = {
@@ -147,7 +164,7 @@ class SauceSelectorGroup extends StatelessWidget {
                   Portion.right: true,
                   Portion.whole: true,
                 };
-              } else if (selectedCount == 2 && !sauce.selected) {
+              } else if (selectedCount == 2 && !sauceSelected) {
                 disables = {
                   Portion.left: true,
                   Portion.right: true,
@@ -160,20 +177,23 @@ class SauceSelectorGroup extends StatelessWidget {
                 setState(() {
                   if (val == true) {
                     Portion? already = _takenPortion(i);
-                    if (already == Portion.left) {
-                      sauce.selected = true;
-                      sauce.portion = Portion.right;
-                    } else if (already == Portion.right) {
-                      sauce.selected = true;
-                      sauce.portion = Portion.left;
-                    } else {
-                      sauce.selected = true;
-                      sauce.portion = Portion.whole;
-                    }
+                    final nextPortion = already == Portion.left
+                        ? 'right'
+                        : already == Portion.right
+                            ? 'left'
+                            : 'whole';
+                    pizzaSauceSelections[i] = {
+                      ...sauce,
+                      'selected': true,
+                      'portion': nextPortion,
+                    };
                   } else {
-                    sauce.selected = false;
-                    sauce.portion = Portion.whole;
-                    sauce.amount = 'regular';
+                    pizzaSauceSelections[i] = {
+                      ...sauce,
+                      'selected': false,
+                      'portion': 'whole',
+                      'amount': 'regular',
+                    };
                   }
                 });
               }
@@ -181,14 +201,17 @@ class SauceSelectorGroup extends StatelessWidget {
               void handlePortionChange(Portion portion) {
                 if (disables[portion] == true) return;
                 setState(() {
-                  sauce.portion = portion;
+                  pizzaSauceSelections[i] = {
+                    ...sauce,
+                    'portion': portion.toString().split('.').last,
+                  };
                 });
               }
 
               return Card(
                 margin: const EdgeInsets.symmetric(vertical: 4.0),
                 elevation: 0,
-                color: sauce.selected
+                color: sauceSelected
                     ? Theme.of(context).colorScheme.surface
                     : Theme.of(context)
                         .colorScheme
@@ -200,13 +223,13 @@ class SauceSelectorGroup extends StatelessWidget {
                     Row(
                       children: [
                         Checkbox(
-                          value: sauce.selected,
+                          value: sauceSelected,
                           onChanged:
                               canSelect && !outOfStock ? handleCheckbox : null,
                         ),
                         Expanded(
                           child: Text(
-                            sauce.name,
+                            sauceName,
                             style: theme.textTheme.bodyLarge?.copyWith(
                               color: outOfStock
                                   ? Theme.of(context)
@@ -226,7 +249,7 @@ class SauceSelectorGroup extends StatelessWidget {
                           ),
                       ],
                     ),
-                    if (sauce.selected)
+                    if (sauceSelected)
                       Padding(
                         padding: const EdgeInsets.only(
                             left: 20.0, top: 4.0, right: 0.0, bottom: 4.0),
@@ -237,10 +260,9 @@ class SauceSelectorGroup extends StatelessWidget {
                             Flexible(
                               flex: 0,
                               child: PortionSelector(
-                                value: sauce.portion,
+                                value: saucePortion,
                                 onChanged: handlePortionChange,
                                 size: 24,
-                                // disables: disables, // Uncomment if your PortionSelector supports it
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -252,17 +274,20 @@ class SauceSelectorGroup extends StatelessWidget {
                                         const BoxConstraints(maxWidth: 170),
                                     child: ToggleButtons(
                                       isSelected: [
-                                        sauce.amount == 'light',
-                                        sauce.amount == 'regular',
-                                        sauce.amount == 'extra'
+                                        sauceAmount == 'light',
+                                        sauceAmount == 'regular',
+                                        sauceAmount == 'extra'
                                       ],
                                       onPressed: (idx) {
                                         setState(() {
-                                          sauce.amount = [
-                                            'light',
-                                            'regular',
-                                            'extra'
-                                          ][idx];
+                                          pizzaSauceSelections[i] = {
+                                            ...sauce,
+                                            'amount': [
+                                              'light',
+                                              'regular',
+                                              'extra'
+                                            ][idx],
+                                          };
                                         });
                                       },
                                       borderRadius: BorderRadius.circular(10),
@@ -317,7 +342,6 @@ class SauceSelectorGroup extends StatelessWidget {
         ),
       );
     }
-
     // --- Non-pizza fallback logic ---
     final groupLabel = group['label'] ?? '';
     final ingredientIds = (group['ingredientIds'] as List<dynamic>? ?? [])

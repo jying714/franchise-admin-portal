@@ -6,7 +6,6 @@ import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/widgets/portion_selector.dart';
 import 'package:franchise_mobile_app/widgets/customization/portion_pill_toggle.dart';
 import 'package:franchise_mobile_app/widgets/customization/dressing_selector_group.dart';
-import 'package:franchise_mobile_app/widgets/customization/sauce_selector_group.dart';
 import 'package:franchise_mobile_app/widgets/customization/checkbox_customization_group.dart';
 import 'package:franchise_mobile_app/widgets/customization/dinner_included_ingredients.dart';
 import 'package:franchise_mobile_app/widgets/customization/radio_customization_group.dart';
