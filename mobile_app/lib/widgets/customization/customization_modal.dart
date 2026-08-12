@@ -103,7 +103,6 @@ class _CustomizationModalState extends State<CustomizationModal> {
 
   late List<Map<String, dynamic>> _checkboxGroups;
   late List<Map<String, dynamic>> _radioGroups;
-  String? _selectedSauceId;
 
   final Map<String, bool> _doubleToppings = {};
   final Map<String, Portion> _ingredientPortions = {};
@@ -133,10 +132,6 @@ class _CustomizationModalState extends State<CustomizationModal> {
   int _drinkMaxPerFlavor = 10; // Default, overwritten by Firestore value
 
   // --- Pizza Sauce State ---
-  String? _selectedPizzaSauceId;
-  String _selectedSaucePortion = 'whole'; // 'whole', 'left', 'right'
-  String _selectedSauceAmount = 'regular'; // 'light', 'regular', 'extra'
-
   List<PizzaSauceSelection> _pizzaSauceSelections = [];
   bool _sauceSplitValidationError = false;
 
@@ -554,19 +549,6 @@ class _CustomizationModalState extends State<CustomizationModal> {
     }
 
     _initializeSelections();
-
-    if (_isPizzaOrCalzone()) {
-      final optionalSauceIds = _optionalIdsByType('sauces');
-      final includedSauceId =
-          widget.menuItem.includedIngredients?.firstWhereOrNull((ing) {
-        final t = (ing['typeId'] ?? ing['type'] ?? '').toString().toLowerCase();
-        return t == 'sauces' || t == 'sauce';
-      })?['ingredientId']?.toString();
-      _selectedPizzaSauceId = includedSauceId ??
-          (optionalSauceIds.isNotEmpty ? optionalSauceIds.first : 'sauce_none');
-      _selectedSaucePortion = 'whole';
-      _selectedSauceAmount = 'regular';
-    }
 
     _sortCustomizationGroups();
 
