@@ -1,8 +1,8 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: August 11, 2026 (~11:10 CDT)  
+**Last Updated**: August 12, 2026
 **Hardware**: MINISFORUM AI X1 Pro-470  
-**Branch**: **`main`** (soft-release)  
+**Branch**: **`feat/customization-modal-composition-root`** (B3 done; merge pending smoke) · soft-release remains **`main`**
 **Firebase**: `doughboyspizzeria-2b3d2`  
 **Storefront**: https://franchise-storefront.web.app  
 **Admin/HQ**: franchisehq.io
@@ -39,13 +39,14 @@ Authority: `docs/slices/bounded-context-repos-v1.md`, `docs/slices/customization
 | **A4** Inventory + Labor | Wrappers + **call-site migration** | **DONE** (exceeded plan) |
 | **A5** Other contexts | Billing, audit, etc. | **Not started** (optional) |
 | **B1** MenuPricing + selection snapshot | Pure domain | **DONE** |
-| **B2** CustomizationController | State + pricing + mutations | **Mostly done** (modal still large + lockstep) |
-| **B3–B4** Thin composition-root modal | ~20–30 KB wiring | **Partial** |
+| **B2** CustomizationController | State + pricing + mutations | **DONE** |
+| **B3** Dual-write removal | Runtime maps → controller | **DONE** on `feat/customization-modal-composition-root` |
+| **B4** Thin composition-root modal | ~20–30 KB wiring / delete init-only locals | **Open** |
 | **C** BrandingFacade / DesignTokens hygiene | Single live path | **Not started** |
 | **D** Surface convergence + local user.dart | Shared helpers | **Not started** |
 | **E** Caching / N+1 / agent templates | Post-containment | **Not started** |
 
-**Scorecard (honest):** A1–A4 exceeded start plan; customization business rules ~70% out of modal (file still fat); MenuItem policy ~30%; branding hygiene ~10%; god service contained at key seams ~40% (not eliminated); burn-in safety **met**.
+**Scorecard (honest):** A1–A4 exceeded start plan; customization dual-write **removed** for cheeses/toppings/sauces/dressings/add-ons (B3); modal still large (B4 open); MenuItem policy ~30%; branding hygiene ~10%; god service contained at key seams ~40% (not eliminated); burn-in safety **met**.
 
 **Not required for hardware cutover:** A5, dual-tree deletion, shared_ui, Phase E.
 
@@ -56,7 +57,7 @@ Authority: `docs/slices/bounded-context-repos-v1.md`, `docs/slices/customization
 | Priority | Focus |
 |----------|--------|
 | **1** | Soft parallel; hard cutover after sign-off + hardware |
-| **2** | Optional extract: Phase B composition-root modal (`feat/customization-modal-composition-root`) |
+| **2** | Optional extract: B4 thin modal / delete init-only dual maps (`feat/customization-modal-composition-root`); then merge when smoke green |
 | **3** | Optional: OrderRepository call-site migration (make A3 as real as A4) |
 | **4** | Optional: Phase C BrandingFacade |
 | **5** | Hardware pilot; iOS when Mac; SendGrid credits |
