@@ -1,6 +1,6 @@
 # Slice: Customization modal decompose v1
 
-**Status:** B1–B2.2.3 COMPLETE on main (2026-08-10/11); **B3–B4 composition-root still open**  
+**Status:** B1–B2.2.3 COMPLETE on main; **B3 dual-write removal COMPLETE** on `feat/customization-modal-composition-root` (2026-08-12); B4 thin file / dead-field delete still open  
 **Authority for:** Phase B of the god-object containment plan  
 **Related:** `docs/slices/bounded-context-repos-v1.md`, `docs/architecture/containment-progress-2026-08-11.md`, `STATUS.md`, `HANDOFF.md`
 
@@ -26,7 +26,7 @@
 
 ---
 
-## 3. Done (through 2026-08-11)
+## 3. Done (through 2026-08-12)
 
 | Step | Result |
 |------|--------|
@@ -34,17 +34,25 @@
 | **B2.1** | Controller pricing getters |
 | **B2.2.1–B2.2.2** | Toppings, sauces, dressings, add-ons, doubles, cheeses |
 | **B2.2.3** | Pizza sauce select/portion/amount/reset via controller; summary string-portion fix |
-| **Smoke** | Pizza / calzone / salad / dinner / wings green |
+| **B3** | Runtime dual-write removed for cheeses, toppings, pizza sauces, dressings, add-ons, sauce counts; UI + submit + validation read controller; dead legacy sauce scalars removed |
+| **Smoke** | Re-run pizza / calzone / salad / dinner on branch before merge |
 
-**Deferred / remaining for full Phase B finish:**
+**Residual (acceptable until B4):**
 
-- Drop dual lockstep maps (controller sole source of truth)
-- Modal file size → composition root only
+- Locals still seeded in `initState` + one `syncSelection` hydrate (cheeses, toppings maps, `_pizzaSauceSelections`, etc.)
+- `_ingredientPortions` still modal-local (no controller API yet)
+- Radio crust/cook/cut still modal-local via `_radioSelections` / `_currentIngredients`
+- Wings / drinks still modal-local
+- `PizzaSauceSelection` class still on modal file for init hydrate
+- File still large — not yet “thin composition root (~20–30 KB)”
+
+**Still open for full Phase B finish:**
+
+- B4: delete init-only dual maps / `PizzaSauceSelection`; further thin the modal
 - Optional: drinks/wings ownership on controller
-- Optional: move `PizzaSauceSelection` off modal file
 - customer_web / POS shared controller (Phase D)
 
-**Suggested branch:** `feat/customization-modal-composition-root`
+**Branch:** `feat/customization-modal-composition-root`
 
 ---
 
@@ -66,4 +74,4 @@ mobile_app/lib/widgets/customization/customization_modal.dart
 - No change to cart payload or `onConfirm` signature.
 - Legacy MenuItem dual-tree fields remain until deliberate re-seed.
 
-**Last updated:** 2026-08-11
+**Last updated:** 2026-08-12
