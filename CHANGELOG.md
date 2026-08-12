@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-08-12
+### Changed
+- Phase B customization modal on `feat/customization-modal-composition-root`:
+  - **B3** runtime dual-write removed (cheeses, toppings, pizza sauces, dressings, add-ons, sauce counts) — UI/submit/validation read `CustomizationController`.
+  - **B4 partial** init-only dual maps removed; `PizzaSauceSelection` class removed; `sauceSplitValidationError` controller-only; `SauceSelectorGroup` map-typed.
+- Authority docs updated: `STATUS.md`, `HANDOFF.md`, `docs/slices/customization-modal-decompose-v1.md`, `docs/architecture/containment-progress-2026-08-11.md`.
+- **Pending:** device smoke on branch before merge to `main`.
+
 ## [Unreleased] - 2026-07-20
 ### Added
 - Full config unification (`design_tokens.dart`, `app_config.dart`, `branding_config.dart`, `feature_config.dart`, `ui_config.dart`) into `shared_core` as SSoT.

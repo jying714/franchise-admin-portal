@@ -1,6 +1,6 @@
 # Slice: Customization modal decompose v1
 
-**Status:** B1–B2.2.3 COMPLETE on main; **B3 COMPLETE**; **B4 partial** on `feat/customization-modal-composition-root` (2026-08-12) — dual init maps, PizzaSauceSelection class, sauceSplit flag, SauceSelectorGroup maps; smoke before merge
+**Status:** B1–B2.2.3 COMPLETE on main; **B3 COMPLETE**; **B4 partial** on `feat/customization-modal-composition-root` (2026-08-12) — dual init maps, PizzaSauceSelection class, sauceSplit flag, SauceSelectorGroup maps removed; smoke before merge  
 **Authority for:** Phase B of the god-object containment plan  
 **Related:** `docs/slices/bounded-context-repos-v1.md`, `docs/architecture/containment-progress-2026-08-11.md`, `STATUS.md`, `HANDOFF.md`
 
@@ -35,22 +35,21 @@
 | **B2.2.1–B2.2.2** | Toppings, sauces, dressings, add-ons, doubles, cheeses |
 | **B2.2.3** | Pizza sauce select/portion/amount/reset via controller; summary string-portion fix |
 | **B3** | Runtime dual-write removed for cheeses, toppings, pizza sauces, dressings, add-ons, sauce counts; UI + submit + validation read controller; dead legacy sauce scalars removed |
-| **Smoke** | Re-run pizza / calzone / salad / dinner on branch before merge |
+| **B4 (partial)** | Init-only dual maps removed; `PizzaSauceSelection` class removed (init builds `List<Map>`); `sauceSplitValidationError` controller-only; `SauceSelectorGroup` map-typed |
+| **Smoke** | **Required on branch before merge** — pizza / calzone / salad / dinner |
 
-**Residual (acceptable until B4):**
+**B4 residual (acceptable; not required for merge):**
 
-- Locals still seeded in `initState` + one `syncSelection` hydrate (cheeses, toppings maps, `_pizzaSauceSelections`, etc.)
 - `_ingredientPortions` still modal-local (no controller API yet)
 - Radio crust/cook/cut still modal-local via `_radioSelections` / `_currentIngredients`
 - Wings / drinks still modal-local
-- `PizzaSauceSelection` class still on modal file for init hydrate
 - File still large — not yet “thin composition root (~20–30 KB)”
 
 **Still open for full Phase B finish:**
 
-- B4: delete init-only dual maps / `PizzaSauceSelection`; further thin the modal
-- Optional: drinks/wings ownership on controller
+- Optional further B4: portions API on controller; radio ownership; drinks/wings
 - customer_web / POS shared controller (Phase D)
+- Device smoke → merge to `main` when green
 
 **Branch:** `feat/customization-modal-composition-root`
 
@@ -63,6 +62,7 @@ packages/shared_core/lib/src/core/domain/menu_pricing.dart
 packages/shared_core/lib/src/core/domain/menu_customization_selection.dart
 mobile_app/lib/widgets/customization/customization_controller.dart
 mobile_app/lib/widgets/customization/customization_modal.dart
+mobile_app/lib/widgets/customization/sauce_selector_group.dart
 ```
 
 ---
@@ -74,4 +74,4 @@ mobile_app/lib/widgets/customization/customization_modal.dart
 - No change to cart payload or `onConfirm` signature.
 - Legacy MenuItem dual-tree fields remain until deliberate re-seed.
 
-**Last updated:** 2026-08-12
+**Last updated:** 2026-08-12 (B4 partial recorded)
