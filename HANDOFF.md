@@ -1,7 +1,7 @@
 # HANDOFF.md — Agent Context & Project Status
 
-**Last Updated**: August 11, 2026 (~11:10 CDT)  
-**Active branch**: **`main`** (soft-release)  
+**Last Updated**: August 12, 2026  
+**Active branch**: **`feat/customization-modal-composition-root`** (B3 done; B4 partial; merge pending smoke) · soft-release remains **`main`**  
 **Repo**: https://github.com/jying714/franchise-admin-portal  
 **Local path**: `C:\\projects\\franchise-admin-portal`  
 **Firebase**: `doughboyspizzeria-2b3d2`  
@@ -23,20 +23,24 @@ Prefer **STATUS.md + this handoff + `docs/plans/*` + `docs/slices/*` + app READM
 | A2 ConfigRepository | **DONE** |
 | A3 OrderRepository + façade | **DONE** |
 | A4 Inventory + Labor repos + call sites | **DONE** |
-| B1–B2 MenuPricing + CustomizationController | **Mostly DONE** |
-| B3–B4 Thin modal composition root | **Partial** — file still large |
+| B1–B2 MenuPricing + CustomizationController | **DONE** |
+| B3 Dual-write removal | **DONE** on composition-root branch |
+| B4 Thin modal | **Partial** — init dual maps / PizzaSauceSelection / sauceSplit / SauceSelectorGroup maps removed; portions/radio/wings still local; file still large; **smoke before merge** |
 | C BrandingFacade | **Open** |
 | D Convergence / local user.dart | **Open** |
 | A5 Other god-service contexts | **Optional / open** |
 
 Full progress write-up: `docs/architecture/containment-progress-2026-08-11.md`
 
-**Operator next:** Soft parallel. Optional next extract branch: `feat/customization-modal-composition-root` (finish Phase B). Hardware when devices arrive.
+
+**After**
+```markdown
+**Operator next:** Soft parallel. On composition-root branch: **device smoke** (pizza/calzone/salad/dinner) → merge to `main` when green. Optional further B4 (portions/radio/wings) after smoke. Hardware when devices arrive.
 
 ```powershell
 cd C:\projects\franchise-admin-portal
-git checkout main
-git pull origin main
+git checkout feat/customization-modal-composition-root
+git pull origin feat/customization-modal-composition-root
 ```
 
 ---
@@ -63,4 +67,4 @@ git pull origin main
 
 ---
 
-**Bottom line:** A1–A4 + customization controller/pricing done. Remaining large extract wins: thin modal, optional Order call sites, BrandingFacade. Ops: soft parallel until hardware + sign-off.
+**Bottom line:** A1–A4 + B1–B3 done on composition-root branch; B4 partial. Next: smoke → merge. Remaining extract wins after that: optional portions/radio/wings, Order call sites, BrandingFacade. Ops: soft parallel until hardware + sign-off.
