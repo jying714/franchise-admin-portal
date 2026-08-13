@@ -51,6 +51,64 @@ class MenuPricing {
     return uiSize;
   }
 
+  /// Resolve a per-size map entry (freeDipCupCount, sideDipUpcharge, etc.).
+  /// Tries exact label, normalizeSizeKey, size-list labels, case-insensitive,
+  /// then single-entry fallback.
+  static V? lookupSizeMapValue<V>(
+    MenuItem item,
+    Map<String, V>? map,
+    String? selectedSize,
+  ) {
+    if (map == null ||
+        map.isEmpty ||
+        selectedSize == null ||
+        selectedSize.isEmpty) {
+      return null;
+    }
+    if (map.containsKey(selectedSize)) return map[selectedSize];
+
+    final key = normalizeSizeKey(item, selectedSize);
+    if (key.isNotEmpty && map.containsKey(key)) return map[key];
+
+    final sizes = item.sizes;
+    if (sizes != null) {
+      for (final s in sizes) {
+        if (s.label == selectedSize ||
+            (key.isNotEmpty && normalizeSizeKey(item, s.label) == key)) {
+          if (map.containsKey(s.label)) return map[s.label];
+        }
+      }
+    }
+
+    final lower = selectedSize.toLowerCase().trim();
+    final keyLower = key.toLowerCase().trim();
+    for (final e in map.entries) {
+      final ek = e.key.toLowerCase().trim();
+      if (ek == lower || (keyLower.isNotEmpty && ek == keyLower)) {
+        return e.value;
+      }
+    }
+
+    // Compact labels: "6pc" vs "6 pc" vs "6-pc"
+    String compact(String s) =>
+        s.toLowerCase().replaceAll(RegExp(r'[\s_\-]+'), '');
+    final compactSel = compact(selectedSize);
+    for (final e in map.entries) {
+      if (compact(e.key) == compactSel) return e.value;
+    }
+
+    if (map.length == 1) return map.values.first;
+    return null;
+  }
+
+  static int freeDipCupCountForSize(MenuItem item, String? selectedSize) {
+    return lookupSizeMapValue(item, item.freeDipCupCount, selectedSize) ?? 0;
+  }
+
+  static double sideDipUpchargeForSize(MenuItem item, String? selectedSize) {
+    return lookupSizeMapValue(item, item.sideDipUpcharge, selectedSize) ?? 0.95;
+  }
+
   /// Unit base price for the selected size.
   /// Mirrors _basePrice in customization_modal.dart.
   static double basePrice(MenuItem item, String? selectedSize) {
@@ -302,8 +360,8 @@ class MenuPricing {
 
     // Wings side dips
     if (isWings(item)) {
-      final upcharge = item.sideDipUpcharge?[selectedSize] ?? 0.95;
-      final freeDips = item.freeDipCupCount?[selectedSize] ?? 0;
+      final upcharge = sideDipUpchargeForSize(item, selectedSize);
+      final freeDips = freeDipCupCountForSize(item, selectedSize);
       final dipIds = wingSauceIds ?? effectiveWingSauceIds(item);
       final totalDipCups = dipIds.fold<int>(
         0,
@@ -432,7 +490,9 @@ class MenuPricing {
           ? toppingUpcharge(item, selectedSize)
           : ingredientUpcharge(meta);
 
-      if (!wasIncluded && (isDinner(item) || salad) && upcharge <= 0) {
+      if (!wasIncluded &&
+          (isDinner(item) || salad || isSub(item)) &&
+          upcharge <= 0) {
         upcharge = resolveExtraIngredientPrice(
           item: item,
           selectedSize: selectedSize,
@@ -472,6 +532,20 @@ class MenuPricing {
         } else {
           total += upcharge * (isDouble ? 2 : 1);
         }
+      }
+    }
+
+    // Pizza/calzone cheeses live outside currentIngredients. Double = one
+    // topping upcharge (same as doubling an included topping).
+    if (isPizzaOrCalzone(item)) {
+      final cheeseUpcharge =
+          usesDynamicToppingPricing ? toppingUpcharge(item, selectedSize) : 0.0;
+      for (final cheeseId in selection.selectedCheeses) {
+        if (selection.cheeseIsDouble[cheeseId] != true) continue;
+        final meta = ingredientMetadata[cheeseId];
+        final upcharge =
+            cheeseUpcharge > 0 ? cheeseUpcharge : ingredientUpcharge(meta);
+        total += upcharge;
       }
     }
 

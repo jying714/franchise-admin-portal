@@ -43,9 +43,9 @@ class WingsDipSauceSelector extends StatelessWidget {
             : null);
 
     final upcharge =
-        (sizeKey != null) ? (menuItem.sideDipUpcharge?[sizeKey] ?? 0.95) : 0.95;
+        shared.MenuPricing.sideDipUpchargeForSize(menuItem, sizeKey);
     final freeDipCups =
-        (sizeKey != null) ? (menuItem.freeDipCupCount?[sizeKey] ?? 0) : 0;
+        shared.MenuPricing.freeDipCupCountForSize(menuItem, sizeKey);
 
     int getCount(String id) => sideDipCounts[id] ?? 0;
 

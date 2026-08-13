@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'package:shared_core/src/core/utils/error_logger.dart';
 import 'package:flutter/material.dart';
 import 'modifier_group.dart';
+import 'package:shared_core/src/core/domain/menu_pricing.dart';
 
 extension IterableFirstOrNull<T> on Iterable<T> {
   T? get firstOrNull => isEmpty ? null : first;
@@ -918,14 +919,12 @@ class MenuItem {
 
   /// How many free side dip cups allowed per wings size.
   int getFreeDipCupCountForSize(String? size) {
-    if (freeDipCupCount == null || size == null) return 0;
-    return freeDipCupCount![size] ?? 0;
+    return MenuPricing.freeDipCupCountForSize(this, size);
   }
 
   /// The per-cup upcharge for side dips, by size.
   double getSideDipUpchargeForSize(String? size) {
-    if (sideDipUpcharge == null || size == null) return 0.0;
-    return sideDipUpcharge![size] ?? 0.0;
+    return MenuPricing.sideDipUpchargeForSize(this, size);
   }
 
   MenuItem copyWith({

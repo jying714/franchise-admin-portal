@@ -134,6 +134,8 @@ class CustomizationController extends ChangeNotifier {
         selectedSauceCounts: Map<String, int>.from(selectedSauceCounts),
         selectedDressingCounts: Map<String, int>.from(selectedDressingCounts),
         sideDipCounts: Map<String, int>.from(sideDipCounts),
+        selectedCheeses: Set<String>.from(selectedCheeses),
+        cheeseIsDouble: Map<String, bool>.from(cheeseIsDouble),
       );
 
   double get basePrice => shared.MenuPricing.basePrice(item, _selectedSize);

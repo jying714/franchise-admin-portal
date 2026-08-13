@@ -231,11 +231,17 @@ class _CustomizationModalState extends State<CustomizationModal> {
         _selectedDippedSauces.values.any((v) => v != null && v != 'plain');
 
     final dipIds = _effectiveWingSauceIds();
+    final source = _controller.sideDipCounts.isNotEmpty
+        ? _controller.sideDipCounts
+        : _sideDipCounts;
     final nextCups = <String, int>{};
     for (final id in dipIds) {
-      nextCups[id] = _sideDipCounts[id] ?? 0;
+      nextCups[id] = source[id] ?? 0;
     }
     _sideDipCounts = nextCups;
+    _controller.sideDipCounts
+      ..clear()
+      ..addAll(nextCups);
   }
 
   Future<void> _loadFranchiseWingSaucePoolIfNeeded() async {
@@ -1187,7 +1193,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
           ? _selectedDippedSauces.values.where((v) => v != null).toList()
           : [];
       result['isAnyDipped'] = _isAnyDipped;
-      result['sideDipCups'] = Map<String, int>.from(_sideDipCounts);
+      result['sideDipCups'] = Map<String, int>.from(_controller.sideDipCounts);
     }
 
     if (_ingredientAmounts.isNotEmpty) {
@@ -1319,7 +1325,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                               theme: theme,
                               loc: loc,
                               ingredientMetadata: _ingredientMetadata,
-                              sideDipCounts: _sideDipCounts,
+                              sideDipCounts: _controller.sideDipCounts,
                               selectedSize: _selectedSize,
                               setState: setState,
                               sauceIdsOverride: _effectiveWingSauceIds(),
@@ -2332,18 +2338,18 @@ class _CustomizationModalState extends State<CustomizationModal> {
                               return null;
                             }).whereType<Widget>(),
 
-                          // AFTER
-                          // Optional ingredients: only when HQ attached optionalAddOns
-                          // (salads e.g. garbanzo; dinners e.g. meatballs). Not pizza/calzone/wings.
+                          // Optional ingredients: when HQ attached optionalAddOns
+                          // (salads e.g. garbanzo; dinners e.g. meatballs; subs).
+                          // Not pizza/calzone/wings.
                           if (!_isWings() &&
                               !_isPizzaOrCalzone() &&
                               ((widget.menuItem.optionalAddOns != null &&
                                       widget.menuItem.optionalAddOns!
                                           .isNotEmpty) ||
-                                  // Dinner/salad: keep Optional Add-ons mounted so
+                                  // Dinner/salad/sub: keep Optional Add-ons mounted so
                                   // removable included ingredients can be re-added
                                   // after Remove from Current Toppings.
-                                  ((_isDinner() || _isSalad()) &&
+                                  ((_isDinner() || _isSalad() || _isSub()) &&
                                       (widget.menuItem.includedIngredients
                                               ?.isNotEmpty ??
                                           false))))
@@ -2392,7 +2398,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                               extraSauceUpcharge: _getExtraSauceUpcharge(),
                             ),
 
-                          // --- ORDER DETAILS: pizza (crust/cook/cut) or sub (cook only) ---
+                          // --- ORDER DETAILS: pizza (crust/cook/cut), calzone/sub (cook only) ---
                           if (_isPizza() || _isSub())
                             Builder(
                               builder: (context) {
@@ -2403,8 +2409,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                   final id =
                                       (group['id'] as String?)?.toLowerCase() ??
                                           '';
-                                  if (_isSub()) {
-                                    // Sub: cook only — never crust/cut
+                                  if (_isSub() || _isCalzone()) {
+                                    // Sub/calzone: cook only — never crust/cut
                                     return label == 'cook' || id == 'cook';
                                   }
                                   return label == 'crust' ||
@@ -2415,8 +2421,10 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                       id == 'cut';
                                 }).toList();
 
-                                // Pizza: seed structural groups when stored groups omit them
-                                if (_isPizza() && orderDetailGroups.isEmpty) {
+                                // Pizza (not calzone): seed crust/cook/cut when stored groups omit them
+                                if (_isPizza() &&
+                                    !_isCalzone() &&
+                                    orderDetailGroups.isEmpty) {
                                   orderDetailGroups =
                                       shared.MenuProfileTemplates.seedGroups(
                                     shared.MenuProfile.pizza,
@@ -2559,11 +2567,12 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                 }
 
                                 final isSub = _isSub();
-                                final emptyTitle = isSub
-                                    ? 'Choose how your sub is cooked — Regular or Crispy.'
+                                final isCalzone = _isCalzone();
+                                final emptyTitle = (isSub || isCalzone)
+                                    ? 'Choose how it is cooked — Regular or Crispy.'
                                     : 'Customize crust, cook, and cut.';
-                                final subtitle = isSub
-                                    ? 'Choose how your sub is cooked — Regular or Crispy.'
+                                final subtitle = (isSub || isCalzone)
+                                    ? 'Choose how it is cooked — Regular or Crispy.'
                                     : 'Tap to customize crust, cook, or cut.';
 
                                 String detailsSummary = orderDetailGroups

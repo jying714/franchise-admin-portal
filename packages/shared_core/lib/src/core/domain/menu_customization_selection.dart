@@ -11,6 +11,8 @@ class MenuCustomizationSelection {
     required this.selectedSauceCounts,
     required this.selectedDressingCounts,
     required this.sideDipCounts,
+    this.selectedCheeses = const <String>{},
+    this.cheeseIsDouble = const <String, bool>{},
   });
 
   final String? selectedSize;
@@ -21,4 +23,6 @@ class MenuCustomizationSelection {
   final Map<String, int> selectedSauceCounts;
   final Map<String, int> selectedDressingCounts;
   final Map<String, int> sideDipCounts;
+  final Set<String> selectedCheeses;
+  final Map<String, bool> cheeseIsDouble;
 }
