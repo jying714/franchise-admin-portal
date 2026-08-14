@@ -1476,7 +1476,9 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
         userId: user.uid,
         franchiseId: franchiseId,
         menuItem: item,
-        customizations: customizations,
+        customizations: {
+          'groups': customizations.map((c) => c.toMap()).toList(),
+        },
         quantity: _qty,
         price: unit,
         specialInstructions: _notesController.text.trim().isEmpty
