@@ -131,17 +131,11 @@ class _ItemScreenState extends State<ItemScreen> {
     setState(() => _isProcessing = true);
 
     try {
-      final List<shared.Customization> customizationList =
-          (customizations['groups'] as List<dynamic>? ?? [])
-              .map((e) =>
-                  shared.Customization.fromMap(e as Map<String, dynamic>))
-              .toList();
-
       await firestoreService.addToCart(
         userId: _userId!,
         franchiseId: franchiseId,
         menuItem: item,
-        customizations: customizationList,
+        customizations: Map<String, dynamic>.from(customizations),
         quantity: quantity,
         price: totalPrice,
         specialInstructions: customizations['specialInstructions'] as String?,

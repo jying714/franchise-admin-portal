@@ -80,7 +80,7 @@ class OrderFirestoreRepository implements OrderRepository {
     required String userId,
     required String franchiseId,
     required MenuItem menuItem,
-    required List<Customization> customizations,
+    required Map<String, dynamic> customizations,
     required int quantity,
     required double price,
     String? specialInstructions,
@@ -120,9 +120,7 @@ class OrderFirestoreRepository implements OrderRepository {
         name: menuItem.name,
         price: price,
         quantity: quantity,
-        customizations: {
-          'groups': customizations.map((c) => c.toMap()).toList()
-        },
+        customizations: Map<String, dynamic>.from(customizations),
         specialInstructions: specialInstructions,
         image: menuItem.image,
         cartItemKey: '${DateTime.now().microsecondsSinceEpoch}_${menuItem.id}',

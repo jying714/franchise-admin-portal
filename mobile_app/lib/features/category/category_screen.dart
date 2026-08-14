@@ -120,7 +120,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
         userId: user.uid,
         franchiseId: franchiseId,
         menuItem: item,
-        customizations: [], // TODO: Convert selectedCustomizations properly later
+        customizations: Map<String, dynamic>.from(selectedCustomizations),
         quantity: quantity,
         price: totalPrice / quantity,
       );

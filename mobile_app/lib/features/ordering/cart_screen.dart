@@ -8,6 +8,19 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:franchise_mobile_app/generated/app_localizations.dart';
 import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
 import 'package:franchise_mobile_app/features/auth/sign_in_screen.dart';
+import 'package:franchise_mobile_app/widgets/customization/customization_modal.dart';
+
+class _CartLineSheetModel {
+  _CartLineSheetModel({
+    required this.workingItem,
+    required this.workingItems,
+  }) : qty = workingItem.quantity;
+
+  shared.OrderItem workingItem;
+  List<shared.OrderItem> workingItems;
+  int qty;
+  bool busy = false;
+}
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -137,14 +150,210 @@ class _CartScreenState extends State<CartScreen> {
     dynamic customizations,
     Map<String, shared.Customization> customObjMap,
     AppLocalizations loc,
-    ColorScheme scheme,
-  ) {
+    ColorScheme scheme, {
+    Map<String, String> ingredientNames = const {},
+  }) {
+    String nameOf(String id) =>
+        ingredientNames[id] ?? customObjMap[id]?.name ?? id;
+
+    Widget modRow(String label, List<String> values) {
+      if (values.isEmpty) return const SizedBox.shrink();
+      final shown = values.take(6).toList();
+      final extra = values.length - shown.length;
+      final valueText =
+          extra > 0 ? '${shown.join(', ')} +$extra more' : shown.join(', ');
+      return Padding(
+        padding: const EdgeInsets.only(top: 2),
+        child: RichText(
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: '$label ',
+                style: TextStyle(
+                  fontSize: shared.DesignTokens.captionFontSize,
+                  fontWeight: FontWeight.w600,
+                  color: scheme.onSurfaceVariant,
+                  fontFamily: shared.DesignTokens.fontFamily,
+                ),
+              ),
+              TextSpan(
+                text: valueText,
+                style: TextStyle(
+                  fontSize: shared.DesignTokens.captionFontSize,
+                  fontWeight: shared.UiConfig.fontWeightMedium,
+                  color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
+                  fontFamily: shared.DesignTokens.fontFamily,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     if (customizations == null ||
         (customizations is List && customizations.isEmpty)) {
       return const SizedBox.shrink();
     }
-    if (customizations is Map<String, dynamic>) {
-      List<Widget> rows = [];
+
+    if (customizations is Map) {
+      final map = Map<String, dynamic>.from(customizations);
+      final rows = <Widget>[];
+
+      final size = map['size']?.toString();
+      if (size != null && size.isNotEmpty) {
+        rows.add(modRow('Size', [size]));
+      }
+
+      final structural = <String>[];
+      for (final key in ['cook', 'crust', 'cut', 'Cook', 'Crust', 'Cut']) {
+        final v = map[key]?.toString();
+        if (v == null || v.isEmpty) continue;
+        final pretty = key[0].toUpperCase() + key.substring(1).toLowerCase();
+        structural.add('$pretty ${nameOf(v)}');
+      }
+      if (structural.isNotEmpty) {
+        rows.add(modRow('Details', structural));
+      }
+
+      final current = map['currentIngredients'];
+      if (current is List && current.isNotEmpty) {
+        final opts = map['ingredientOptions'];
+        final parts = <String>[];
+        for (final raw in current) {
+          final id = raw.toString();
+          if (id.isEmpty) continue;
+          var label = nameOf(id);
+          if (opts is Map && opts[id] is Map) {
+            final o = Map<String, dynamic>.from(opts[id] as Map);
+            if (o['double'] == true) label = 'Dbl $label';
+            final p = o['portion']?.toString();
+            if (p == 'left') label = '$label (L)';
+            if (p == 'right') label = '$label (R)';
+          }
+          parts.add(label);
+        }
+        if (parts.isNotEmpty) {
+          rows.add(modRow('Toppings', parts));
+        }
+      }
+
+      final cheeses = map['cheeses'];
+      if (cheeses is List && cheeses.isNotEmpty) {
+        final cheeseOpts = map['cheeseOptions'];
+        final parts = <String>[];
+        for (final raw in cheeses) {
+          final id = raw.toString();
+          var label = nameOf(id);
+          if (cheeseOpts is Map && cheeseOpts[id] is Map) {
+            final o = Map<String, dynamic>.from(cheeseOpts[id] as Map);
+            if (o['double'] == true) label = 'Dbl $label';
+            final p = o['portion']?.toString();
+            if (p == 'left') label = '$label (L)';
+            if (p == 'right') label = '$label (R)';
+          }
+          parts.add(label);
+        }
+        if (parts.isNotEmpty) {
+          rows.add(modRow('Cheese', parts));
+        }
+      }
+
+      final sauce = map['sauce'];
+      if (sauce is List && sauce.isNotEmpty) {
+        final parts = <String>[];
+        for (final s in sauce) {
+          if (s is! Map) continue;
+          final id = s['id']?.toString() ?? '';
+          if (id.isEmpty) continue;
+          var label = nameOf(id);
+          final p = s['portion']?.toString();
+          if (p == 'left') label = '$label (L)';
+          if (p == 'right') label = '$label (R)';
+          final amt = s['amount']?.toString();
+          if (amt != null && amt != 'regular') label = '$label · $amt';
+          parts.add(label);
+        }
+        if (parts.isNotEmpty) {
+          rows.add(modRow('Sauce', parts));
+        }
+      }
+
+      final sauces = map['sauces'];
+      if (sauces is Map && sauces.isNotEmpty) {
+        final parts = sauces.entries
+            .where((e) => (e.value is num) && (e.value as num) > 0)
+            .map((e) {
+          final n = e.value as num;
+          final name = nameOf(e.key.toString());
+          return n > 1 ? '$name ×${n.toInt()}' : name;
+        }).toList();
+        if (parts.isNotEmpty) {
+          rows.add(modRow('Sauces', parts));
+        }
+      }
+
+      final dressings = map['dressings'];
+      if (dressings is Map && dressings.isNotEmpty) {
+        final parts = dressings.entries
+            .where((e) => (e.value is num) && (e.value as num) > 0)
+            .map((e) {
+          final n = e.value as num;
+          final name = nameOf(e.key.toString());
+          return n > 1 ? '$name ×${n.toInt()}' : name;
+        }).toList();
+        if (parts.isNotEmpty) {
+          rows.add(modRow('Dressings', parts));
+        }
+      }
+
+      final addOns = map['selectedAddOns'];
+      if (addOns is List && addOns.isNotEmpty) {
+        final parts = addOns.map((e) => nameOf(e.toString())).toList();
+        if (parts.isNotEmpty) {
+          rows.add(modRow('Extras', parts));
+        }
+      }
+
+      final dips = map['dippedSplits'];
+      if (dips is List && dips.isNotEmpty) {
+        final parts = dips
+            .map((e) => e.toString())
+            .where((id) => id.isNotEmpty && id != 'plain')
+            .map(nameOf)
+            .toList();
+        if (parts.isNotEmpty) {
+          rows.add(modRow('Toss', parts));
+        }
+      }
+
+      final cups = map['sideDipCups'];
+      if (cups is Map && cups.isNotEmpty) {
+        final parts = cups.entries
+            .where((e) => (e.value is num) && (e.value as num) > 0)
+            .map((e) {
+          final n = (e.value as num).toInt();
+          final name = nameOf(e.key.toString());
+          return n > 1 ? '$name ×$n' : name;
+        }).toList();
+        if (parts.isNotEmpty) {
+          rows.add(modRow('Dips', parts));
+        }
+      }
+
+      if (rows.isNotEmpty) {
+        return Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: rows,
+          ),
+        );
+      }
+
+      // Legacy group/option map fallback
       customizations.forEach((groupOrOptionId, selection) {
         final custom = customObjMap[groupOrOptionId];
         final displayName = custom?.name ?? groupOrOptionId.toString();
@@ -161,7 +370,7 @@ class _CartScreenState extends State<CartScreen> {
             String details = '';
             if (opt is Map) {
               if (opt['portion'] != null && opt['portion'] != 'whole') {
-                String portionLabel = opt['portion'] == 'left'
+                final portionLabel = opt['portion'] == 'left'
                     ? loc.leftSide
                     : opt['portion'] == 'right'
                         ? loc.rightSide
@@ -169,9 +378,12 @@ class _CartScreenState extends State<CartScreen> {
                 details += ' ($portionLabel)';
               }
               if ((opt['extra'] ?? false) == true) details += ' (${loc.extra})';
-              if ((opt['double'] ?? false) == true)
+              if ((opt['double'] ?? false) == true) {
                 details += ' (${loc.doubleTopping})';
-              if ((opt['quantity'] ?? 1) > 1) details += ' x${opt['quantity']}';
+              }
+              if ((opt['quantity'] ?? 1) > 1) {
+                details += ' x${opt['quantity']}';
+              }
             }
             final upcharge = option.price > 0
                 ? ' (+${loc.currencyFormat(option.price)})'
@@ -217,8 +429,11 @@ class _CartScreenState extends State<CartScreen> {
           ));
         }
       });
+
       return Column(
-          crossAxisAlignment: CrossAxisAlignment.start, children: rows);
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: rows,
+      );
     } else if (customizations is List) {
       final joined = customizations.join(', ');
       return Text(
@@ -231,6 +446,7 @@ class _CartScreenState extends State<CartScreen> {
         ),
       );
     }
+
     return const SizedBox.shrink();
   }
 
@@ -414,6 +630,7 @@ class _CartScreenState extends State<CartScreen> {
                                 firestoreService,
                                 loc,
                                 objMap,
+                                ingredientMetadatas,
                               ),
                             ),
                           ],
@@ -466,12 +683,283 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
+  Future<void> _showCartItemSheet({
+    required BuildContext context,
+    required shared.OrderItem item,
+    required int index,
+    required shared.Order cart,
+    required shared.FirestoreService firestoreService,
+    required Map<String, String> ingredientNames,
+    required Map<String, shared.Customization> customMap,
+    required AppLocalizations loc,
+    required ColorScheme scheme,
+  }) async {
+    final sheetModel = _CartLineSheetModel(
+      workingItem: item,
+      workingItems: List<shared.OrderItem>.from(cart.items),
+    );
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: scheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+            child: Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 12,
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom +
+                MediaQuery.of(sheetContext).padding.bottom +
+                16,
+          ),
+          child: StatefulBuilder(
+            builder: (context, setSheetState) {
+              Future<void> persistQuantity(int next) async {
+                if (next < 1 || sheetModel.busy) return;
+                sheetModel.busy = true;
+                try {
+                  sheetModel.workingItem =
+                      sheetModel.workingItem.copyWith(quantity: next);
+                  sheetModel.workingItems =
+                      List<shared.OrderItem>.from(sheetModel.workingItems);
+                  sheetModel.workingItems[index] = sheetModel.workingItem;
+                  sheetModel.qty = next;
+                  final newSubtotal = sheetModel.workingItems.fold<double>(
+                    0,
+                    (sum, i) => sum + i.price * i.quantity,
+                  );
+                  await firestoreService.updateCart(
+                    cart.copyWith(
+                      items: sheetModel.workingItems,
+                      subtotal: newSubtotal,
+                      total: newSubtotal +
+                          cart.tax +
+                          cart.deliveryFee -
+                          (cart.discount ?? 0.0),
+                    ),
+                  );
+                  if (context.mounted) {
+                    setSheetState(() {});
+                  }
+                } finally {
+                  sheetModel.busy = false;
+                }
+              }
+
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: scheme.outlineVariant,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      NetworkImageWidget(
+                        imageUrl: item.image ?? '',
+                        fallbackAsset: shared.UiConfig.defaultPizzaIcon,
+                        width: 72,
+                        height: 72,
+                        fit: BoxFit.cover,
+                        borderRadius: BorderRadius.circular(
+                            shared.DesignTokens.imageRadius),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.name,
+                              style: TextStyle(
+                                fontSize: shared.DesignTokens.titleFontSize,
+                                fontWeight: shared.UiConfig.fontWeightBold,
+                                color: scheme.onSurface,
+                                fontFamily: shared.DesignTokens.fontFamily,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '\$${(sheetModel.workingItem.price * sheetModel.qty).toStringAsFixed(2)}',
+                              style: TextStyle(
+                                fontSize: shared.DesignTokens.bodyFontSize,
+                                fontWeight: shared.UiConfig.fontWeightMedium,
+                                color: scheme.onSurface,
+                                fontFamily: shared.DesignTokens.fontFamily,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Your selections',
+                    style: TextStyle(
+                      fontSize: shared.DesignTokens.bodyFontSize,
+                      fontWeight: shared.UiConfig.fontWeightBold,
+                      color: scheme.onSurface,
+                      fontFamily: shared.DesignTokens.fontFamily,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Full detail: reuse renderer without truncation pressure
+                  renderCustomizations(
+                    item.customizations,
+                    customMap,
+                    loc,
+                    scheme,
+                    ingredientNames: ingredientNames,
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Text(
+                        'Quantity',
+                        style: TextStyle(
+                          fontWeight: shared.UiConfig.fontWeightMedium,
+                          color: scheme.onSurface,
+                          fontFamily: shared.DesignTokens.fontFamily,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: sheetModel.qty > 1
+                            ? () => persistQuantity(sheetModel.qty - 1)
+                            : null,
+                        icon: const Icon(Icons.remove_circle_outline),
+                      ),
+                      Text(
+                        '${sheetModel.qty}',
+                        style: TextStyle(
+                          fontSize: shared.DesignTokens.bodyFontSize,
+                          fontWeight: shared.UiConfig.fontWeightBold,
+                          fontFamily: shared.DesignTokens.fontFamily,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => persistQuantity(sheetModel.qty + 1),
+                        icon: const Icon(Icons.add_circle_outline),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () async {
+                            Navigator.pop(sheetContext);
+                            final menu = await firestoreService.getMenuItemById(
+                              item.menuItemId,
+                              franchiseId: cart.storeId,
+                            );
+                            if (menu == null || !context.mounted) return;
+
+                            await showDialog<void>(
+                              context: context,
+                              builder: (ctx) => CustomizationModal(
+                                menuItem: menu,
+                                ingredientMetadata: null,
+                                initialQuantity: item.quantity,
+                                initialCustomizations:
+                                    Map<String, dynamic>.from(
+                                  item.customizations,
+                                ),
+                                onConfirm: (customizations, quantity,
+                                    totalPrice) async {
+                                  final updatedItems =
+                                      List<shared.OrderItem>.from(cart.items);
+                                  updatedItems[index] = item.copyWith(
+                                    quantity: quantity,
+                                    price: totalPrice / quantity,
+                                    customizations: Map<String, dynamic>.from(
+                                        customizations),
+                                  );
+                                  final newSubtotal = updatedItems.fold<double>(
+                                    0,
+                                    (sum, i) => sum + i.price * i.quantity,
+                                  );
+                                  await firestoreService.updateCart(
+                                    cart.copyWith(
+                                      items: updatedItems,
+                                      subtotal: newSubtotal,
+                                      total: newSubtotal +
+                                          cart.tax +
+                                          cart.deliveryFee -
+                                          (cart.discount ?? 0.0),
+                                    ),
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                          child: const Text('Edit'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: scheme.error,
+                            side: BorderSide(color: scheme.error),
+                          ),
+                          onPressed: () async {
+                            Navigator.pop(sheetContext);
+                            final updatedItems = List<shared.OrderItem>.from(
+                                sheetModel.workingItems)
+                              ..removeAt(index);
+                            final newSubtotal = updatedItems.fold<double>(
+                              0,
+                              (sum, i) => sum + i.price * i.quantity,
+                            );
+                            await firestoreService.updateCart(
+                              cart.copyWith(
+                                items: updatedItems,
+                                subtotal: newSubtotal,
+                                total: newSubtotal +
+                                    cart.tax +
+                                    cart.deliveryFee -
+                                    (cart.discount ?? 0.0),
+                              ),
+                            );
+                          },
+                          child: Text(loc.removeItem),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            },
+          ),
+        ));
+      },
+    );
+  }
+
   Widget buildCartContent(
     BuildContext context,
     shared.Order cart,
     shared.FirestoreService firestoreService,
     AppLocalizations loc,
     Map<String, Map<String, shared.Customization>> objMap,
+    List<shared.IngredientMetadata> ingredientMetadatas,
   ) {
     final scheme = Theme.of(context).colorScheme;
 
@@ -571,6 +1059,9 @@ class _CartScreenState extends State<CartScreen> {
             itemBuilder: (context, index) {
               final item = cart.items[index];
               final customMap = objMap[item.menuItemId] ?? {};
+              final ingredientNames = {
+                for (final m in ingredientMetadatas) m.id: m.name,
+              };
               return Card(
                 elevation: shared.DesignTokens.cardElevation,
                 margin: const EdgeInsets.symmetric(
@@ -582,6 +1073,17 @@ class _CartScreenState extends State<CartScreen> {
                   side: BorderSide(color: scheme.outline),
                 ),
                 child: ListTile(
+                  onTap: () => _showCartItemSheet(
+                    context: context,
+                    item: item,
+                    index: index,
+                    cart: cart,
+                    firestoreService: firestoreService,
+                    ingredientNames: ingredientNames,
+                    customMap: customMap,
+                    loc: loc,
+                    scheme: scheme,
+                  ),
                   leading: NetworkImageWidget(
                     imageUrl: item.image ?? '',
                     fallbackAsset: shared.UiConfig
@@ -593,7 +1095,9 @@ class _CartScreenState extends State<CartScreen> {
                         BorderRadius.circular(shared.DesignTokens.imageRadius),
                   ),
                   title: Text(
-                    item.name,
+                    item.quantity > 1
+                        ? '${item.name}  ×${item.quantity}'
+                        : item.name,
                     style: TextStyle(
                       fontSize: shared.DesignTokens.bodyFontSize,
                       color: scheme.onSurface,
@@ -602,7 +1106,14 @@ class _CartScreenState extends State<CartScreen> {
                     ),
                   ),
                   subtitle: renderCustomizations(
-                      item.customizations, customMap, loc, scheme),
+                    item.customizations,
+                    customMap,
+                    loc,
+                    scheme,
+                    ingredientNames: {
+                      for (final m in ingredientMetadatas) m.id: m.name,
+                    },
+                  ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [

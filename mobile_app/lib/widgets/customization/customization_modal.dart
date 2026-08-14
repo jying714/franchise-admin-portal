@@ -219,7 +219,12 @@ class _CustomizationModalState extends State<CustomizationModal> {
 
   void _resyncWingsForSize(String? size) {
     if (!_isWings()) return;
-    final splitCount = widget.menuItem.dippingSplits?[size] ?? 2;
+    final splitCount = shared.MenuPricing.lookupSizeMapValue(
+          widget.menuItem,
+          widget.menuItem.dippingSplits,
+          size,
+        ) ??
+        2;
 
     final nextSplits = <String, String?>{};
     for (var i = 0; i < splitCount; i++) {
@@ -615,6 +620,153 @@ class _CustomizationModalState extends State<CustomizationModal> {
       cheesePortions: initCheesePortions,
       pizzaSauceSelections: initPizzaSauceSelections,
     );
+
+    _applyInitialCustomizations(widget.initialCustomizations);
+  }
+
+  /// Hydrate controller + local UI state from a prior cart line map.
+  void _applyInitialCustomizations(Map<String, dynamic>? raw) {
+    if (raw == null || raw.isEmpty) return;
+    final map = Map<String, dynamic>.from(raw);
+
+    final size = map['size']?.toString();
+    if (size != null && size.isNotEmpty) {
+      _selectedSize = size;
+      _controller.setSelectedSize(size);
+      if (_isWings()) _resyncWingsForSize(size);
+    }
+
+    final current = map['currentIngredients'];
+    if (current is List) {
+      _currentIngredients
+        ..clear()
+        ..addAll(current.map((e) => e.toString()).where((e) => e.isNotEmpty));
+      _controller.currentIngredients
+        ..clear()
+        ..addAll(_currentIngredients);
+    }
+
+    final cheeses = map['cheeses'];
+    if (cheeses is List) {
+      _controller.selectedCheeses
+        ..clear()
+        ..addAll(cheeses.map((e) => e.toString()).where((e) => e.isNotEmpty));
+    }
+    final cheeseOpts = map['cheeseOptions'];
+    if (cheeseOpts is Map) {
+      _controller.cheeseIsDouble.clear();
+      _controller.cheesePortions.clear();
+      cheeseOpts.forEach((key, val) {
+        final id = key.toString();
+        if (val is! Map) return;
+        final o = Map<String, dynamic>.from(val);
+        _controller.cheeseIsDouble[id] = o['double'] == true;
+        _controller.cheesePortions[id] =
+            (o['portion']?.toString() ?? 'whole').toLowerCase();
+      });
+    }
+
+    final opts = map['ingredientOptions'];
+    if (opts is Map) {
+      _controller.doubleToppings.clear();
+      _ingredientPortions.clear();
+      opts.forEach((key, val) {
+        final id = key.toString();
+        if (val is! Map) return;
+        final o = Map<String, dynamic>.from(val);
+        _controller.doubleToppings[id] = o['double'] == true;
+        final p = (o['portion']?.toString() ?? 'whole').toLowerCase();
+        if (p == 'left') {
+          _ingredientPortions[id] = Portion.left;
+        } else if (p == 'right') {
+          _ingredientPortions[id] = Portion.right;
+        } else {
+          _ingredientPortions[id] = Portion.whole;
+        }
+      });
+    }
+
+    final addOns = map['selectedAddOns'];
+    if (addOns is List) {
+      _controller.selectedAddOns
+        ..clear()
+        ..addAll(addOns.map((e) => e.toString()).where((e) => e.isNotEmpty));
+    }
+
+    final sauces = map['sauces'];
+    if (sauces is Map) {
+      _controller.selectedSauceCounts
+        ..clear()
+        ..addAll({
+          for (final e in sauces.entries)
+            if (e.value is num) e.key.toString(): (e.value as num).toInt(),
+        });
+    }
+    final dressings = map['dressings'];
+    if (dressings is Map) {
+      _controller.selectedDressingCounts
+        ..clear()
+        ..addAll({
+          for (final e in dressings.entries)
+            if (e.value is num) e.key.toString(): (e.value as num).toInt(),
+        });
+    }
+
+    final sauceList = map['sauce'];
+    if (sauceList is List && _controller.pizzaSauceSelections.isNotEmpty) {
+      final selectedById = <String, Map<String, dynamic>>{};
+      for (final s in sauceList) {
+        if (s is! Map) continue;
+        final id = s['id']?.toString() ?? '';
+        if (id.isEmpty) continue;
+        selectedById[id] = Map<String, dynamic>.from(s);
+      }
+      _controller.pizzaSauceSelections =
+          _controller.pizzaSauceSelections.map((row) {
+        final id = row['id']?.toString() ?? '';
+        final sel = selectedById[id];
+        if (sel == null) {
+          return {...row, 'selected': false};
+        }
+        return {
+          ...row,
+          'selected': true,
+          'portion': sel['portion'] ?? 'whole',
+          'amount': sel['amount'] ?? 'regular',
+        };
+      }).toList();
+    }
+
+    // Radio structural (cook/crust/cut) — keys may be label or lowercase
+    for (final key in ['Cook', 'Crust', 'Cut', 'cook', 'crust', 'cut']) {
+      final v = map[key]?.toString();
+      if (v == null || v.isEmpty) continue;
+      final label = key[0].toUpperCase() + key.substring(1).toLowerCase();
+      _radioSelections[label] = v;
+      _currentIngredients.add(v);
+      _controller.currentIngredients.add(v);
+    }
+
+    final cups = map['sideDipCups'];
+    if (cups is Map) {
+      _controller.sideDipCounts
+        ..clear()
+        ..addAll({
+          for (final e in cups.entries)
+            if (e.value is num) e.key.toString(): (e.value as num).toInt(),
+        });
+      _sideDipCounts = Map<String, int>.from(_controller.sideDipCounts);
+    }
+
+    final dipped = map['dippedSplits'];
+    if (dipped is List && dipped.isNotEmpty) {
+      _selectedDippedSauces = {};
+      for (var i = 0; i < dipped.length; i++) {
+        _selectedDippedSauces['split_$i'] = dipped[i]?.toString();
+      }
+      _isAnyDipped = _selectedDippedSauces.values
+          .any((v) => v != null && v != 'plain' && v!.isNotEmpty);
+    }
   }
 
   @override
@@ -1075,6 +1227,43 @@ class _CustomizationModalState extends State<CustomizationModal> {
           return;
         }
         continue;
+      }
+
+      // Wings: sauces/dips are not on currentIngredients. Toss sauces live in
+      // _selectedDippedSauces (Portion 1..N); side cups are optional counts.
+      if (_isWings()) {
+        final gid = (group['id'] ?? '').toString().toLowerCase();
+        final gl = groupLabel.toLowerCase();
+        final isWingSauce = gid == 'wing_sauce' ||
+            gl == 'sauce' ||
+            (gl.contains('sauce') && !gl.contains('dip'));
+        final isWingDips = gid == 'wing_dips' ||
+            gl.contains('dipping') ||
+            gl == 'dips' ||
+            (gl.contains('dip') && !gl.contains('sauce'));
+
+        if (isWingDips) {
+          // Side cups are optional; priced via freeDipCupCount / upcharge.
+          continue;
+        }
+        if (isWingSauce) {
+          // Plain counts as a filled portion. Require min filled splits.
+          final filled = _selectedDippedSauces.values
+              .where((v) => v != null && v!.trim().isNotEmpty)
+              .length;
+          if (min > 0 && filled < min) {
+            setState(() => _error =
+                loc.pleaseSelectRequired.replaceFirst('{name}', groupLabel));
+            return;
+          }
+          if (max > 0 && filled > max) {
+            setState(() {
+              _error = 'Too many selected for $groupLabel (max $max).';
+            });
+            return;
+          }
+          continue;
+        }
       }
 
       final ids = (group['ingredientIds'] as List<dynamic>? ?? [])

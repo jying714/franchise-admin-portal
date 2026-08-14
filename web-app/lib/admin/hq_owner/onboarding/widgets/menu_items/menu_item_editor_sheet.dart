@@ -317,9 +317,28 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       final dipIds = idsFromGroup('wing_dips');
       final sharedIds = dipIds.isNotEmpty ? dipIds : tossIds;
 
+      final sizes = toSave.sizes ?? const <shared.SizeData>[];
+      final freeCups = Map<String, int>.from(toSave.freeDipCupCount ?? {});
+      final upcharges = Map<String, double>.from(toSave.sideDipUpcharge ?? {});
+      final splits = Map<String, int>.from(toSave.dippingSplits ?? {});
+      for (final s in sizes) {
+        freeCups.putIfAbsent(s.label, () => 2);
+        upcharges.putIfAbsent(s.label, () => 0.95);
+        splits.putIfAbsent(s.label, () => 2);
+      }
+      if (sizes.isNotEmpty) {
+        final labels = sizes.map((s) => s.label).toSet();
+        freeCups.removeWhere((k, _) => !labels.contains(k));
+        upcharges.removeWhere((k, _) => !labels.contains(k));
+        splits.removeWhere((k, _) => !labels.contains(k));
+      }
+
       toSave = toSave.copyWith(
         dippingSauceOptions: tossIds.isNotEmpty ? tossIds : sharedIds,
         sideDipSauceOptions: sharedIds,
+        freeDipCupCount: sizes.isEmpty ? toSave.freeDipCupCount : freeCups,
+        sideDipUpcharge: sizes.isEmpty ? toSave.sideDipUpcharge : upcharges,
+        dippingSplits: sizes.isEmpty ? toSave.dippingSplits : splits,
         // Ensure included/optional stay empty on wings
         includedIngredients: const <Map<String, dynamic>>[],
         optionalAddOns: const <Map<String, dynamic>>[],

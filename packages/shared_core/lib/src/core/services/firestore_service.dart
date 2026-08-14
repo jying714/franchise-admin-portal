@@ -546,7 +546,7 @@ abstract class FirestoreService {
     required String userId,
     required String franchiseId,
     required MenuItem menuItem,
-    required List<Customization> customizations,
+    required Map<String, dynamic> customizations,
     required int quantity,
     required double price,
     String? specialInstructions,

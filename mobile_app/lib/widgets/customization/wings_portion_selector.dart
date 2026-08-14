@@ -33,7 +33,12 @@ class WingsPortionSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final splitCount = menuItem.dippingSplits?[selectedSize] ?? 2;
+    final splitCount = shared.MenuPricing.lookupSizeMapValue(
+          menuItem,
+          menuItem.dippingSplits,
+          selectedSize,
+        ) ??
+        2;
     final sauceOptions =
         (sauceIdsOverride != null && sauceIdsOverride!.isNotEmpty)
             ? sauceIdsOverride!
