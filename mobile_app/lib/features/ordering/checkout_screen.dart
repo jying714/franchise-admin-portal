@@ -61,6 +61,154 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   bool _paymentsRefreshStarted = false;
 
+  Widget _checkoutModLine(
+    ColorScheme scheme,
+    String label,
+    List<String> values,
+  ) {
+    if (values.isEmpty) return const SizedBox.shrink();
+    final shown = values.take(6).toList();
+    final extra = values.length - shown.length;
+    final valueText =
+        extra > 0 ? '${shown.join(', ')} +$extra more' : shown.join(', ');
+    return Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: RichText(
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: '$label ',
+              style: TextStyle(
+                fontSize: shared.DesignTokens.captionFontSize,
+                fontWeight: FontWeight.w600,
+                color: scheme.onSurfaceVariant,
+                fontFamily: shared.DesignTokens.fontFamily,
+              ),
+            ),
+            TextSpan(
+              text: valueText,
+              style: TextStyle(
+                fontSize: shared.DesignTokens.captionFontSize,
+                fontWeight: shared.UiConfig.fontWeightMedium,
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
+                fontFamily: shared.DesignTokens.fontFamily,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _checkoutItemCustomizations(
+    Map<String, dynamic>? customizations,
+    Map<String, String> ingredientNames,
+    ColorScheme scheme,
+  ) {
+    if (customizations == null || customizations.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final map = Map<String, dynamic>.from(customizations);
+    String nameOf(String id) => ingredientNames[id] ?? id;
+    final rows = <Widget>[];
+
+    final size = map['size']?.toString();
+    if (size != null && size.isNotEmpty) {
+      rows.add(_checkoutModLine(scheme, 'Size', [size]));
+    }
+
+    final current = map['currentIngredients'];
+    if (current is List && current.isNotEmpty) {
+      final opts = map['ingredientOptions'];
+      final parts = <String>[];
+      for (final raw in current) {
+        final id = raw.toString();
+        if (id.isEmpty) continue;
+        var label = nameOf(id);
+        if (opts is Map && opts[id] is Map) {
+          final o = Map<String, dynamic>.from(opts[id] as Map);
+          if (o['double'] == true) label = 'Dbl $label';
+          final p = o['portion']?.toString();
+          if (p == 'left') label = '$label (L)';
+          if (p == 'right') label = '$label (R)';
+        }
+        parts.add(label);
+      }
+      if (parts.isNotEmpty)
+        rows.add(_checkoutModLine(scheme, 'Toppings', parts));
+    }
+
+    final cheeses = map['cheeses'];
+    if (cheeses is List && cheeses.isNotEmpty) {
+      final cheeseOpts = map['cheeseOptions'];
+      final parts = <String>[];
+      for (final raw in cheeses) {
+        final id = raw.toString();
+        var label = nameOf(id);
+        if (cheeseOpts is Map && cheeseOpts[id] is Map) {
+          final o = Map<String, dynamic>.from(cheeseOpts[id] as Map);
+          if (o['double'] == true) label = 'Dbl $label';
+        }
+        parts.add(label);
+      }
+      if (parts.isNotEmpty) rows.add(_checkoutModLine(scheme, 'Cheese', parts));
+    }
+
+    final sauce = map['sauce'];
+    if (sauce is List && sauce.isNotEmpty) {
+      final parts = <String>[];
+      for (final s in sauce) {
+        if (s is! Map) continue;
+        final id = s['id']?.toString() ?? '';
+        if (id.isEmpty) continue;
+        parts.add(nameOf(id));
+      }
+      if (parts.isNotEmpty) rows.add(_checkoutModLine(scheme, 'Sauce', parts));
+    }
+
+    final addOns = map['selectedAddOns'];
+    if (addOns is List && addOns.isNotEmpty) {
+      rows.add(_checkoutModLine(
+        scheme,
+        'Extras',
+        addOns.map((e) => nameOf(e.toString())).toList(),
+      ));
+    }
+
+    final dips = map['dippedSplits'];
+    if (dips is List && dips.isNotEmpty) {
+      final parts = dips
+          .map((e) => e.toString())
+          .where((id) => id.isNotEmpty && id != 'plain')
+          .map(nameOf)
+          .toList();
+      if (parts.isNotEmpty) rows.add(_checkoutModLine(scheme, 'Toss', parts));
+    }
+
+    final cups = map['sideDipCups'];
+    if (cups is Map && cups.isNotEmpty) {
+      final parts = cups.entries
+          .where((e) => (e.value is num) && (e.value as num) > 0)
+          .map((e) {
+        final n = (e.value as num).toInt();
+        final name = nameOf(e.key.toString());
+        return n > 1 ? '$name ×$n' : name;
+      }).toList();
+      if (parts.isNotEmpty) rows.add(_checkoutModLine(scheme, 'Dips', parts));
+    }
+
+    if (rows.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: rows,
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _promoController.dispose();
@@ -879,6 +1027,89 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 ],
                               ),
                             ),
+                          // Order summary (pre-pay review) — uses outer `cart`
+                          FutureBuilder<List<shared.IngredientMetadata>>(
+                            future: firestoreService.getAllIngredientMetadata(
+                              provider.currentFranchiseId,
+                            ),
+                            builder: (context, metaSnap) {
+                              final names = <String, String>{
+                                for (final m in metaSnap.data ??
+                                    const <shared.IngredientMetadata>[])
+                                  m.id: m.name,
+                              };
+                              final scheme = Theme.of(context).colorScheme;
+                              return Card(
+                                margin: const EdgeInsets.only(bottom: 16),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      Text(
+                                        'Order summary',
+                                        style: TextStyle(
+                                          fontWeight:
+                                              shared.UiConfig.fontWeightBold,
+                                          fontSize:
+                                              shared.DesignTokens.bodyFontSize,
+                                          fontFamily:
+                                              shared.DesignTokens.fontFamily,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      ...cart.items.map((item) {
+                                        final qtyLabel = item.quantity > 1
+                                            ? '  ×${item.quantity}'
+                                            : '';
+                                        return Padding(
+                                          padding:
+                                              const EdgeInsets.only(bottom: 12),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: Text(
+                                                      '${item.name}$qtyLabel',
+                                                      style: TextStyle(
+                                                        fontWeight: shared
+                                                            .UiConfig
+                                                            .fontWeightMedium,
+                                                        fontFamily: shared
+                                                            .DesignTokens
+                                                            .fontFamily,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    '\$${(item.price * item.quantity).toStringAsFixed(2)}',
+                                                    style: TextStyle(
+                                                      fontFamily: shared
+                                                          .DesignTokens
+                                                          .fontFamily,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              _checkoutItemCustomizations(
+                                                item.customizations,
+                                                names,
+                                                scheme,
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                           Text(
                             localizations.orderType,
                             style: TextStyle(
