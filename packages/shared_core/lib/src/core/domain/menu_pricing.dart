@@ -170,18 +170,22 @@ class MenuPricing {
     String? selectedSize, {
     int? maxFreeFromGroup,
   }) {
-    if (maxFreeFromGroup != null) return maxFreeFromGroup;
-
+    // Item-level freeDressingCount is HQ source of truth for salad (and when set).
+    // Group maxFree is only a fallback when the item field is absent.
     final value = item.freeDressingCount ?? item.freeSauceCount;
     if (value is Map) {
       final key = normalizeSizeKey(item, selectedSize);
       if (key.isNotEmpty && value[key] != null) {
         return (value[key] as num).toInt();
       }
-      return 0;
+      // Map present but no size key — fall through to group / 0
+    } else if (value is int) {
+      return value;
+    } else if (value is num) {
+      return value.toInt();
     }
-    if (value is int) return value;
-    if (value is num) return value.toInt();
+
+    if (maxFreeFromGroup != null) return maxFreeFromGroup;
     return 0;
   }
 

@@ -251,6 +251,8 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       maxFreeSauces: _session.draft.maxFreeSauces,
       maxFreeDressings: _session.draft.maxFreeDressings,
       maxToppings: _session.draft.maxToppings,
+      freeDressingCount: _session.draft.freeDressingCount,
+      extraDressingUpcharge: _session.draft.extraDressingUpcharge,
       dippingSauceOptions: _session.draft.dippingSauceOptions,
       dippingSplits: _session.draft.dippingSplits,
       sideDipSauceOptions: _session.draft.sideDipSauceOptions,
@@ -275,6 +277,9 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       inventoryTracked: _session.draft.inventoryTracked,
       stockCount: _session.draft.stockCount,
       lowStockThreshold: _session.draft.lowStockThreshold,
+      freeDressingCount: _session.draft.freeDressingCount,
+      extraDressingUpcharge: _session.draft.extraDressingUpcharge,
+      maxFreeDressings: _session.draft.maxFreeDressings,
       dippingSauceOptions: _session.draft.dippingSauceOptions,
       dippingSplits: _session.draft.dippingSplits,
       sideDipSauceOptions: _session.draft.sideDipSauceOptions,
@@ -342,6 +347,31 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
         // Ensure included/optional stay empty on wings
         includedIngredients: const <Map<String, dynamic>>[],
         optionalAddOns: const <Map<String, dynamic>>[],
+      );
+    }
+
+    if (profile == shared.MenuProfile.salad) {
+      final groups = List<shared.ModifierGroup>.from(
+        toSave.modifierGroups ?? const [],
+      );
+      final cleaned = [
+        for (final g in groups)
+          if (g.id.toLowerCase() == 'dressings' ||
+              g.label.toLowerCase().contains('dressing'))
+            g.copyWith(
+                maxFree:
+                    null) // or 0 only if copyWith can't clear — prefer omit
+          else
+            g,
+      ];
+      // If copyWith can't set null, rebuild ModifierGroup without maxFree.
+      toSave = toSave.copyWith(
+        freeDressingCount: toSave.freeDressingCount ?? 1,
+        extraDressingUpcharge: toSave.extraDressingUpcharge ?? 0.75,
+        maxFreeDressings: toSave.freeDressingCount is int
+            ? toSave.freeDressingCount as int
+            : (toSave.maxFreeDressings ?? 1),
+        modifierGroups: cleaned,
       );
     }
 
