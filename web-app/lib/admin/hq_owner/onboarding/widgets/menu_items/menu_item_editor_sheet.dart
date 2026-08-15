@@ -504,6 +504,17 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                             dippingSplits: nextSplits,
                             freeDipCupCount: nextFreeCups,
                             sideDipUpcharge: nextUpcharge,
+                            // Salad: item-level free dressings + extra $
+                            freeDressingCount: val == shared.MenuProfile.salad
+                                ? (session.draft.freeDressingCount ?? 1)
+                                : session.draft.freeDressingCount,
+                            extraDressingUpcharge: val ==
+                                    shared.MenuProfile.salad
+                                ? (session.draft.extraDressingUpcharge ?? 0.75)
+                                : session.draft.extraDressingUpcharge,
+                            maxFreeDressings: val == shared.MenuProfile.salad
+                                ? (session.draft.maxFreeDressings ?? 1)
+                                : session.draft.maxFreeDressings,
                             // Wings: no included toppings / optional add-ons
                             includedIngredients: val == shared.MenuProfile.wings
                                 ? <Map<String, dynamic>>[]
@@ -774,6 +785,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                     ),
                     const SizedBox(height: 12),
                     ModifierGroupsIngredientBinder(
+                      franchiseId: widget.franchiseId,
                       groups: session.draft.modifierGroups ??
                           session.draft.effectiveModifierGroups,
                       onChanged: (groups) => session.updateDraft(
@@ -965,6 +977,93 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                                 ),
                               );
                             }),
+                          ],
+                        );
+                      },
+                    ),
+
+                    // Salad: free dressings + extra dressing charge (item-level)
+                    Builder(
+                      builder: (context) {
+                        final profile = (session.draft.menuProfile ??
+                                session.draft.effectiveMenuProfile)
+                            .toLowerCase();
+                        if (profile != shared.MenuProfile.salad) {
+                          return const SizedBox.shrink();
+                        }
+                        final freeRaw = session.draft.freeDressingCount;
+                        final free = freeRaw is int
+                            ? freeRaw
+                            : (freeRaw is Map && freeRaw.isNotEmpty)
+                                ? (freeRaw.values.first as num?)?.toInt() ?? 1
+                                : 1;
+                        final up = session.draft.extraDressingUpcharge ?? 0.75;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const SizedBox(height: 20),
+                            Text(
+                              'Salad dressings',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Bind dressing options on the Dressings modifier group. '
+                              'Free count and extra price apply to this item (same idea as wings cups).',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    key: ValueKey('salad_free_$free'),
+                                    initialValue: '$free',
+                                    decoration: const InputDecoration(
+                                      labelText: 'Free dressings',
+                                      isDense: true,
+                                    ),
+                                    keyboardType: TextInputType.number,
+                                    onChanged: (v) {
+                                      final n = int.tryParse(v.trim()) ?? 0;
+                                      final safe = n < 0 ? 0 : n;
+                                      session.updateDraft(
+                                        session.draft.copyWith(
+                                          freeDressingCount: safe,
+                                          maxFreeDressings: safe,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: TextFormField(
+                                    key: ValueKey('salad_up_$up'),
+                                    initialValue: up.toStringAsFixed(2),
+                                    decoration: const InputDecoration(
+                                      labelText: 'Extra dressing \$',
+                                      prefixText: '\$',
+                                      isDense: true,
+                                    ),
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                    onChanged: (v) {
+                                      final n =
+                                          double.tryParse(v.trim()) ?? 0.0;
+                                      session.updateDraft(
+                                        session.draft.copyWith(
+                                          extraDressingUpcharge:
+                                              n < 0 ? 0.0 : n,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
                         );
                       },

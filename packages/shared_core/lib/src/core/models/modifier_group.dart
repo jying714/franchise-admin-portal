@@ -10,6 +10,7 @@ abstract final class MenuProfile {
   static const String wings = 'wings';
   static const String drinks = 'drinks';
   static const String sub = 'sub';
+  static const String salad = 'salad';
 
   static const List<String> known = [
     standard,
@@ -18,6 +19,7 @@ abstract final class MenuProfile {
     wings,
     drinks,
     sub,
+    salad,
   ];
 }
 
@@ -140,6 +142,10 @@ class ModifierGroup {
   final bool allowsDouble;
   final List<ModifierOption> options;
 
+  /// Franchise ingredient_types doc id used to filter bindable options.
+  /// Salad dressings: set from config/menu_profile_salad.dressingsSourceTypeId.
+  final String? sourceTypeId;
+
   const ModifierGroup({
     required this.id,
     required this.label,
@@ -151,6 +157,7 @@ class ModifierGroup {
     this.allowsPortion = false,
     this.allowsDouble = false,
     this.options = const [],
+    this.sourceTypeId,
   });
 
   bool get isValid =>
@@ -181,6 +188,7 @@ class ModifierGroup {
       allowsPortion: map['allowsPortion'] == true,
       allowsDouble: map['allowsDouble'] == true,
       options: options,
+      sourceTypeId: map['sourceTypeId']?.toString(),
     );
   }
 
@@ -195,6 +203,8 @@ class ModifierGroup {
       if (sortOrder != null) 'sortOrder': sortOrder,
       'allowsPortion': allowsPortion,
       'allowsDouble': allowsDouble,
+      if (sourceTypeId != null && sourceTypeId!.trim().isNotEmpty)
+        'sourceTypeId': sourceTypeId,
       'options': options.map((o) => o.toMap()).toList(),
     };
   }
@@ -210,6 +220,7 @@ class ModifierGroup {
     bool? allowsPortion,
     bool? allowsDouble,
     List<ModifierOption>? options,
+    String? sourceTypeId,
   }) {
     return ModifierGroup(
       id: id ?? this.id,
@@ -222,6 +233,7 @@ class ModifierGroup {
       allowsPortion: allowsPortion ?? this.allowsPortion,
       allowsDouble: allowsDouble ?? this.allowsDouble,
       options: options ?? this.options,
+      sourceTypeId: sourceTypeId ?? this.sourceTypeId,
     );
   }
 }

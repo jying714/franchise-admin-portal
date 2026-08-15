@@ -240,6 +240,8 @@ class MenuPricing {
   }
 
   static bool isSalad(MenuItem item) {
+    final profile = item.effectiveMenuProfile.toLowerCase().trim();
+    if (profile == MenuProfile.salad) return true;
     final cat = item.category.toLowerCase();
     final catId = (item.categoryId ?? '').toLowerCase();
     return cat.contains('salad') || catId.contains('salad');

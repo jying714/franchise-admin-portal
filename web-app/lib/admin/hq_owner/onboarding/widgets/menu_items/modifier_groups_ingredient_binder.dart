@@ -1,18 +1,95 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Binds franchise catalog ingredients onto [ModifierGroup.options].
 /// Structural groups (crust/cook/cut) stay label-only and are not shown.
-class ModifierGroupsIngredientBinder extends StatelessWidget {
+class ModifierGroupsIngredientBinder extends StatefulWidget {
   final List<shared.ModifierGroup> groups;
   final ValueChanged<List<shared.ModifierGroup>> onChanged;
+  final String? franchiseId;
 
   const ModifierGroupsIngredientBinder({
     super.key,
     required this.groups,
     required this.onChanged,
+    this.franchiseId,
   });
+
+  @override
+  State<ModifierGroupsIngredientBinder> createState() =>
+      _ModifierGroupsIngredientBinderState();
+}
+
+class _ModifierGroupsIngredientBinderState
+    extends State<ModifierGroupsIngredientBinder> {
+  bool _defaultHydrated = false;
+
+  Future<void> _persistSaladDressingsType(String? typeId) async {
+    final fid = widget.franchiseId?.trim() ?? '';
+    if (fid.isEmpty || fid == 'unknown') return;
+    final id = typeId?.trim() ?? '';
+    try {
+      await FirebaseFirestore.instance
+          .collection('franchises')
+          .doc(fid)
+          .collection('config')
+          .doc('menu_profile_salad')
+          .set(
+        {
+          if (id.isNotEmpty) 'dressingsSourceTypeId': id,
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+    } catch (_) {
+      // Non-fatal: item still has sourceTypeId
+    }
+  }
+
+  Future<void> _hydrateDressingsDefaultIfNeeded(
+    List<shared.ModifierGroup> normalized,
+  ) async {
+    if (_defaultHydrated) return;
+    final fid = widget.franchiseId?.trim() ?? '';
+    if (fid.isEmpty || fid == 'unknown') {
+      _defaultHydrated = true;
+      return;
+    }
+    final idx = normalized.indexWhere(_isDressingsGroup);
+    if (idx < 0) {
+      _defaultHydrated = true;
+      return;
+    }
+    final existing = normalized[idx].sourceTypeId?.trim() ?? '';
+    if (existing.isNotEmpty) {
+      _defaultHydrated = true;
+      return;
+    }
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('franchises')
+          .doc(fid)
+          .collection('config')
+          .doc('menu_profile_salad')
+          .get();
+      final def =
+          snap.data()?['dressingsSourceTypeId']?.toString().trim() ?? '';
+      _defaultHydrated = true;
+      if (def.isEmpty || !mounted) return;
+      final next = [
+        for (var i = 0; i < normalized.length; i++)
+          if (i == idx)
+            normalized[i].copyWith(sourceTypeId: def)
+          else
+            normalized[i],
+      ];
+      widget.onChanged(next);
+    } catch (_) {
+      _defaultHydrated = true;
+    }
+  }
 
   static bool _isStructuralGroup(shared.ModifierGroup g) {
     final id = g.id.toLowerCase().trim();
@@ -44,11 +121,30 @@ class ModifierGroupsIngredientBinder extends StatelessWidget {
   }
 
   /// Limit chips to ingredients whose type matches the group (Meats → meats, etc.).
+  static bool _isDressingsGroup(shared.ModifierGroup g) {
+    final id = g.id.toLowerCase().trim();
+    final label = g.label.toLowerCase().trim();
+    return id == 'dressings' ||
+        label == 'dressings' ||
+        label.contains('dressing');
+  }
+
   static bool _ingredientMatchesGroup(
     shared.IngredientMetadata ing,
     shared.ModifierGroup group, {
     List<shared.IngredientType> types = const [],
   }) {
+    // Explicit HQ category: only that foundation type (salad dressings, etc.).
+    final sourceTypeId = group.sourceTypeId?.trim() ?? '';
+    if (sourceTypeId.isNotEmpty) {
+      return (ing.typeId ?? '').trim() == sourceTypeId;
+    }
+
+    // Dressings group with no type chosen: show nothing (force category pick).
+    if (_isDressingsGroup(group)) {
+      return false;
+    }
+
     final gLabel = group.label.toLowerCase().trim();
     final gId = group.id.toLowerCase().trim();
 
@@ -123,11 +219,15 @@ class ModifierGroupsIngredientBinder extends StatelessWidget {
 
     // Work off a normalized copy with stable ids (fixes empty-id collision).
     final normalized = <shared.ModifierGroup>[
-      for (var i = 0; i < groups.length; i++)
-        groups[i].id.trim().isEmpty
-            ? groups[i].copyWith(id: _stableId(groups[i], i))
-            : groups[i],
+      for (var i = 0; i < widget.groups.length; i++)
+        widget.groups[i].id.trim().isEmpty
+            ? widget.groups[i].copyWith(id: _stableId(widget.groups[i], i))
+            : widget.groups[i],
     ];
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _hydrateDressingsDefaultIfNeeded(normalized);
+    });
 
     final bindableIndexes = <int>[
       for (var i = 0; i < normalized.length; i++)
@@ -177,6 +277,55 @@ class ModifierGroupsIngredientBinder extends StatelessWidget {
                     group.label,
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
+                  if (_isDressingsGroup(group)) ...[
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      value: () {
+                        final id = group.sourceTypeId?.trim() ?? '';
+                        if (id.isEmpty) return null;
+                        final ok = types.any((t) => t.id == id);
+                        return ok ? id : null;
+                      }(),
+                      decoration: const InputDecoration(
+                        labelText: 'Dressings category (ingredient type)',
+                        isDense: true,
+                        border: OutlineInputBorder(),
+                        helperText:
+                            'Applies to this item and becomes the default for new salads.',
+                      ),
+                      items: [
+                        const DropdownMenuItem<String>(
+                          value: null,
+                          child: Text('Select type…'),
+                        ),
+                        ...types.map(
+                          (t) => DropdownMenuItem<String>(
+                            value: t.id,
+                            child: Text(t.name),
+                          ),
+                        ),
+                      ],
+                      onChanged: (typeId) {
+                        final next = [
+                          for (var i = 0; i < normalized.length; i++)
+                            if (i == index)
+                              normalized[i].copyWith(
+                                sourceTypeId: typeId,
+                                options: typeId ==
+                                        (normalized[i].sourceTypeId?.trim() ??
+                                            '')
+                                    ? normalized[i].options
+                                    : const <shared.ModifierOption>[],
+                              )
+                            else
+                              normalized[i],
+                        ];
+                        widget.onChanged(next);
+                        _persistSaladDressingsType(typeId);
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                  ],
                   if (_isWingsGroup(group)) ...[
                     const SizedBox(height: 4),
                     Text(
@@ -210,7 +359,7 @@ class ModifierGroupsIngredientBinder extends StatelessWidget {
                                   else
                                     normalized[i],
                               ];
-                              onChanged(next);
+                              widget.onChanged(next);
                             },
                           ),
                         ),
@@ -235,44 +384,50 @@ class ModifierGroupsIngredientBinder extends StatelessWidget {
                                   else
                                     normalized[i],
                               ];
-                              onChanged(next);
+                              widget.onChanged(next);
                             },
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: TextFormField(
-                            key: ValueKey('maxFree_${group.id}_$index'),
-                            initialValue: '${group.maxFree ?? 0}',
-                            decoration: const InputDecoration(
-                              labelText: 'Max free',
-                              helperText: 'Then size topping upcharge',
-                              isDense: true,
-                              border: OutlineInputBorder(),
+                        if (!_isDressingsGroup(group)) ...[
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextFormField(
+                              key: ValueKey('maxFree_${group.id}_$index'),
+                              initialValue: '${group.maxFree ?? 0}',
+                              decoration: const InputDecoration(
+                                labelText: 'Max free',
+                                helperText: 'Then size topping upcharge',
+                                isDense: true,
+                                border: OutlineInputBorder(),
+                              ),
+                              keyboardType: TextInputType.number,
+                              onChanged: (v) {
+                                final n = int.tryParse(v.trim());
+                                if (n == null || n < 0) return;
+                                final next = [
+                                  for (var i = 0; i < normalized.length; i++)
+                                    if (i == index)
+                                      normalized[i].copyWith(maxFree: n)
+                                    else
+                                      normalized[i],
+                                ];
+                                widget.onChanged(next);
+                              },
                             ),
-                            keyboardType: TextInputType.number,
-                            onChanged: (v) {
-                              final n = int.tryParse(v.trim());
-                              if (n == null || n < 0) return;
-                              final next = [
-                                for (var i = 0; i < normalized.length; i++)
-                                  if (i == index)
-                                    normalized[i].copyWith(maxFree: n)
-                                  else
-                                    normalized[i],
-                              ];
-                              onChanged(next);
-                            },
                           ),
-                        ),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 8),
                   ],
                   if (chipsForGroup.isEmpty)
-                    const Text(
-                      'No matching ingredients for this group type.',
-                      style: TextStyle(fontSize: 12),
+                    Text(
+                      _isDressingsGroup(group) &&
+                              (group.sourceTypeId == null ||
+                                  group.sourceTypeId!.trim().isEmpty)
+                          ? 'Select a dressings category above to load ingredients.'
+                          : 'No matching ingredients for this group type.',
+                      style: const TextStyle(fontSize: 12),
                     )
                   else
                     Wrap(
@@ -316,7 +471,7 @@ class ModifierGroupsIngredientBinder extends StatelessWidget {
                                     );
                                   }(),
                             ];
-                            onChanged(next);
+                            widget.onChanged(next);
                           },
                         );
                       }).toList(),

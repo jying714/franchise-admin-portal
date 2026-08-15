@@ -55,6 +55,8 @@ abstract final class MenuProfileTemplates {
         return _drinks();
       case MenuProfile.sub:
         return _sub();
+      case MenuProfile.salad:
+        return _salad();
       case MenuProfile.standard:
       default:
         return _standard();
@@ -101,6 +103,23 @@ abstract final class MenuProfileTemplates {
             label: 'Crispy',
           ),
         ],
+      ),
+    ];
+  }
+
+  /// Salad: dressings multi-select; free count / extra $ live on MenuItem
+  /// (freeDressingCount + extraDressingUpcharge), same pattern as wings cups.
+  static List<ModifierGroup> _salad() {
+    return [
+      ModifierGroup(
+        id: 'dressings',
+        label: 'Dressings',
+        selectMode: ModifierSelectMode.multi,
+        min: 0,
+        max: 4,
+        maxFree: 1,
+        sortOrder: 0,
+        options: const [],
       ),
     ];
   }
