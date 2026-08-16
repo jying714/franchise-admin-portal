@@ -4,7 +4,7 @@ import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
-class MultiIngredientSelector extends StatelessWidget {
+class MultiIngredientSelector extends StatefulWidget {
   final String title;
   final List<shared.IngredientReference> selected;
   final ValueChanged<List<shared.IngredientReference>> onChanged;
@@ -23,8 +23,16 @@ class MultiIngredientSelector extends StatelessWidget {
   });
 
   @override
+  State<MultiIngredientSelector> createState() =>
+      _MultiIngredientSelectorState();
+}
+
+class _MultiIngredientSelectorState extends State<MultiIngredientSelector> {
+  /// Group key = display type name (same as before).
+  String? _activeTypeName;
+
+  @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
     final ingredientProvider =
         context.watch<shared.IngredientMetadataProvider>();
     final typeProvider = context.watch<shared.IngredientTypeProvider>();
@@ -38,57 +46,102 @@ class MultiIngredientSelector extends StatelessWidget {
       );
     }
 
-    // Decision 10: Cook/Cut/Crust are modifier options, not catalog ingredients.
     final foodOnly = metadataList.where((ingredient) {
-      final typeName = ingredient.type;
       return !shared.StructuralIngredientTypes.isStructuralType(
         typeId: ingredient.typeId,
-        typeName: typeName,
+        typeName: ingredient.type,
         types: types,
       );
     }).toList();
 
     if (foodOnly.isEmpty) {
-      return _EmptyIngredientsWarning(message: warningMessage);
+      return _EmptyIngredientsWarning(message: widget.warningMessage);
     }
 
     final Map<String, List<shared.IngredientMetadata>> groupedByType = {};
     for (final ingredient in foodOnly) {
-      groupedByType
-          .putIfAbsent(
-            ingredient.type ?? 'Other',
-            () => [],
-          )
-          .add(ingredient);
+      // Prefer foundation type name when typeId resolves.
+      var label = (ingredient.type ?? '').trim();
+      final tid = (ingredient.typeId ?? '').trim();
+      if (tid.isNotEmpty) {
+        for (final t in types) {
+          if (t.id == tid && t.name.trim().isNotEmpty) {
+            label = t.name.trim();
+            break;
+          }
+        }
+      }
+      if (label.isEmpty) label = 'Other';
+      groupedByType.putIfAbsent(label, () => []).add(ingredient);
     }
+
+    final typeNames = groupedByType.keys.toList()
+      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+
+    final active =
+        (_activeTypeName != null && groupedByType.containsKey(_activeTypeName))
+            ? _activeTypeName!
+            : typeNames.first;
+
+    if (_activeTypeName != active) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _activeTypeName = active);
+      });
+    }
+
+    final selectedInActive = widget.selected.where((s) {
+      final ings = groupedByType[active] ?? const [];
+      return ings.any((i) => i.id == s.id);
+    }).length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: shared.UiConfig.titleStyle,
-        ),
+        Text(widget.title, style: shared.UiConfig.titleStyle),
         const SizedBox(height: 8),
-        ...groupedByType.entries.map((entry) {
-          final typeName = entry.key;
-          final ingredients = entry.value;
-
-          return _IngredientTypeGroup(
-            typeName: typeName,
-            ingredients: ingredients,
-            selected: selected,
-            onChanged: onChanged,
-          );
-        }),
-        if (isRequired && selected.isEmpty)
+        if (widget.selected.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.only(top: 4),
+            padding: const EdgeInsets.only(bottom: 8),
             child: Text(
-              loc.fieldRequired ?? 'This field is required',
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
+              '${widget.selected.length} selected'
+              '${widget.selected.isNotEmpty ? ': ${widget.selected.map((e) => e.name).join(', ')}' : ''}',
+              style: Theme.of(context).textTheme.bodySmall,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
+        DropdownButtonFormField<String>(
+          value: active,
+          decoration: const InputDecoration(
+            labelText: 'Ingredient type',
+            isDense: true,
+            border: OutlineInputBorder(),
+          ),
+          items: typeNames
+              .map(
+                (name) => DropdownMenuItem<String>(
+                  value: name,
+                  child: Text(name),
+                ),
+              )
+              .toList(),
+          onChanged: (v) {
+            if (v == null) return;
+            setState(() => _activeTypeName = v);
+          },
+        ),
+        const SizedBox(height: 8),
+        Text(
+          '$selectedInActive selected in $active',
+          style: Theme.of(context).textTheme.labelMedium,
+        ),
+        const SizedBox(height: 6),
+        _IngredientTypeGroup(
+          typeName: active,
+          ingredients: groupedByType[active] ?? const [],
+          selected: widget.selected,
+          onChanged: widget.onChanged,
+        ),
       ],
     );
   }

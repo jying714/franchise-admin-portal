@@ -558,104 +558,8 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                         );
                       },
                     ),
-                    const SizedBox(height: 16),
-                    Text('Template',
-                        style: Theme.of(context).textTheme.titleSmall),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Optional starting point. Applying a template fills fields you can still edit.',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 8),
-                    MenuItemTemplateDropdown(
-                      selectedTemplateId:
-                          (session.draft.templateRefs?.isNotEmpty ?? false)
-                              ? session.draft.templateRefs!.first
-                              : null,
-                      onTemplateApplied: (template) {
-                        final categories = Provider.of<shared.CategoryProvider>(
-                          context,
-                          listen: false,
-                        ).categories;
-                        final ingredients =
-                            Provider.of<shared.IngredientMetadataProvider>(
-                          context,
-                          listen: false,
-                        ).allIngredients;
-                        final types =
-                            Provider.of<shared.IngredientTypeProvider>(
-                          context,
-                          listen: false,
-                        ).ingredientTypes;
-
-                        var updated = applyTemplateToDraft(
-                          session.draft,
-                          template,
-                          allIngredients: ingredients,
-                        );
-
-                        final issues =
-                            shared.MenuItemSchemaIssue.detectAllIssues(
-                          menuItem: updated,
-                          categories: categories,
-                          ingredients: ingredients,
-                          ingredientTypes: types,
-                        );
-
-                        for (final issue in issues) {
-                          if (issue.severity != 'error') continue;
-                          String? mapped;
-                          switch (issue.type) {
-                            case shared.MenuItemSchemaIssueType.category:
-                              mapped = categories
-                                  .where((c) =>
-                                      c.id == issue.missingReference ||
-                                      c.name.trim().toLowerCase() ==
-                                          (issue.label ??
-                                                  issue.missingReference)
-                                              .trim()
-                                              .toLowerCase())
-                                  .map((c) => c.id)
-                                  .cast<String?>()
-                                  .firstWhere((_) => true, orElse: () => null);
-                              break;
-                            case shared.MenuItemSchemaIssueType.ingredient:
-                              mapped = ingredients
-                                  .where((ing) =>
-                                      ing.id == issue.missingReference ||
-                                      ing.name.trim().toLowerCase() ==
-                                          (issue.label ??
-                                                  issue.missingReference)
-                                              .trim()
-                                              .toLowerCase())
-                                  .map((ing) => ing.id)
-                                  .cast<String?>()
-                                  .firstWhere((_) => true, orElse: () => null);
-                              break;
-                            case shared.MenuItemSchemaIssueType.ingredientType:
-                              mapped = types
-                                  .where((t) =>
-                                      t.id == issue.missingReference ||
-                                      t.name.trim().toLowerCase() ==
-                                          (issue.label ??
-                                                  issue.missingReference)
-                                              .trim()
-                                              .toLowerCase())
-                                  .map((t) => t.id)
-                                  .cast<String?>()
-                                  .firstWhere((_) => true, orElse: () => null);
-                              break;
-                            case shared.MenuItemSchemaIssueType.missingField:
-                              break;
-                          }
-                          if (mapped != null && mapped.isNotEmpty) {
-                            updated = repairMenuItem(updated, issue, mapped);
-                          }
-                        }
-
-                        session.updateDraft(updated);
-                      },
-                    ),
+                    // Legacy MenuItemTemplateDropdown hidden until templates are
+                    // re-seeded for Decision 10 profiles + modifier groups.
                     const Divider(height: 32),
 
                     // ── 1. Basics ─────────────────────────────────────
@@ -785,51 +689,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                       ),
                     ),
 
-                    const Divider(height: 32),
-
-                    Builder(
-                      builder: (context) {
-                        final profile = (session.draft.menuProfile ??
-                                session.draft.effectiveMenuProfile)
-                            .toLowerCase();
-                        final isWings = profile == shared.MenuProfile.wings;
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(
-                              isWings ? 'Wings sauces' : 'Modifiers',
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              isWings
-                                  ? 'Bind sauces from the catalog (type sauces). '
-                                      'Sauce = toss / flavor portions (max 2). '
-                                      'Dipping cups = side cups (same sauce list is fine). '
-                                      'Free cups and extra-cup price are set per size below.'
-                                  : 'Bind catalog ingredients. Crust/Cook/Cut are label-only. '
-                                      'Optional toppings = multi groups (min 0); extras use size topping upcharge.',
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    ModifierGroupsIngredientBinder(
-                      franchiseId: widget.franchiseId,
-                      groups: session.draft.modifierGroups ??
-                          session.draft.effectiveModifierGroups,
-                      onChanged: (groups) => session.updateDraft(
-                        session.draft.copyWith(modifierGroups: groups),
-                      ),
-                    ),
-
-                    const Divider(height: 32),
-
-                    // ── 3. Item inventory ─────────────────────────────
-                    Text('Item inventory',
-                        style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 16),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       value: session.draft.inventoryTracked,
@@ -843,29 +703,55 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                       ),
                       title: const Text('Track inventory on this item'),
                       subtitle: const Text(
-                        'Count-tracked products only. Topping OOS stays on ingredients.',
+                        'When on, stock count is enforced for this SKU',
                       ),
                     ),
-                    if (session.draft.inventoryTracked)
+                    if (session.draft.inventoryTracked) ...[
+                      const SizedBox(height: 8),
                       TextFormField(
-                        key: ValueKey(
-                          'stock_${session.draft.id}_${session.draft.inventoryTracked}',
-                        ),
+                        key: ValueKey('stock_${session.draft.stockCount ?? 0}'),
                         initialValue: '${session.draft.stockCount ?? 0}',
                         decoration: const InputDecoration(
                           labelText: 'Stock count',
+                          isDense: true,
                         ),
                         keyboardType: TextInputType.number,
-                        onChanged: (v) => session.updateDraft(
-                          session.draft.copyWith(
-                            stockCount: int.tryParse(v.trim()) ?? 0,
-                          ),
-                        ),
+                        onChanged: (v) {
+                          final n = int.tryParse(v.trim());
+                          if (n == null || n < 0) return;
+                          session.updateDraft(
+                            session.draft.copyWith(stockCount: n),
+                          );
+                        },
                       ),
+                      // Keep any lowStockThreshold field that already exists
+                      // in the old inventory block (copy it here if present).
+                    ],
 
+                    const SizedBox(height: 16),
+                    Text('Image',
+                        style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Customer-facing photo for this item.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 8),
+                    ImageUploadField(
+                      initialValue: session.draft.image?.isNotEmpty == true
+                          ? session.draft.image
+                          : (session.draft.imageUrl.isNotEmpty
+                              ? session.draft.imageUrl
+                              : ''),
+                      onChanged: (url) => session.updateDraft(
+                        session.draft.copyWith(image: url ?? ''),
+                      ),
+                      onSaved: (url) => session.updateDraft(
+                        session.draft.copyWith(image: url ?? ''),
+                      ),
+                    ),
                     const Divider(height: 32),
 
-                    // ── 4. Presentation ───────────────────────────────
                     Text('Sizes & pricing',
                         style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 4),
@@ -1208,7 +1094,46 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
 
                     const Divider(height: 32),
 
-                    // AFTER
+                    Builder(
+                      builder: (context) {
+                        final profile = (session.draft.menuProfile ??
+                                session.draft.effectiveMenuProfile)
+                            .toLowerCase();
+                        final isWings = profile == shared.MenuProfile.wings;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              isWings ? 'Wings sauces' : 'Modifiers',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              isWings
+                                  ? 'Bind sauces from the catalog (type sauces). '
+                                      'Sauce = toss / flavor portions (max 2). '
+                                      'Dipping cups = side cups (same sauce list is fine). '
+                                      'Free cups and extra-cup price are set per size above.'
+                                  : 'Bind catalog ingredients. Crust/Cook/Cut are label-only. '
+                                      'Optional toppings = multi groups (min 0); extras use size topping upcharge.',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    ModifierGroupsIngredientBinder(
+                      franchiseId: widget.franchiseId,
+                      groups: session.draft.modifierGroups ??
+                          session.draft.effectiveModifierGroups,
+                      onChanged: (groups) => session.updateDraft(
+                        session.draft.copyWith(modifierGroups: groups),
+                      ),
+                    ),
+
+                    const Divider(height: 32),
+
                     // ── Included + optional ingredients ───────────────
                     // Wings: no included toppings / optional add-ons (Build your wings + dips only)
                     Builder(
@@ -1222,194 +1147,154 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Text('Included toppings',
-                                style: Theme.of(context).textTheme.titleMedium),
-                            const SizedBox(height: 4),
-                            Text(
-                              'What starts on the item (Current Toppings on mobile). '
-                              'Customers can remove these; re-adding does not upcharge.',
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                            const SizedBox(height: 8),
-                            MultiIngredientSelector(
-                              title: 'Included (on by default)',
-                              selected: _refsFromMaps(
-                                  session.draft.includedIngredients),
-                              allowEmpty: true,
-                              onChanged: (refs) => session.updateDraft(
-                                session.draft.copyWith(
-                                  includedIngredients: _mapsFromRefs(refs),
+                            Card(
+                              margin: EdgeInsets.zero,
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    Text(
+                                      'Included toppings',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Starts on the item. Customer can remove; re-add stays free.',
+                                      style:
+                                          Theme.of(context).textTheme.bodySmall,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    MultiIngredientSelector(
+                                      title: 'Included (on by default)',
+                                      selected: _refsFromMaps(
+                                          session.draft.includedIngredients),
+                                      allowEmpty: true,
+                                      onChanged: (refs) => session.updateDraft(
+                                        session.draft.copyWith(
+                                          includedIngredients:
+                                              _mapsFromRefs(refs),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 24),
-                            Text('Optional add-ons',
-                                style: Theme.of(context).textTheme.titleMedium),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Extra ingredients not in modifier groups. '
-                              'Extras use size topping price unless an override is set. '
-                              'Pizza meats/veggies/cheeses use Modifier groups + size topping price.',
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-
-                            const SizedBox(height: 8),
-                            MultiIngredientSelector(
-                              title: 'Optional add-ons',
-                              selected:
-                                  _refsFromMaps(session.draft.optionalAddOns),
-                              allowEmpty: true,
-                              onChanged: (refs) {
-                                session.updateDraft(
-                                  session.draft.copyWith(
-                                    optionalAddOns: _mapsFromRefs(refs),
-                                  ),
-                                );
-                              },
-                            ),
-                            // Per-addon price editor (only when at least one is selected)
-                            Builder(
-                              builder: (context) {
-                                final profile = (session.draft.menuProfile ??
-                                        session.draft.effectiveMenuProfile)
-                                    .toLowerCase();
-                                // Pizza/calzone: size toppingPrice owns extras
-                                if (profile == shared.MenuProfile.pizza ||
-                                    profile == shared.MenuProfile.calzone ||
-                                    profile == shared.MenuProfile.wings) {
-                                  return const SizedBox.shrink();
-                                }
-                                final selected =
-                                    _refsFromMaps(session.draft.optionalAddOns);
-                                if (selected.isEmpty) {
-                                  return const SizedBox.shrink();
-                                }
-                                final overrides =
-                                    List<Map<String, dynamic>>.from(
-                                  session.draft.optionalAddonPriceOverrides ??
-                                      const [],
-                                );
-                                final types =
-                                    Provider.of<shared.IngredientTypeProvider>(
-                                  context,
-                                  listen: false,
-                                ).ingredientTypes;
-                                final allIng = Provider.of<
-                                    shared.IngredientMetadataProvider>(
-                                  context,
-                                  listen: false,
-                                ).allIngredients;
-
-                                return Padding(
-                                  padding: const EdgeInsets.only(top: 12),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      Text(
-                                        'Optional add-on pricing',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleSmall,
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Size topping price is the house extra. '
-                                        'Add overrides only for premium ingredients.',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall,
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Align(
-                                        alignment: Alignment.centerLeft,
-                                        child: TextButton.icon(
-                                          onPressed: () {
-                                            final next = [
-                                              ...overrides,
-                                              {
-                                                'ingredientId': '',
-                                                'typeId': '',
-                                                'price': 0.0,
-                                              },
-                                            ];
-                                            session.updateDraft(
-                                              session.draft.copyWith(
-                                                optionalAddonPriceOverrides:
-                                                    next,
-                                              ),
-                                            );
-                                          },
-                                          icon: const Icon(Icons.add, size: 18),
-                                          label:
-                                              const Text('Add price override'),
-                                        ),
-                                      ),
-                                      ...List.generate(overrides.length, (i) {
-                                        final row = overrides[i];
-                                        final typeId =
-                                            row['typeId']?.toString() ?? '';
-                                        final ingId =
-                                            row['ingredientId']?.toString() ??
-                                                '';
-                                        final price = (row['price'] as num?)
-                                                ?.toDouble() ??
-                                            0.0;
-                                        final typeOk =
-                                            types.any((t) => t.id == typeId);
-                                        final ingsForType = allIng
-                                            .where((ing) =>
-                                                typeId.isEmpty ||
-                                                (ing.typeId ?? '') == typeId)
-                                            .toList();
-                                        final selectedBound =
-                                            selected.map((r) => r.id).toSet();
-                                        final ings = ingsForType
-                                            .where((ing) =>
-                                                selectedBound
-                                                    .contains(ing.id) ||
-                                                ing.id == ingId)
-                                            .toList();
+                            const SizedBox(height: 16),
+                            Card(
+                              margin: EdgeInsets.zero,
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    Text(
+                                      'Optional add-ons',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Extras use size topping price unless an override is set below.',
+                                      style:
+                                          Theme.of(context).textTheme.bodySmall,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    MultiIngredientSelector(
+                                      title: 'Optional add-ons',
+                                      selected: _refsFromMaps(
+                                          session.draft.optionalAddOns),
+                                      allowEmpty: true,
+                                      onChanged: (refs) {
+                                        session.updateDraft(
+                                          session.draft.copyWith(
+                                            optionalAddOns: _mapsFromRefs(refs),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    // Keep the existing optional pricing
+                                    // Builder (overrides) as the next child
+                                    // inside this Card if it currently sits
+                                    // immediately below MultiIngredientSelector.
+                                    // Per-addon price editor (only when at least one is selected)
+                                    Builder(
+                                      builder: (context) {
+                                        final profile =
+                                            (session.draft.menuProfile ??
+                                                    session.draft
+                                                        .effectiveMenuProfile)
+                                                .toLowerCase();
+                                        // Pizza/calzone: size toppingPrice owns extras
+                                        if (profile ==
+                                                shared.MenuProfile.pizza ||
+                                            profile ==
+                                                shared.MenuProfile.calzone ||
+                                            profile ==
+                                                shared.MenuProfile.wings) {
+                                          return const SizedBox.shrink();
+                                        }
+                                        final selected = _refsFromMaps(
+                                            session.draft.optionalAddOns);
+                                        if (selected.isEmpty) {
+                                          return const SizedBox.shrink();
+                                        }
+                                        final overrides =
+                                            List<Map<String, dynamic>>.from(
+                                          session.draft
+                                                  .optionalAddonPriceOverrides ??
+                                              const [],
+                                        );
+                                        final types = Provider.of<
+                                            shared.IngredientTypeProvider>(
+                                          context,
+                                          listen: false,
+                                        ).ingredientTypes;
+                                        final allIng = Provider.of<
+                                            shared.IngredientMetadataProvider>(
+                                          context,
+                                          listen: false,
+                                        ).allIngredients;
 
                                         return Padding(
                                           padding:
-                                              const EdgeInsets.only(bottom: 8),
-                                          child: Row(
+                                              const EdgeInsets.only(top: 12),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.stretch,
                                             children: [
-                                              Expanded(
-                                                child: DropdownButtonFormField<
-                                                    String>(
-                                                  value: typeOk ? typeId : null,
-                                                  decoration:
-                                                      const InputDecoration(
-                                                    labelText: 'Type',
-                                                    isDense: true,
-                                                  ),
-                                                  items: [
-                                                    const DropdownMenuItem(
-                                                      value: null,
-                                                      child: Text('Type…'),
-                                                    ),
-                                                    ...types.map(
-                                                      (t) => DropdownMenuItem(
-                                                        value: t.id,
-                                                        child: Text(t.name),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                  onChanged: (v) {
+                                              Text(
+                                                'Optional add-on pricing',
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .titleSmall,
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                'Size topping price is the house extra. '
+                                                'Add overrides only for premium ingredients.',
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodySmall,
+                                              ),
+                                              const SizedBox(height: 8),
+                                              Align(
+                                                alignment: Alignment.centerLeft,
+                                                child: TextButton.icon(
+                                                  onPressed: () {
                                                     final next = [
-                                                      for (var j = 0;
-                                                          j < overrides.length;
-                                                          j++)
-                                                        if (j == i)
-                                                          {
-                                                            ...overrides[j],
-                                                            'typeId': v ?? '',
-                                                            'ingredientId': '',
-                                                          }
-                                                        else
-                                                          overrides[j],
+                                                      ...overrides,
+                                                      {
+                                                        'ingredientId': '',
+                                                        'typeId': '',
+                                                        'price': 0.0,
+                                                      },
                                                     ];
                                                     session.updateDraft(
                                                       session.draft.copyWith(
@@ -1418,125 +1303,249 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                                                       ),
                                                     );
                                                   },
+                                                  icon: const Icon(Icons.add,
+                                                      size: 18),
+                                                  label: const Text(
+                                                      'Add price override'),
                                                 ),
                                               ),
-                                              const SizedBox(width: 8),
-                                              Expanded(
-                                                child: DropdownButtonFormField<
-                                                    String>(
-                                                  value: ings.any(
-                                                          (e) => e.id == ingId)
-                                                      ? ingId
-                                                      : null,
-                                                  decoration:
-                                                      const InputDecoration(
-                                                    labelText: 'Ingredient',
-                                                    isDense: true,
-                                                  ),
-                                                  items: [
-                                                    const DropdownMenuItem(
-                                                      value: null,
-                                                      child: Text('Item…'),
-                                                    ),
-                                                    ...ings.map(
-                                                      (ing) => DropdownMenuItem(
-                                                        value: ing.id,
-                                                        child: Text(ing.name),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                  onChanged: (v) {
-                                                    final next = [
-                                                      for (var j = 0;
-                                                          j < overrides.length;
-                                                          j++)
-                                                        if (j == i)
-                                                          {
-                                                            ...overrides[j],
-                                                            'ingredientId':
-                                                                v ?? '',
-                                                          }
-                                                        else
-                                                          overrides[j],
-                                                    ];
-                                                    session.updateDraft(
-                                                      session.draft.copyWith(
-                                                        optionalAddonPriceOverrides:
-                                                            next,
-                                                      ),
-                                                    );
-                                                  },
-                                                ),
-                                              ),
-                                              const SizedBox(width: 8),
-                                              SizedBox(
-                                                width: 100,
-                                                child: TextFormField(
-                                                  key: ValueKey(
-                                                      'ovr_${i}_${ingId}_$price'),
-                                                  initialValue:
-                                                      price.toStringAsFixed(2),
-                                                  decoration:
-                                                      const InputDecoration(
-                                                    labelText: '\$',
-                                                    isDense: true,
-                                                  ),
-                                                  keyboardType:
-                                                      const TextInputType
-                                                          .numberWithOptions(
-                                                          decimal: true),
-                                                  onChanged: (v) {
-                                                    final n = double.tryParse(
-                                                            v.trim()) ??
+                                              ...List.generate(overrides.length,
+                                                  (i) {
+                                                final row = overrides[i];
+                                                final typeId =
+                                                    row['typeId']?.toString() ??
+                                                        '';
+                                                final ingId =
+                                                    row['ingredientId']
+                                                            ?.toString() ??
+                                                        '';
+                                                final price =
+                                                    (row['price'] as num?)
+                                                            ?.toDouble() ??
                                                         0.0;
-                                                    final next = [
-                                                      for (var j = 0;
-                                                          j < overrides.length;
-                                                          j++)
-                                                        if (j == i)
-                                                          {
-                                                            ...overrides[j],
-                                                            'price':
-                                                                n < 0 ? 0.0 : n,
-                                                          }
-                                                        else
-                                                          overrides[j],
-                                                    ];
-                                                    session.updateDraft(
-                                                      session.draft.copyWith(
-                                                        optionalAddonPriceOverrides:
-                                                            next,
+                                                final typeOk = types
+                                                    .any((t) => t.id == typeId);
+                                                final ingsForType = allIng
+                                                    .where((ing) =>
+                                                        typeId.isEmpty ||
+                                                        (ing.typeId ?? '') ==
+                                                            typeId)
+                                                    .toList();
+                                                final selectedBound = selected
+                                                    .map((r) => r.id)
+                                                    .toSet();
+                                                final ings = ingsForType
+                                                    .where((ing) =>
+                                                        selectedBound
+                                                            .contains(ing.id) ||
+                                                        ing.id == ingId)
+                                                    .toList();
+
+                                                return Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          bottom: 8),
+                                                  child: Row(
+                                                    children: [
+                                                      Expanded(
+                                                        child:
+                                                            DropdownButtonFormField<
+                                                                String>(
+                                                          value: typeOk
+                                                              ? typeId
+                                                              : null,
+                                                          decoration:
+                                                              const InputDecoration(
+                                                            labelText: 'Type',
+                                                            isDense: true,
+                                                          ),
+                                                          items: [
+                                                            const DropdownMenuItem(
+                                                              value: null,
+                                                              child:
+                                                                  Text('Type…'),
+                                                            ),
+                                                            ...types.map(
+                                                              (t) =>
+                                                                  DropdownMenuItem(
+                                                                value: t.id,
+                                                                child: Text(
+                                                                    t.name),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                          onChanged: (v) {
+                                                            final next = [
+                                                              for (var j = 0;
+                                                                  j <
+                                                                      overrides
+                                                                          .length;
+                                                                  j++)
+                                                                if (j == i)
+                                                                  {
+                                                                    ...overrides[
+                                                                        j],
+                                                                    'typeId':
+                                                                        v ?? '',
+                                                                    'ingredientId':
+                                                                        '',
+                                                                  }
+                                                                else
+                                                                  overrides[j],
+                                                            ];
+                                                            session.updateDraft(
+                                                              session.draft
+                                                                  .copyWith(
+                                                                optionalAddonPriceOverrides:
+                                                                    next,
+                                                              ),
+                                                            );
+                                                          },
+                                                        ),
                                                       ),
-                                                    );
-                                                  },
-                                                ),
-                                              ),
-                                              IconButton(
-                                                icon: const Icon(
-                                                    Icons.delete_outline),
-                                                onPressed: () {
-                                                  final next = [
-                                                    for (var j = 0;
-                                                        j < overrides.length;
-                                                        j++)
-                                                      if (j != i) overrides[j],
-                                                  ];
-                                                  session.updateDraft(
-                                                    session.draft.copyWith(
-                                                      optionalAddonPriceOverrides:
-                                                          next,
-                                                    ),
-                                                  );
-                                                },
-                                              ),
+                                                      const SizedBox(width: 8),
+                                                      Expanded(
+                                                        child:
+                                                            DropdownButtonFormField<
+                                                                String>(
+                                                          value: ings.any((e) =>
+                                                                  e.id == ingId)
+                                                              ? ingId
+                                                              : null,
+                                                          decoration:
+                                                              const InputDecoration(
+                                                            labelText:
+                                                                'Ingredient',
+                                                            isDense: true,
+                                                          ),
+                                                          items: [
+                                                            const DropdownMenuItem(
+                                                              value: null,
+                                                              child:
+                                                                  Text('Item…'),
+                                                            ),
+                                                            ...ings.map(
+                                                              (ing) =>
+                                                                  DropdownMenuItem(
+                                                                value: ing.id,
+                                                                child: Text(
+                                                                    ing.name),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                          onChanged: (v) {
+                                                            final next = [
+                                                              for (var j = 0;
+                                                                  j <
+                                                                      overrides
+                                                                          .length;
+                                                                  j++)
+                                                                if (j == i)
+                                                                  {
+                                                                    ...overrides[
+                                                                        j],
+                                                                    'ingredientId':
+                                                                        v ?? '',
+                                                                  }
+                                                                else
+                                                                  overrides[j],
+                                                            ];
+                                                            session.updateDraft(
+                                                              session.draft
+                                                                  .copyWith(
+                                                                optionalAddonPriceOverrides:
+                                                                    next,
+                                                              ),
+                                                            );
+                                                          },
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 8),
+                                                      SizedBox(
+                                                        width: 100,
+                                                        child: TextFormField(
+                                                          key: ValueKey(
+                                                              'ovr_${i}_${ingId}_$price'),
+                                                          initialValue: price
+                                                              .toStringAsFixed(
+                                                                  2),
+                                                          decoration:
+                                                              const InputDecoration(
+                                                            labelText: '\$',
+                                                            isDense: true,
+                                                          ),
+                                                          keyboardType:
+                                                              const TextInputType
+                                                                  .numberWithOptions(
+                                                                  decimal:
+                                                                      true),
+                                                          onChanged: (v) {
+                                                            final n = double
+                                                                    .tryParse(v
+                                                                        .trim()) ??
+                                                                0.0;
+                                                            final next = [
+                                                              for (var j = 0;
+                                                                  j <
+                                                                      overrides
+                                                                          .length;
+                                                                  j++)
+                                                                if (j == i)
+                                                                  {
+                                                                    ...overrides[
+                                                                        j],
+                                                                    'price': n <
+                                                                            0
+                                                                        ? 0.0
+                                                                        : n,
+                                                                  }
+                                                                else
+                                                                  overrides[j],
+                                                            ];
+                                                            session.updateDraft(
+                                                              session.draft
+                                                                  .copyWith(
+                                                                optionalAddonPriceOverrides:
+                                                                    next,
+                                                              ),
+                                                            );
+                                                          },
+                                                        ),
+                                                      ),
+                                                      IconButton(
+                                                        icon: const Icon(Icons
+                                                            .delete_outline),
+                                                        onPressed: () {
+                                                          final next = [
+                                                            for (var j = 0;
+                                                                j <
+                                                                    overrides
+                                                                        .length;
+                                                                j++)
+                                                              if (j != i)
+                                                                overrides[j],
+                                                          ];
+                                                          session.updateDraft(
+                                                            session.draft
+                                                                .copyWith(
+                                                              optionalAddonPriceOverrides:
+                                                                  next,
+                                                            ),
+                                                          );
+                                                        },
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              }),
                                             ],
                                           ),
                                         );
-                                      }),
-                                    ],
-                                  ),
-                                );
-                              },
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                             const Divider(height: 32),
                           ],
@@ -1578,29 +1587,6 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                         ],
                       ),
                     ),
-
-                    Text('Image',
-                        style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Customer-facing photo for this item.',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 8),
-                    ImageUploadField(
-                      initialValue: session.draft.image?.isNotEmpty == true
-                          ? session.draft.image
-                          : (session.draft.imageUrl.isNotEmpty
-                              ? session.draft.imageUrl
-                              : ''),
-                      onChanged: (url) => session.updateDraft(
-                        session.draft.copyWith(image: url ?? ''),
-                      ),
-                      onSaved: (url) => session.updateDraft(
-                        session.draft.copyWith(image: url ?? ''),
-                      ),
-                    ),
-                    const Divider(height: 32),
 
                     ExpansionTile(
                       title: const Text('Live mobile preview'),
