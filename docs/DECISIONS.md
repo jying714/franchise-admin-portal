@@ -1,6 +1,6 @@
 # Architecture Decision Log (DECISIONS.md)
 
-**Last Updated**: July 30, 2026 (stripe COMPLETE; residual polish COMPLETE; Decision 14 Thin POS active)
+**Last Updated**: August 15, 2026 (Decision 15 Catalog Health locked)
 
 This file records major architectural and design decisions for the Doughboys Pizzeria Franchise Platform.
 
@@ -86,38 +86,41 @@ This file records major architectural and design decisions for the Doughboys Piz
 
 ### 14. Thin POS Station App (`pos_app`) — Counter-Focused MVP Station
 **Date**: July 30, 2026  
-**Status**: **Approved — implementation active on `feat/pos-app-v1`**  
+**Status**: **Approved — thin POS pilot COMPLETE on main**  
 **Authority**: this decision · `docs/slices/pos-app-v1.md` · STATUS · HANDOFF  
 
-**Decision summary:**
-
-1. **Strike the standalone thin Kitchen management app** as the MVP station surface. Replace it with a **thin POS app** (`pos_app` Flutter target/flavor) whose primary placement is the **counter / order-taking station**.
-2. **Pilot hardware**: Android tablet + Ethernet ESC-POS printer(s) in kitchen(s) + cash drawer (printer-kick) + card-present reader (Stripe Terminal or equivalent). Codebase remains Flutter multi-platform; iOS station post-pilot.
-3. **Release gate (hard)**: The overall product is **not** considered releasable until **thin POS + customer website + polished mobile_app + web-app management** are all at MVP quality.
-4. **Order types on home**: Dine-in, Carry-out, Delivery.
-   - Dine-in → full custom 2D table map (owner builds layout in web-app) → seat → open ticket → close & pay at end of meal.
-   - Carry-out / Delivery share order-creation flow; Delivery first collects customer + address (auto-fill name/phone/address when known).
-5. **Order creation**: Full menu + existing modifier system (reuse mobile_app / shared_core patterns).
-6. **Incoming online orders** (mobile / future website): auto-print, appear in the same open-order list, full management actions available.
-7. **Payments**: Card-present required; cash + automatic drawer open on cash tender; split tenders (manager-configurable max, default 3); discount UI (percentage/fixed) in MVP.
-8. **Large orders**: Manager sets threshold (amount and/or item count) or disables; over-threshold orders enter `needs_approval` and stay held until approved.
-9. **86’ing**: Manager-only; dialog chooses channels (mobile, customer website, in-store); all selected by default.
-10. **Allergens**: From existing menu-item data; prominent on printed tickets; high-visibility on-screen.
-11. **Staff / roles / PIN**: PIN session model (session timeout; forced re-PIN on void/refund/86/large-order/settings). Manager can create roles and assign permissions from the defined list. Thin staff records include roles + hourly pay + critical fields only. Separate lightweight driver and waitress lists (name + pay rate) for financial tracking.
-12. **Driver assignment**: Required on delivery order completion (critical for pay). No live delivery status tracking in MVP.
-13. **Order states (MVP)**: `draft` → `open` / `needs_approval` → `sent_to_kitchen` → `ready` → `completed` / `cancelled` (+ driver assigned at completion for delivery).
-14. **Offline**: Cash orders only when offline. Card and receiving mobile/website orders require online. If POS is down, customer channels should reflect inability to accept new orders.
-15. **Printing**: Multi-printer by menu category (or default); Ethernet ESC-POS preferred; idempotent print jobs. Absorbs prior cash/print toggle thinking.
-16. **Customer identity**: Prefer link to existing Auth users; fallback lightweight POS customer (name + phone + address). Every order carries source + optional customer/user reference.
-17. **Permissions model** (elevated actions protected): take_order, take_payment, open_drawer, void_item/void_order, refund, discount, 86_item, view_orders, manage_tables, change_settings, approve_large_order, manager_override.
-18. **Settings panel (first version)**: large-order threshold + enable/disable; max split tenders; prep/promised time; PIN session timeout; auto-print rules; default tip prompts.
-19. **Explicitly out of this MVP**: live delivery status tracking, full catering packages, complex inventory/recipe costing, advanced tips pooling or full time-clock, rich offline card processing, iOS as primary pilot device, complex multi-station orchestration beyond category→printer.
-
-**Rationale:** A pure kitchen-only app would not be used long-term and would not make the product market-viable. A counter-focused thin POS that can take orders, accept card + cash, open a drawer, seat tables, assign drivers, and reuse shared_core is the correct station surface. Prerequisites (Stripe + mobile/web polish) are complete as of July 30, 2026.
-
-**Impact:** New `pos_app` target; web-app table-layout editor; staff/driver/waitress lightweight records; order source + customer linkage; expanded order states; permission model; absorption of prior kitchen print/cash rules; hard release gate includes customer website.
+**Decision summary:** Thin POS station app (not kitchen-only). Pilot Android + Ethernet ESC-POS + drawer. Release gate includes POS + customer website + polished mobile + web management. See full points in prior revision / pos-app-v1 slice.
 
 **Reference:** `docs/slices/pos-app-v1.md`, `STATUS.md`, `HANDOFF.md`.
+
+### 15. Catalog Health (not "schema" in the UI) — Self-serve integrity
+**Date**: August 15–16, 2026  
+**Status**: **Approved — implement on `feat/pre-hardware-hq-polish`**  
+**Authority**: `docs/slices/catalog-health-v1.md`
+
+**Decision**
+
+1. **Owner-facing language:** UI uses **Catalog health** and **Fixes needed**. The word **schema** stays in code, agent docs, and engineering only.
+2. **Surfaces (both):**
+   - **Onboarding step** — catalog must be healthy (or guided fixes completed) before onboarding can finish.
+   - **Post-onboarding** — HQ/Admin **attention card** (count + open sheet), not a permanent embedded schema editor on every form.
+3. **Menu item editor (HQ + Admin):** Remove the standing schema issues card. When unresolved issues exist, show an attention control (e.g. pulsing **"N fixes needed"**) in app bar/footer; tap opens a sheet with plain-language issues and primary repair actions.
+4. **Publish / save gate:**
+   - **Errors block** publish/save.
+   - **Warnings do not** (e.g. $0 price allowed as free item, with warning).
+5. **Must-error examples:** missing category; missing ingredient ref; required modifier group unbound (`min > 0`, no options); salad profile with empty dressings `sourceTypeId`; **franchise-level duplicate ingredient types** (case-insensitive).
+6. **Duplicate types:** User picks survivor **id**; **union** all ingredients onto survivor (`typeId` rewrite); **hard-delete** loser type **after** verified rewrite. Case-insensitive uniqueness on **create and rename**.
+7. **Franchise-level problems (e.g. duplicate types):** **Block menu item publish** until fixed (no silent escape hatch by default).
+8. **Normalize v1 scope:** types merge + orphan ingredients + menu item ref repair — one Catalog health flow with **dry-run → confirm → apply**.
+9. **Scan cadence:** Auto-scan when entering Menu Items and the onboarding Catalog step (debounced/cached) + manual "Scan again".
+10. **Data safety v1:** Confirm dialog with dry-run counts is enough; optional audit log later. No 24h undo required for v1.
+11. **Success metric:** ≤ **5 purposeful taps** from "duplicate sauces detected" to "merge confirmed" (ideally ≤ 3 with smart defaults); first salad publishable with **zero support**.
+
+**Rationale:** Competitors train operators on internal data models. We undercut support cost by making integrity **self-serve**, **invisible when healthy**, and **impossible to ignore when not** — so we can price below competitors while remaining polished (not "MVP-thin").
+
+**Impact:** New slice `catalog-health-v1`; menu editor UX change; onboarding step + HQ/Admin card; type merge writes; publish gates. Aligns with Decision 10 profiles and foundation types.
+
+**Reference:** `docs/slices/catalog-health-v1.md`, `STATUS.md`, `HANDOFF.md`, `ROADMAP.md`.
 
 ---
 
@@ -125,4 +128,4 @@ This file records major architectural and design decisions for the Doughboys Piz
 - Add new decisions with date, status, rationale, impact, and references.
 - Review before major refactors.
 
-**Last Updated**: July 30, 2026
+**Last Updated**: August 15, 2026
