@@ -1,70 +1,80 @@
-# HANDOFF.md — Agent Context & Project Status
+# HANDOFF.md
 
-**Last Updated**: August 12, 2026  
-**Active branch**: **`feat/customization-modal-composition-root`** (B3 done; B4 partial; merge pending smoke) · soft-release remains **`main`**  
-**Repo**: https://github.com/jying714/franchise-admin-portal  
-**Local path**: `C:\\projects\\franchise-admin-portal`  
-**Firebase**: `doughboyspizzeria-2b3d2`  
-**Admin/HQ**: franchisehq.io · **Storefront**: https://franchise-storefront.web.app
-
-Prefer **STATUS.md + this handoff + `docs/plans/*` + `docs/slices/*` + app READMEs** over agent memory.
+**As of:** Saturday, August 15, 2026  
+**Active branch:** `feat/pre-hardware-hq-polish`  
+**Soft-release:** `main` (includes salad profile + HQ editor polish)
 
 ---
 
-## 1. Where we are
+## How to start the next chat
 
-**Product:** Soft-release on main. Burn-in checklist **GREEN** 2026-08-10. Soft parallel OK. Hard Owner.com cutover waits on sign-off + hardware.
+| Priority | Path |
+|----------|------|
+| 1 | `STATUS.md` |
+| 2 | `HANDOFF.md` |
+| 3 | `docs/DECISIONS.md` (Decision **15** Catalog Health) |
+| 4 | `docs/slices/catalog-health-v1.md` |
+| 5 | `docs/slices/pos-app-v1.md` (print/drawer when hardware) |
 
-**Containment extract (plan baseline ~2026-08-08 → 2026-08-11):**
-
-| Phase | State |
-|-------|--------|
-| A1 MenuRepository | **DONE** |
-| A2 ConfigRepository | **DONE** |
-| A3 OrderRepository + façade | **DONE** |
-| A4 Inventory + Labor repos + call sites | **DONE** |
-| B1–B2 MenuPricing + CustomizationController | **DONE** |
-| B3 Dual-write removal | **DONE** on composition-root branch |
-| B4 Thin modal | **Partial** — init dual maps / PizzaSauceSelection / sauceSplit / SauceSelectorGroup maps removed; portions/radio/wings still local; file still large; **smoke before merge** |
-| C BrandingFacade | **Open** |
-| D Convergence / local user.dart | **Open** |
-| A5 Other god-service contexts | **Optional / open** |
-
-Full progress write-up: `docs/architecture/containment-progress-2026-08-11.md`
-
-
-**After**
-```markdown
-**Operator next:** Soft parallel. On composition-root branch: **device smoke** (pizza/calzone/salad/dinner) → merge to `main` when green. Optional further B4 (portions/radio/wings) after smoke. Hardware when devices arrive.
+**Repo:** https://github.com/jying714/franchise-admin-portal  
+**Local:** `C:\projects\franchise-admin-portal`  
+**Firebase:** `doughboyspizzeria-2b3d2`
 
 ```powershell
 cd C:\projects\franchise-admin-portal
-git checkout feat/customization-modal-composition-root
-git pull origin feat/customization-modal-composition-root
+git fetch origin
+git checkout feat/pre-hardware-hq-polish
+git pull origin feat/pre-hardware-hq-polish
 ```
 
 ---
 
-## 2. High-signal paths
+## Just shipped on main (2026-08-15)
 
-| Surface | Path |
-|---------|------|
-| Menu / Config / Order / Inventory / Labor repos | `packages/shared_core/lib/src/core/repositories/` |
-| MenuPricing | `packages/shared_core/.../domain/menu_pricing.dart` |
-| CustomizationController | `mobile_app/lib/widgets/customization/customization_controller.dart` |
-| Customization modal (still large) | `mobile_app/lib/widgets/customization/customization_modal.dart` |
-| Inventory ledger (impl) | `packages/shared_core/.../services/inventory_ledger.dart` |
-| Labor service (impl) | `packages/shared_core/.../services/labor_firestore_service.dart` |
+- `MenuProfile.salad`; dressings `sourceTypeId` + `config/menu_profile_salad`
+- `freeDressingCount` / `extraDressingUpcharge` persist + mobile prefers item free count
+- Optional add-on **price overrides** only (no default-by-size); size topping $ = house extra
+- Pricing: salad/sub/dinner non-included extras use `resolveExtra` (override wins)
+- HQ editor: template dropdown hidden; section reorder; type-first `MultiIngredientSelector`
+- Android night theme Material/AppCompat (Stripe)
 
----
-
-## 3. Locks
-
-- Human is merge gate; no invented schema
-- Extract = rewire only; zero intentional behavior change
-- Soft parallel ≠ hard Owner.com cutover
-- A5 / dual-tree removal / Phase E not required for hardware cutover
+**Known residual:** optional chip **label** may still show size topping $ while footer uses override — fix on polish branch if desired.
 
 ---
 
-**Bottom line:** A1–A4 + B1–B3 done on composition-root branch; B4 partial. Next: smoke → merge. Remaining extract wins after that: optional portions/radio/wings, Order call sites, BrandingFacade. Ops: soft parallel until hardware + sign-off.
+## Locked product direction (Decision 15)
+
+Owners never need the word **schema**. **Catalog health** + **Fixes needed**.
+
+- Standing schema card **out** of menu item sheet → attention control + sheet  
+- Onboarding Catalog health step + post HQ/Admin card  
+- Errors block publish; warnings don’t  
+- Duplicate types (e.g. sauces/Sauces): pick survivor, union ingredients, hard-delete loser  
+- Case-insensitive type uniqueness on create and rename  
+- Franchise duplicates block menu publish  
+- Normalize v1: types + orphans + menu refs  
+- ≤ 5 taps to clear duplicate sauces  
+
+Authority: `docs/slices/catalog-health-v1.md`
+
+---
+
+## Next code (this branch)
+
+1. **A4** — Remove standing schema panel; **N fixes needed** + sheet (HQ menu item editor, then Admin).  
+2. **B1–B2** — Detect + merge duplicate types with dry-run.  
+3. **B3 / C** — Orphans, ref repair, onboarding step + HQ card.  
+4. **D** — POS `KitchenPrinter` / drawer interfaces + mock ticket preview.  
+
+**Hardware:** printer + cash drawer inbound — keep software ports ready.  
+**iOS:** delayed; simulator bring-up when started (no hardware dependency).
+
+---
+
+## Operating rules
+
+- Human is merge gate; agents proposal-only  
+- Prefer real paths; no invented schema fields  
+- Quote source for surgical edits  
+
+**Bottom line:** Salad path is on main. Pre-hardware focus is **Catalog health self-serve** + **POS print/drawer interfaces**. Schema UI becomes Catalog health per Decision 15.
