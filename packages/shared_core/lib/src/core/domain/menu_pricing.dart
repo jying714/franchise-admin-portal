@@ -328,12 +328,12 @@ class MenuPricing {
         if (wasIncludedIngredient(item, ingId)) continue;
 
         if (selection.selectedAddOns.contains(ingId)) {
-          final meta = ingredientMetadata[ingId];
-          double upcharge = usesDynamicToppingPricing
-              ? (toppingUpcharge?.call() ?? 0.0)
-              : (meta != null
-                  ? (ingredientUpcharge?.call(meta) ?? 0.0)
-                  : (addOn['price'] as num?)?.toDouble() ?? 0.0);
+          final upcharge = resolveExtraIngredientPrice(
+            item: item,
+            selectedSize: selectedSize,
+            ingId: ingId,
+            ingredientMetadata: ingredientMetadata,
+          );
           final multiplier = selection.doubleAddOns[ingId] == true ? 2 : 1;
           total += upcharge * multiplier;
         }
@@ -425,6 +425,41 @@ class MenuPricing {
     return 0.0;
   }
 
+  /// Override map entry for [ingId], if any.
+  static Map<String, dynamic>? _optionalOverrideFor(
+    MenuItem item,
+    String ingId,
+  ) {
+    final list = item.optionalAddonPriceOverrides;
+    if (list == null) return null;
+    for (final raw in list) {
+      final id = (raw['ingredientId'] ?? raw['id'] ?? '').toString().trim();
+      if (id == ingId) return Map<String, dynamic>.from(raw);
+    }
+    return null;
+  }
+
+  static double? _priceFromOverrideMap(
+    Map<String, dynamic> override,
+    MenuItem item,
+    String? selectedSize,
+  ) {
+    final bySize = override['priceBySize'];
+    if (bySize is Map && selectedSize != null) {
+      final key = normalizeSizeKey(item, selectedSize);
+      for (final e in bySize.entries) {
+        final k = e.key.toString();
+        if (k == selectedSize || normalizeSizeKey(item, k) == key) {
+          final v = e.value;
+          if (v is num) return v.toDouble();
+        }
+      }
+    }
+    final flat = override['price'];
+    if (flat is num) return flat.toDouble();
+    return null;
+  }
+
   /// Mirrors modal _resolveExtraIngredientPrice.
   static double resolveExtraIngredientPrice({
     required MenuItem item,
@@ -432,20 +467,34 @@ class MenuPricing {
     required String ingId,
     required Map<String, IngredientMetadata> ingredientMetadata,
   }) {
+    // 1. Sparse override for this ingredient
+    final override = _optionalOverrideFor(item, ingId);
+    if (override != null) {
+      final o = _priceFromOverrideMap(override, item, selectedSize);
+      if (o != null) return o;
+    }
+
+    // 2. Size topping upcharge when item has sizes (house default extra)
     final usesDynamic = selectedSize != null &&
         (item.additionalToppingPrices != null ||
             (item.sizes?.isNotEmpty ?? false));
     if (usesDynamic) {
       return toppingUpcharge(item, selectedSize);
     }
-    final fromMeta = ingredientUpcharge(ingredientMetadata[ingId]);
-    if (fromMeta > 0) return fromMeta;
+
+    // 4. Legacy optionalAddOns[].price / upcharge
     for (final addOn in item.optionalAddOns ?? const []) {
       final id = (addOn['ingredientId'] ?? addOn['id'] ?? '').toString();
       if (id == ingId) {
-        return (addOn['price'] as num?)?.toDouble() ?? 0.0;
+        final p = addOn['price'] ?? addOn['upcharge'];
+        if (p is num) return p.toDouble();
       }
     }
+
+    // 5. Ingredient catalog upcharge
+    final fromMeta = ingredientUpcharge(ingredientMetadata[ingId]);
+    if (fromMeta > 0) return fromMeta;
+
     return 0.0;
   }
 

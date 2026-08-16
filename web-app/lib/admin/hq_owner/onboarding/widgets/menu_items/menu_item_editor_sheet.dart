@@ -253,6 +253,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       maxToppings: _session.draft.maxToppings,
       freeDressingCount: _session.draft.freeDressingCount,
       extraDressingUpcharge: _session.draft.extraDressingUpcharge,
+      optionalAddonPriceOverrides: _session.draft.optionalAddonPriceOverrides,
       dippingSauceOptions: _session.draft.dippingSauceOptions,
       dippingSplits: _session.draft.dippingSplits,
       sideDipSauceOptions: _session.draft.sideDipSauceOptions,
@@ -280,6 +281,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       freeDressingCount: _session.draft.freeDressingCount,
       extraDressingUpcharge: _session.draft.extraDressingUpcharge,
       maxFreeDressings: _session.draft.maxFreeDressings,
+      optionalAddonPriceOverrides: _session.draft.optionalAddonPriceOverrides,
       dippingSauceOptions: _session.draft.dippingSauceOptions,
       dippingSplits: _session.draft.dippingSplits,
       sideDipSauceOptions: _session.draft.sideDipSauceOptions,
@@ -1245,11 +1247,12 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                                 style: Theme.of(context).textTheme.titleMedium),
                             const SizedBox(height: 4),
                             Text(
-                              'Extra ingredients not in modifier groups (e.g. meatballs on spaghetti). '
-                              'Set a per-item price so mobile charges the upcharge. '
-                              'Pizza meats/veggies/cheeses still use Modifier groups above.',
+                              'Extra ingredients not in modifier groups. '
+                              'Extras use size topping price unless an override is set. '
+                              'Pizza meats/veggies/cheeses use Modifier groups + size topping price.',
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
+
                             const SizedBox(height: 8),
                             MultiIngredientSelector(
                               title: 'Optional add-ons',
@@ -1257,61 +1260,46 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                                   _refsFromMaps(session.draft.optionalAddOns),
                               allowEmpty: true,
                               onChanged: (refs) {
-                                // Preserve existing prices when toggling selection; seed new ones from
-                                // ingredient metadata upcharge when available.
-                                final prevById = <String, double?>{};
-                                for (final m in session.draft.optionalAddOns ??
-                                    const []) {
-                                  final id =
-                                      (m['ingredientId'] ?? m['id'] ?? '')
-                                          .toString();
-                                  if (id.isEmpty) continue;
-                                  final raw = m['price'] ?? m['upcharge'];
-                                  if (raw is num) {
-                                    prevById[id] = raw.toDouble();
-                                  } else if (raw is String) {
-                                    prevById[id] = double.tryParse(raw);
-                                  }
+                                session.updateDraft(
+                                  session.draft.copyWith(
+                                    optionalAddOns: _mapsFromRefs(refs),
+                                  ),
+                                );
+                              },
+                            ),
+                            // Per-addon price editor (only when at least one is selected)
+                            Builder(
+                              builder: (context) {
+                                final profile = (session.draft.menuProfile ??
+                                        session.draft.effectiveMenuProfile)
+                                    .toLowerCase();
+                                // Pizza/calzone: size toppingPrice owns extras
+                                if (profile == shared.MenuProfile.pizza ||
+                                    profile == shared.MenuProfile.calzone ||
+                                    profile == shared.MenuProfile.wings) {
+                                  return const SizedBox.shrink();
                                 }
-                                final metaList = Provider.of<
+                                final selected =
+                                    _refsFromMaps(session.draft.optionalAddOns);
+                                if (selected.isEmpty) {
+                                  return const SizedBox.shrink();
+                                }
+                                final overrides =
+                                    List<Map<String, dynamic>>.from(
+                                  session.draft.optionalAddonPriceOverrides ??
+                                      const [],
+                                );
+                                final types =
+                                    Provider.of<shared.IngredientTypeProvider>(
+                                  context,
+                                  listen: false,
+                                ).ingredientTypes;
+                                final allIng = Provider.of<
                                     shared.IngredientMetadataProvider>(
                                   context,
                                   listen: false,
                                 ).allIngredients;
-                                final next = refs.map((r) {
-                                  double? price = prevById[r.id] ?? r.upcharge;
-                                  if (price == null) {
-                                    // IngredientMetadata.upcharge is Map<String, double>?
-                                    shared.IngredientMetadata? meta;
-                                    for (final i in metaList) {
-                                      if (i.id == r.id) {
-                                        meta = i;
-                                        break;
-                                      }
-                                    }
-                                    final u = meta?.upcharge;
-                                    if (u != null && u.isNotEmpty) {
-                                      // Prefer Large, else first size value in the map.
-                                      price = u['Large'] ??
-                                          u['large'] ??
-                                          u.values.first;
-                                    }
-                                  }
-                                  return r.copyWith(upcharge: price);
-                                }).toList();
-                                session.updateDraft(
-                                  session.draft.copyWith(
-                                      optionalAddOns: _mapsFromRefs(next)),
-                                );
-                              },
-                            ),
-// Per-addon price editor (only when at least one is selected)
-                            Builder(
-                              builder: (context) {
-                                final selected =
-                                    _refsFromMaps(session.draft.optionalAddOns);
-                                if (selected.isEmpty)
-                                  return const SizedBox.shrink();
+
                                 return Padding(
                                   padding: const EdgeInsets.only(top: 12),
                                   child: Column(
@@ -1319,48 +1307,178 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                                         CrossAxisAlignment.stretch,
                                     children: [
                                       Text(
-                                        'Price per optional add-on',
+                                        'Optional add-on pricing',
                                         style: Theme.of(context)
                                             .textTheme
                                             .titleSmall,
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        'Charged when the customer adds this ingredient. '
-                                        'Leave 0 for free extras.',
+                                        'Size topping price is the house extra. '
+                                        'Add overrides only for premium ingredients.',
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodySmall,
                                       ),
                                       const SizedBox(height: 8),
-                                      ...selected.map((ref) {
-                                        final current = ref.upcharge ?? 0.0;
+                                      Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: TextButton.icon(
+                                          onPressed: () {
+                                            final next = [
+                                              ...overrides,
+                                              {
+                                                'ingredientId': '',
+                                                'typeId': '',
+                                                'price': 0.0,
+                                              },
+                                            ];
+                                            session.updateDraft(
+                                              session.draft.copyWith(
+                                                optionalAddonPriceOverrides:
+                                                    next,
+                                              ),
+                                            );
+                                          },
+                                          icon: const Icon(Icons.add, size: 18),
+                                          label:
+                                              const Text('Add price override'),
+                                        ),
+                                      ),
+                                      ...List.generate(overrides.length, (i) {
+                                        final row = overrides[i];
+                                        final typeId =
+                                            row['typeId']?.toString() ?? '';
+                                        final ingId =
+                                            row['ingredientId']?.toString() ??
+                                                '';
+                                        final price = (row['price'] as num?)
+                                                ?.toDouble() ??
+                                            0.0;
+                                        final typeOk =
+                                            types.any((t) => t.id == typeId);
+                                        final ingsForType = allIng
+                                            .where((ing) =>
+                                                typeId.isEmpty ||
+                                                (ing.typeId ?? '') == typeId)
+                                            .toList();
+                                        final selectedBound =
+                                            selected.map((r) => r.id).toSet();
+                                        final ings = ingsForType
+                                            .where((ing) =>
+                                                selectedBound
+                                                    .contains(ing.id) ||
+                                                ing.id == ingId)
+                                            .toList();
+
                                         return Padding(
                                           padding:
                                               const EdgeInsets.only(bottom: 8),
                                           child: Row(
                                             children: [
                                               Expanded(
-                                                flex: 3,
-                                                child: Text(
-                                                  ref.name,
-                                                  style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.w500),
-                                                ),
-                                              ),
-                                              const SizedBox(width: 12),
-                                              SizedBox(
-                                                width: 120,
-                                                child: TextFormField(
-                                                  key: ValueKey(
-                                                      'opt_price_${ref.id}_$current'),
-                                                  initialValue: current
-                                                      .toStringAsFixed(2),
+                                                child: DropdownButtonFormField<
+                                                    String>(
+                                                  value: typeOk ? typeId : null,
                                                   decoration:
                                                       const InputDecoration(
-                                                    labelText: 'Price',
-                                                    prefixText: '\$',
+                                                    labelText: 'Type',
+                                                    isDense: true,
+                                                  ),
+                                                  items: [
+                                                    const DropdownMenuItem(
+                                                      value: null,
+                                                      child: Text('Type…'),
+                                                    ),
+                                                    ...types.map(
+                                                      (t) => DropdownMenuItem(
+                                                        value: t.id,
+                                                        child: Text(t.name),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                  onChanged: (v) {
+                                                    final next = [
+                                                      for (var j = 0;
+                                                          j < overrides.length;
+                                                          j++)
+                                                        if (j == i)
+                                                          {
+                                                            ...overrides[j],
+                                                            'typeId': v ?? '',
+                                                            'ingredientId': '',
+                                                          }
+                                                        else
+                                                          overrides[j],
+                                                    ];
+                                                    session.updateDraft(
+                                                      session.draft.copyWith(
+                                                        optionalAddonPriceOverrides:
+                                                            next,
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                child: DropdownButtonFormField<
+                                                    String>(
+                                                  value: ings.any(
+                                                          (e) => e.id == ingId)
+                                                      ? ingId
+                                                      : null,
+                                                  decoration:
+                                                      const InputDecoration(
+                                                    labelText: 'Ingredient',
+                                                    isDense: true,
+                                                  ),
+                                                  items: [
+                                                    const DropdownMenuItem(
+                                                      value: null,
+                                                      child: Text('Item…'),
+                                                    ),
+                                                    ...ings.map(
+                                                      (ing) => DropdownMenuItem(
+                                                        value: ing.id,
+                                                        child: Text(ing.name),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                  onChanged: (v) {
+                                                    final next = [
+                                                      for (var j = 0;
+                                                          j < overrides.length;
+                                                          j++)
+                                                        if (j == i)
+                                                          {
+                                                            ...overrides[j],
+                                                            'ingredientId':
+                                                                v ?? '',
+                                                          }
+                                                        else
+                                                          overrides[j],
+                                                    ];
+                                                    session.updateDraft(
+                                                      session.draft.copyWith(
+                                                        optionalAddonPriceOverrides:
+                                                            next,
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              SizedBox(
+                                                width: 100,
+                                                child: TextFormField(
+                                                  key: ValueKey(
+                                                      'ovr_${i}_${ingId}_$price'),
+                                                  initialValue:
+                                                      price.toStringAsFixed(2),
+                                                  decoration:
+                                                      const InputDecoration(
+                                                    labelText: '\$',
                                                     isDense: true,
                                                   ),
                                                   keyboardType:
@@ -1371,24 +1489,45 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                                                     final n = double.tryParse(
                                                             v.trim()) ??
                                                         0.0;
-                                                    final price =
-                                                        n < 0 ? 0.0 : n;
-                                                    final updated = selected
-                                                        .map((r) => r.id ==
-                                                                ref.id
-                                                            ? r.copyWith(
-                                                                upcharge: price)
-                                                            : r)
-                                                        .toList();
+                                                    final next = [
+                                                      for (var j = 0;
+                                                          j < overrides.length;
+                                                          j++)
+                                                        if (j == i)
+                                                          {
+                                                            ...overrides[j],
+                                                            'price':
+                                                                n < 0 ? 0.0 : n,
+                                                          }
+                                                        else
+                                                          overrides[j],
+                                                    ];
                                                     session.updateDraft(
                                                       session.draft.copyWith(
-                                                        optionalAddOns:
-                                                            _mapsFromRefs(
-                                                                updated),
+                                                        optionalAddonPriceOverrides:
+                                                            next,
                                                       ),
                                                     );
                                                   },
                                                 ),
+                                              ),
+                                              IconButton(
+                                                icon: const Icon(
+                                                    Icons.delete_outline),
+                                                onPressed: () {
+                                                  final next = [
+                                                    for (var j = 0;
+                                                        j < overrides.length;
+                                                        j++)
+                                                      if (j != i) overrides[j],
+                                                  ];
+                                                  session.updateDraft(
+                                                    session.draft.copyWith(
+                                                      optionalAddonPriceOverrides:
+                                                          next,
+                                                    ),
+                                                  );
+                                                },
                                               ),
                                             ],
                                           ),

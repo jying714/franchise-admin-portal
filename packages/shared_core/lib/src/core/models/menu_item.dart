@@ -99,6 +99,9 @@ class MenuItem {
   final dynamic freeDressingCount; // int or Map<String, int>
   final double? extraDressingUpcharge;
 
+  /// Sparse overrides: ingredientId, optional typeId, price or priceBySize.
+  final List<Map<String, dynamic>>? optionalAddonPriceOverrides;
+
   // --- Wings customization fields ---
   final List<String>? dippingSauceOptions; // For dipped/tossed wings
   final Map<String, int>?
@@ -200,6 +203,7 @@ class MenuItem {
     this.extraSauceUpcharge,
     this.freeDressingCount,
     this.extraDressingUpcharge,
+    this.optionalAddonPriceOverrides,
     // WINGS fields
     this.dippingSauceOptions,
     this.dippingSplits,
@@ -492,6 +496,14 @@ class MenuItem {
         freeDressingCount: data['freeDressingCount'],
         extraDressingUpcharge:
             (data['extraDressingUpcharge'] as num?)?.toDouble(),
+        optionalAddonPriceOverrides: () {
+          final raw = data['optionalAddonPriceOverrides'];
+          if (raw is! List || raw.isEmpty) return null;
+          return raw
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList();
+        }(),
         dippingSauceOptions: data['dippingSauceOptions'] == null
             ? null
             : List<String>.from(data['dippingSauceOptions']),
@@ -689,6 +701,14 @@ class MenuItem {
       freeDressingCount: template['freeDressingCount'],
       extraDressingUpcharge:
           (template['extraDressingUpcharge'] as num?)?.toDouble(),
+      optionalAddonPriceOverrides: () {
+        final raw = template['optionalAddonPriceOverrides'];
+        if (raw is! List || raw.isEmpty) return null;
+        return raw
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      }(),
       dippingSauceOptions: template['dippingSauceOptions'] == null
           ? null
           : List<String>.from(template['dippingSauceOptions']),
@@ -814,6 +834,9 @@ class MenuItem {
       if (freeDressingCount != null) 'freeDressingCount': freeDressingCount,
       if (extraDressingUpcharge != null)
         'extraDressingUpcharge': extraDressingUpcharge,
+      if (optionalAddonPriceOverrides != null &&
+          optionalAddonPriceOverrides!.isNotEmpty)
+        'optionalAddonPriceOverrides': optionalAddonPriceOverrides,
       // Wings fields (intentional product maps — keep)
       if (dippingSauceOptions != null)
         'dippingSauceOptions': dippingSauceOptions,
@@ -984,6 +1007,7 @@ class MenuItem {
     double? extraSauceUpcharge,
     dynamic freeDressingCount,
     double? extraDressingUpcharge,
+    List<Map<String, dynamic>>? optionalAddonPriceOverrides,
     // Wings fields
     List<String>? dippingSauceOptions,
     Map<String, int>? dippingSplits,
@@ -1046,6 +1070,8 @@ class MenuItem {
       freeDressingCount: freeDressingCount ?? this.freeDressingCount,
       extraDressingUpcharge:
           extraDressingUpcharge ?? this.extraDressingUpcharge,
+      optionalAddonPriceOverrides:
+          optionalAddonPriceOverrides ?? this.optionalAddonPriceOverrides,
       // Wings
       dippingSauceOptions: dippingSauceOptions ?? this.dippingSauceOptions,
       dippingSplits: dippingSplits ?? this.dippingSplits,
