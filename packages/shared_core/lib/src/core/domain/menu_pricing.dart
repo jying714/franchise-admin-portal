@@ -537,23 +537,23 @@ class MenuPricing {
         continue;
       }
 
-      final cat = item.category.toLowerCase();
-      final salad = cat.contains('salad');
+      final salad = isSalad(item);
       final wasIncluded = wasIncludedIngredient(item, ingId);
 
-      double upcharge = usesDynamicToppingPricing
-          ? toppingUpcharge(item, selectedSize)
-          : ingredientUpcharge(meta);
-
-      if (!wasIncluded &&
-          (isDinner(item) || salad || isSub(item)) &&
-          upcharge <= 0) {
+      // Salad / sub / dinner extras: always resolve (override → size topping → …).
+      // Pizza keeps uniform size topping for non-included extras.
+      final double upcharge;
+      if (!wasIncluded && (salad || isDinner(item) || isSub(item))) {
         upcharge = resolveExtraIngredientPrice(
           item: item,
           selectedSize: selectedSize,
           ingId: ingId,
           ingredientMetadata: ingredientMetadata,
         );
+      } else if (usesDynamicToppingPricing) {
+        upcharge = toppingUpcharge(item, selectedSize);
+      } else {
+        upcharge = ingredientUpcharge(meta);
       }
 
       final isDouble = selection.doubleToppings[ingId] == true;

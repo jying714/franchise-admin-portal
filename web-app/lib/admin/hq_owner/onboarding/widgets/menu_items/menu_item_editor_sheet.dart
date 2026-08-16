@@ -528,15 +528,43 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                           }
                         }
 
+                        var nextGroups =
+                            shared.MenuProfileTemplates.seedGroups(val);
+                        if (val == shared.MenuProfile.salad) {
+                          try {
+                            final snap = await FirebaseFirestore.instance
+                                .collection('franchises')
+                                .doc(widget.franchiseId)
+                                .collection('config')
+                                .doc('menu_profile_salad')
+                                .get();
+                            final def = snap
+                                    .data()?['dressingsSourceTypeId']
+                                    ?.toString()
+                                    .trim() ??
+                                '';
+                            if (def.isNotEmpty) {
+                              nextGroups = [
+                                for (final g in nextGroups)
+                                  if (g.id.toLowerCase() == 'dressings' ||
+                                      g.label
+                                          .toLowerCase()
+                                          .contains('dressing'))
+                                    g.copyWith(sourceTypeId: def)
+                                  else
+                                    g,
+                              ];
+                            }
+                          } catch (_) {}
+                        }
+
                         session.updateDraft(
                           session.draft.copyWith(
                             menuProfile: val,
-                            modifierGroups:
-                                shared.MenuProfileTemplates.seedGroups(val),
+                            modifierGroups: nextGroups,
                             dippingSplits: nextSplits,
                             freeDipCupCount: nextFreeCups,
                             sideDipUpcharge: nextUpcharge,
-                            // Salad: item-level free dressings + extra $
                             freeDressingCount: val == shared.MenuProfile.salad
                                 ? (session.draft.freeDressingCount ?? 1)
                                 : session.draft.freeDressingCount,
@@ -547,7 +575,6 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                             maxFreeDressings: val == shared.MenuProfile.salad
                                 ? (session.draft.maxFreeDressings ?? 1)
                                 : session.draft.maxFreeDressings,
-                            // Wings: no included toppings / optional add-ons
                             includedIngredients: val == shared.MenuProfile.wings
                                 ? <Map<String, dynamic>>[]
                                 : session.draft.includedIngredients,
