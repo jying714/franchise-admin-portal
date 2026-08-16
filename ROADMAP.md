@@ -1,8 +1,8 @@
 # Doughboys Pizzeria Franchise Platform — Roadmap
 
-**Last Updated**: August 6, 2026 (~20:40 CDT)  
-**Current focus**: **Manager burn-in / soft release**  
-**Active branch**: **`main`**
+**Last Updated**: August 15, 2026  
+**Current focus**: **Catalog health v1 + pre-hardware POS interfaces**  
+**Active branch**: **`feat/pre-hardware-hq-polish`** · soft-release **`main`**
 
 ## Vision
 
@@ -19,6 +19,7 @@ Multi-tenant white-label Flutter platform: web + mobile + counter station, franc
 - **Inventory v1** — isSellable, channel 86, paid decrement, void restore  
 - **Staff/labor v1** — roster/PIN, schedule+print, POS clock, hours+timesheet  
 - **Station claims** — `stationFranchise`; clock-in gates + manager override  
+- **Salad profile** + HQ editor polish (2026-08-15 on main)
 
 ---
 
@@ -27,12 +28,16 @@ Multi-tenant white-label Flutter platform: web + mobile + counter station, franc
 | Epic | Status |
 |------|--------|
 | Soft release / burn-in | **Active** |
+| Salad profile + HQ editor polish | **COMPLETE on main** (2026-08-15) |
+| Catalog health v1 (Decision 15) | **Active** on `feat/pre-hardware-hq-polish` |
+| POS print/drawer interfaces | **Queued** (pre-hardware) |
 | Storefront shell + Modern | **COMPLETE** |
 | Inventory v1 | **COMPLETE** |
 | Staff/labor v1 | **COMPLETE** |
 | Home composition Wave 2 | **Deferred** |
 | Promos / push / loyalty | **Growth — after soft stability** |
-| POS hardware / iOS | **Waiting on devices** |
+| POS hardware | **Waiting on devices** (inbound) |
+| iOS port | **Delayed** (parallel when started) |
 | Custom domains | **Open** |
 | CF Node 22 | Before ~2026-10-30 |
 
@@ -53,7 +58,8 @@ Multi-tenant white-label Flutter platform: web + mobile + counter station, franc
 - Guests order on brand-capable web/mobile  
 - Counter runs FranchiseHQ POS as primary after burn-in  
 - Managers track stock and labor without Owner.com  
+- Owners self-serve catalog integrity (Catalog health) with zero support for common fixes
 
 ## How to use
 
-Agents: STATUS + HANDOFF + closed `docs/plans/*` + app READMEs.
+Agents: STATUS + HANDOFF + Decision 15 + `docs/slices/catalog-health-v1.md` + closed `docs/plans/*` + app READMEs.
