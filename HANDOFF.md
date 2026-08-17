@@ -1,6 +1,6 @@
 # HANDOFF.md
 
-**As of:** Saturday, August 15, 2026  
+**As of:** Monday, August 17, 2026  
 **Active branch:** `feat/pre-hardware-hq-polish`  
 **Soft-release:** `main` (includes salad profile + HQ editor polish)
 
@@ -59,15 +59,22 @@ Authority: `docs/slices/catalog-health-v1.md`
 
 ---
 
-## Next code (this branch)
+## On this branch (2026-08-16 → 17)
 
-1. **A4** — Remove standing schema panel; **N fixes needed** + sheet (HQ menu item editor, then Admin).  
-2. **B1–B2** — Detect + merge duplicate types with dry-run.  
-3. **B3 / C** — Orphans, ref repair, onboarding step + HQ card.  
-4. **D** — POS `KitchenPrinter` / drawer interfaces + mock ticket preview.  
+- Catalog health: type merge, ingredient type-label normalize, category duplicate banner + name uniqueness  
+- Menu item editor: full-width; **Fixes needed** sheet with map/create (category/ingredient); schema sidebar **removed**  
+- Mark Complete: always labeled Mark Complete; disabled when item errors remain  
+- POS: `DrawerService` mock used on cash pay + refund paths; `PrintService` mock unchanged  
 
-**Hardware:** printer + cash drawer inbound — keep software ports ready.  
-**iOS:** delayed; simulator bring-up when started (no hardware dependency).
+## Next code
+
+1. Optional: Catalog health **hub** (onboarding step / HQ card) — Decision 15 surface C  
+2. Optional: override $ on mobile optional **chip labels**  
+3. Merge → `main` when you sign off smoke  
+4. Hardware week: real print + drawer behind existing services  
+
+**Hardware:** printer + cash drawer inbound.  
+**iOS:** delayed.
 
 ---
 
@@ -77,4 +84,4 @@ Authority: `docs/slices/catalog-health-v1.md`
 - Prefer real paths; no invented schema fields  
 - Quote source for surgical edits  
 
-**Bottom line:** Salad path is on main. Pre-hardware focus is **Catalog health self-serve** + **POS print/drawer interfaces**. Schema UI becomes Catalog health per Decision 15.
+**Bottom line:** Salad on main. Branch has Catalog health foundation + Fixes sheet + DrawerService mock. Optional hub C, then merge; hardware swaps mocks.
