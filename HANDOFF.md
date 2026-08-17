@@ -1,6 +1,6 @@
 # HANDOFF.md
 
-**As of:** Monday, August 17, 2026  
+**As of:** Monday, August 17, 2026 (TSP100 + Stripe reader on site)  
 **Active branch:** `feat/pre-hardware-hq-polish`  
 **Soft-release:** `main` (includes salad profile + HQ editor polish)
 
@@ -68,12 +68,21 @@ Authority: `docs/slices/catalog-health-v1.md`
 
 ## Next code
 
-1. Optional: Catalog health **hub** (onboarding step / HQ card) — Decision 15 surface C  
-2. Optional: override $ on mobile optional **chip labels**  
-3. Merge → `main` when you sign off smoke  
-4. Hardware week: real print + drawer behind existing services  
+1. Merge → `main` when Catalog health smoke is signed off  
+2. **POS print:** Star TSP100 behind `PrintService` (console fallback without paper)  
+3. **Stripe reader:** card-present / Terminal when scheduled  
+4. **Cash drawer:** real `DrawerService` when hardware arrives (DK on receipt printer)  
+5. Live service later: second printer for kitchen tickets vs counter receipts  
 
-**Hardware:** printer + cash drawer inbound.  
+### Station hardware (2026-08-17)
+
+| Item | Status |
+|------|--------|
+| Star TSP100 (LAN) | On site, networked; **paper pending** |
+| Stripe card reader | On site |
+| Cash drawer | Still inbound |
+| 2nd (kitchen) printer | Not required for dev; planned for live |
+
 **iOS:** delayed.
 
 ---
@@ -84,4 +93,4 @@ Authority: `docs/slices/catalog-health-v1.md`
 - Prefer real paths; no invented schema fields  
 - Quote source for surgical edits  
 
-**Bottom line:** Salad on main. Branch has Catalog health foundation + Fixes sheet + DrawerService mock. Optional hub C, then merge; hardware swaps mocks.
+**Bottom line:** Salad on main. Catalog health + Fixes sheet on branch. **TSP100 + Stripe reader on site** — ready for print/Terminal development (paper & drawer still pending). One printer OK for pilot; two for live (counter + kitchen).
