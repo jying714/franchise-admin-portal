@@ -19,6 +19,7 @@ import 'package:franchise_admin_portal/core/providers/onboarding_progress_provid
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:franchise_admin_portal/admin/staff/staff_access_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class OwnerHQDashboardScreen extends StatelessWidget {
   final String currentScreen;
@@ -101,6 +102,11 @@ class OwnerHQDashboardScreen extends StatelessWidget {
         child: SingleChildScrollView(
           child: Column(
             children: [
+              CatalogHealthBanner(
+                key: ValueKey('hq-catalog-health-$franchiseId'),
+                franchiseId: franchiseId,
+              ),
+              SizedBox(height: gap),
               GridView.count(
                 crossAxisCount: gridColumns,
                 shrinkWrap: true,
@@ -127,6 +133,7 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                     franchiseId: franchiseId,
                   ),
                   const OnboardingProgressCard(),
+                  // CatalogHealthCard omitted here — use overlay row below OR:
                   const CustomerCardPaymentsStatusCard(),
                   CashFlowForecastCard(franchiseId: franchiseId),
                 ],
@@ -921,6 +928,164 @@ class OnboardingProgressCard extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// Decision 15 — post-onboarding attention when foundation catalog is dirty.
+/// Loads types/ingredients/categories via Firestore (providers are onboarding-scoped).
+class CatalogHealthBanner extends StatefulWidget {
+  final String franchiseId;
+
+  const CatalogHealthBanner({
+    super.key,
+    required this.franchiseId,
+  });
+
+  @override
+  State<CatalogHealthBanner> createState() => _CatalogHealthBannerState();
+}
+
+class _CatalogHealthBannerState extends State<CatalogHealthBanner> {
+  int? _issueCount;
+  int _typeDupes = 0;
+  int _labelIssues = 0;
+  int _catDupes = 0;
+  bool _loading = true;
+  String? _loadedForFranchiseId;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final providerId =
+        Provider.of<shared.FranchiseProvider>(context, listen: true)
+            .franchiseId;
+    final fid = (providerId.isNotEmpty && providerId != 'unknown')
+        ? providerId
+        : widget.franchiseId;
+    if (fid.isEmpty || fid == 'unknown') {
+      setState(() {
+        _loading = false;
+        _issueCount = 0;
+      });
+      return;
+    }
+    if (_loadedForFranchiseId == fid) return;
+    _loadedForFranchiseId = fid;
+    _scan(fid);
+  }
+
+  Future<void> _scan(String franchiseId) async {
+    setState(() => _loading = true);
+    try {
+      final db = FirebaseFirestore.instance;
+      final typesSnap = await db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('ingredient_types')
+          .get();
+      final ingsSnap = await db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('ingredients')
+          .get();
+      final catsSnap = await db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('categories')
+          .get();
+
+      final types = typesSnap.docs
+          .map((d) => shared.IngredientType.fromFirestore(d))
+          .toList();
+      final ingredients = ingsSnap.docs.map((d) {
+        final data = Map<String, dynamic>.from(d.data());
+        data['id'] = data['id'] ?? d.id;
+        return shared.IngredientMetadata.fromMap(data);
+      }).toList();
+      final categories = catsSnap.docs
+          .map(
+            (d) => shared.Category.fromFirestore(
+              Map<String, dynamic>.from(d.data()),
+              d.id,
+            ),
+          )
+          .toList();
+
+      final typeDupes =
+          shared.CatalogHealth.detectDuplicateIngredientTypes(types);
+      final labelIssues = shared.CatalogHealth.detectIngredientTypeLabelIssues(
+        ingredients,
+        types,
+      );
+      final catDupes =
+          shared.CatalogHealth.detectDuplicateCategories(categories);
+
+      if (!mounted) return;
+      setState(() {
+        _typeDupes = typeDupes.length;
+        _labelIssues = labelIssues.length;
+        _catDupes = catDupes.length;
+        _issueCount = _typeDupes + _labelIssues + _catDupes;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _issueCount = 0;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const SizedBox.shrink();
+    }
+
+    final issueCount = _issueCount ?? 0;
+    if (issueCount == 0) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Icon(Icons.health_and_safety_outlined,
+                  color: Colors.deepOrange.shade700),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Catalog health: $issueCount issue group(s). '
+                  '${_typeDupes == 0 ? '' : '$_typeDupes type. '}'
+                  '${_labelIssues == 0 ? '' : '$_labelIssues ingredient label(s). '}'
+                  '${_catDupes == 0 ? '' : '$_catDupes category. '}',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const HqOnboardingShellScreen(
+                        initialSectionKey: 'onboarding_menu_foundation',
+                      ),
+                    ),
+                  );
+                },
+                child: const Text('Fix'),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

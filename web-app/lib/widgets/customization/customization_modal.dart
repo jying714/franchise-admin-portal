@@ -2074,6 +2074,13 @@ class _CustomizationModalState extends State<CustomizationModal> {
                           ),
                           maxFreeSauces: _getFreeSauceCount(),
                           extraSauceUpcharge: _getExtraSauceUpcharge(),
+                          resolveExtraPrice: (ingId) =>
+                              shared.MenuPricing.resolveExtraIngredientPrice(
+                            item: widget.menuItem,
+                            selectedSize: _selectedSize?.label,
+                            ingId: ingId,
+                            ingredientMetadata: _ingredientMetadata,
+                          ),
                         ),
 
                       // --- ORDER DETAILS SECTION: Always at the very end, collapsed by default ---

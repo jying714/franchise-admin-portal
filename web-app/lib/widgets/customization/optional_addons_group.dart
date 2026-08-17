@@ -17,6 +17,9 @@ class OptionalAddOnsGroup extends StatelessWidget {
   final bool usesDynamicToppingPricing;
   final double Function() getToppingUpcharge;
   final double Function(shared.IngredientMetadata? meta) getIngredientUpcharge;
+
+  /// When set (salad/sub/dinner), chip $ matches footer (overrides win).
+  final double Function(String ingId)? resolveExtraPrice;
   final void Function(String ingId, bool? value) onToggleAddOn;
   final void Function(String ingId, int delta) onChangeSauceCount;
   final Widget Function(String ingId, bool isDouble, VoidCallback onTap)
@@ -36,6 +39,7 @@ class OptionalAddOnsGroup extends StatelessWidget {
     required this.usesDynamicToppingPricing,
     required this.getToppingUpcharge,
     required this.getIngredientUpcharge,
+    this.resolveExtraPrice,
     required this.onToggleAddOn,
     required this.onChangeSauceCount,
     required this.buildAddOnDoublePill,
@@ -65,13 +69,16 @@ class OptionalAddOnsGroup extends StatelessWidget {
             final meta = ingredientMetadata[ingId];
             final isSauce = (meta?.type?.toLowerCase() == "sauces") ||
                 (addOn['type']?.toString()?.toLowerCase() == "sauces");
-            final upcharge = usesDynamicToppingPricing
-                ? toppingUpcharge
-                : (meta != null &&
-                        meta.upcharge != null &&
-                        meta.upcharge!.isNotEmpty)
-                    ? getIngredientUpcharge(meta)
-                    : (addOn['price'] as num?)?.toDouble() ?? 0.0;
+            final idStr = ingId?.toString() ?? '';
+            final upcharge = (resolveExtraPrice != null && idStr.isNotEmpty)
+                ? resolveExtraPrice!(idStr)
+                : usesDynamicToppingPricing
+                    ? toppingUpcharge
+                    : (meta != null &&
+                            meta.upcharge != null &&
+                            meta.upcharge!.isNotEmpty)
+                        ? getIngredientUpcharge(meta)
+                        : (addOn['price'] as num?)?.toDouble() ?? 0.0;
 
             if (isSauce) {
               final count = selectedSauceCounts[ingId] ?? 0;
