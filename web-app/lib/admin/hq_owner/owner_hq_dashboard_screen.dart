@@ -987,7 +987,7 @@ class _CatalogHealthBannerState extends State<CatalogHealthBanner> {
       final ingsSnap = await db
           .collection('franchises')
           .doc(franchiseId)
-          .collection('ingredients')
+          .collection('ingredient_metadata')
           .get();
       final catsSnap = await db
           .collection('franchises')
@@ -998,11 +998,18 @@ class _CatalogHealthBannerState extends State<CatalogHealthBanner> {
       final types = typesSnap.docs
           .map((d) => shared.IngredientType.fromFirestore(d))
           .toList();
-      final ingredients = ingsSnap.docs.map((d) {
-        final data = Map<String, dynamic>.from(d.data());
-        data['id'] = data['id'] ?? d.id;
-        return shared.IngredientMetadata.fromMap(data);
-      }).toList();
+      final ingredients = <shared.IngredientMetadata>[];
+      for (final d in ingsSnap.docs) {
+        try {
+          final data = Map<String, dynamic>.from(d.data());
+          data['id'] = (data['id'] ?? d.id).toString();
+          data['name'] = (data['name'] ?? '').toString();
+          data['type'] = (data['type'] ?? '').toString();
+          ingredients.add(shared.IngredientMetadata.fromMap(data));
+        } catch (e) {
+          debugPrint('[CatalogHealthBanner] skip ingredient ${d.id}: $e');
+        }
+      }
       final categories = catsSnap.docs
           .map(
             (d) => shared.Category.fromFirestore(
@@ -1029,7 +1036,8 @@ class _CatalogHealthBannerState extends State<CatalogHealthBanner> {
         _issueCount = _typeDupes + _labelIssues + _catDupes;
         _loading = false;
       });
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('[CatalogHealthBanner] scan failed: $e\n$st');
       if (!mounted) return;
       setState(() {
         _loading = false;
