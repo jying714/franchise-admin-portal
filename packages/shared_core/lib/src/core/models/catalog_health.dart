@@ -1,5 +1,6 @@
 import 'package:shared_core/src/core/models/ingredient_type_model.dart';
 import 'package:shared_core/src/core/models/ingredient_metadata.dart';
+import 'package:shared_core/src/core/models/category.dart';
 
 /// One case-insensitive name collision among ingredient types.
 class DuplicateIngredientTypeGroup {
@@ -257,5 +258,29 @@ class CatalogHealth {
       issues: issues,
       targetByIngredientId: targets,
     );
+  }
+
+  /// Categories whose names collide case-insensitively.
+  static List<List<Category>> detectDuplicateCategories(
+    List<Category> categories,
+  ) {
+    final byKey = <String, List<Category>>{};
+    for (final c in categories) {
+      final name = c.name.trim();
+      if (name.isEmpty) continue;
+      byKey.putIfAbsent(name.toLowerCase(), () => []).add(c);
+    }
+    final groups = <List<Category>>[];
+    for (final e in byKey.entries) {
+      if (e.value.length < 2) continue;
+      final sorted = List<Category>.from(e.value)
+        ..sort((a, b) => a.id.compareTo(b.id));
+      groups.add(sorted);
+    }
+    groups.sort(
+      (a, b) =>
+          a.first.name.toLowerCase().compareTo(b.first.name.toLowerCase()),
+    );
+    return groups;
   }
 }

@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart' hide Order;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart';
-
+import '../../../services/drawer_service.dart';
 import '../../../core/constants/pos_permissions.dart';
 import '../../../providers/pin_session_provider.dart';
 import '../../session/force_repin_dialog.dart';
@@ -608,10 +608,8 @@ class OrderDetailDialog extends StatelessWidget {
       debugPrint('[POS] inventory restore skipped: $e');
     }
 
-    // ignore: avoid_print
-    print(
-      '[POS] cash drawer kick (mock) — line refund $orderId '
-      '\$${refundSlice.toStringAsFixed(2)}',
+    await const DrawerService().openDrawer(
+      reason: 'line_refund $orderId \$${refundSlice.toStringAsFixed(2)}',
     );
 
     if (context.mounted) {

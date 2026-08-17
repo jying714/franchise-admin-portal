@@ -274,20 +274,66 @@ class _OnboardingCategoriesScreenState
               ],
             ),
             const SizedBox(height: 12),
-            if (provider.isDirty)
-              Row(
-                children: [
-                  ElevatedButton(
-                    onPressed: _saveChanges,
-                    child: Text(loc.saveChanges),
+            Builder(
+              builder: (context) {
+                final provider = Provider.of<shared.CategoryProvider>(context);
+                final groups = shared.CatalogHealth.detectDuplicateCategories(
+                  provider.categories,
+                );
+                if (groups.isEmpty) return const SizedBox.shrink();
+                return Card(
+                  color: Colors.red.shade50,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'Catalog health: ${groups.length} duplicate '
+                          'category name(s)',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.red,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Rename or remove extras so each name is unique '
+                          '(case does not matter). New saves already block collisions.',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        const SizedBox(height: 8),
+                        ...groups.map((g) {
+                          final labels =
+                              g.map((c) => '“${c.name}” (${c.id})').join(' · ');
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Text(
+                              labels,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
                   ),
-                  const SizedBox(width: 12),
-                  OutlinedButton(
-                    onPressed: provider.revertChanges,
-                    child: Text(loc.revertChanges),
-                  ),
-                ],
-              ),
+                );
+              },
+            ),
+            Row(
+              children: [
+                ElevatedButton(
+                  onPressed: _saveChanges,
+                  child: Text(loc.saveChanges),
+                ),
+                const SizedBox(width: 12),
+                OutlinedButton(
+                  onPressed: provider.revertChanges,
+                  child: Text(loc.revertChanges),
+                ),
+              ],
+            ),
             const SizedBox(height: 12),
             if (_showSelectAllBanner)
               Card(

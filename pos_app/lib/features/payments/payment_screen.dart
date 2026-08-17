@@ -11,6 +11,7 @@ import 'split_tender_sheet.dart';
 import '../../services/card_present_service.dart';
 import '../../services/print_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import '../../services/drawer_service.dart';
 
 class PaymentScreen extends StatefulWidget {
   final String franchiseId;
@@ -519,8 +520,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           'timestamps.${widget.statusWhenPaid}': now.toIso8601String(),
       }, SetOptions(merge: true));
 
-      // ignore: avoid_print
-      print('[POS] cash drawer kick (mock)');
+      await const DrawerService().openDrawer(reason: 'cash_or_split_pay');
 
       // Mock customer receipt — never fail the already-committed payment.
       try {

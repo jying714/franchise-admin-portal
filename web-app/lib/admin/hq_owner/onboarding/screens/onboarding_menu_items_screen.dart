@@ -9,7 +9,6 @@ import 'package:franchise_admin_portal/core/utils/features/feature_gate_banner.d
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/menu_item_editor_sheet.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/menu_items_list_tile.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/menu_item_template_picker_dialog.dart';
-import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/schema_issue_sidebar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/hq_onboarding_shell_screen.dart';
 import 'package:uuid/uuid.dart';
@@ -239,48 +238,6 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
     setState(() {
       _inlineSchemaIssues = List<shared.MenuItemSchemaIssue>.from(newIssues);
     });
-  }
-
-  void _handleRepair(shared.MenuItemSchemaIssue issue, String newValue) {
-    _editorKey.currentState?.repairSchemaIssue(issue, newValue);
-    // Force immediate refresh and clear issues after repair
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (mounted) _onFullRefresh();
-    });
-  }
-
-  Future<void> _onNormalizeAll() async {
-    final menuProvider =
-        Provider.of<shared.MenuItemProvider>(context, listen: false);
-    try {
-      await menuProvider.normalizeSchemaReferences();
-      _editorKey.currentState?.forceRecomputeIssues();
-      _onFullRefresh();
-    } catch (e, stack) {
-      shared.ErrorLogger.log(
-        message: 'menu_items_normalize_failed',
-        stack: stack.toString(),
-        source: 'onboarding_menu_items_screen',
-        severity: 'warning',
-      );
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Normalize failed: $e')),
-      );
-    }
-  }
-
-  void _onFullRefresh() {
-    final issues = _editorKey.currentState?.currentIssues;
-    if (issues != null) {
-      setState(() => _inlineSchemaIssues = List.from(issues));
-    } else if (_editingItem != null) {
-      _checkForSchemaIssues(
-        _editorKey.currentState?.currentDraft ?? _editingItem,
-      );
-    } else {
-      setState(() => _inlineSchemaIssues = []);
-    }
   }
 
   void openEditor(shared.MenuItem item) {
@@ -528,7 +485,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
               IconButton(
                 icon: const Icon(Icons.check_circle_outline),
                 tooltip: anyItemHasSchemaErrors
-                    ? 'Fix schema errors on all items first'
+                    ? 'Resolve fixes on flagged items before marking complete'
                     : (loc.markAsComplete),
                 onPressed: anyItemHasSchemaErrors ? null : _markComplete,
               ),
@@ -538,92 +495,64 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
           body: Padding(
             padding: DesignTokens.gridPadding,
             child: _isEditing
-                ? Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: MenuItemEditorSheet(
-                          key: _editorKey,
-                          existing: _editingItem,
-                          firestore: FirebaseFirestore.instance,
-                          franchiseId: Provider.of<shared.FranchiseProvider>(
-                                  context,
-                                  listen: false)
-                              .franchiseId,
-                          onSchemaIssuesChanged: (issues) {
-                            if (!mounted) return;
-                            setState(
-                                () => _inlineSchemaIssues = List.from(issues));
-                          },
-                          onSave: (updatedItem) async {
-                            final adminService = AdminFirestoreService();
-                            final franchiseId =
-                                Provider.of<shared.FranchiseProvider>(context,
-                                        listen: false)
-                                    .franchiseId;
+                ? MenuItemEditorSheet(
+                    key: _editorKey,
+                    existing: _editingItem,
+                    firestore: FirebaseFirestore.instance,
+                    franchiseId: Provider.of<shared.FranchiseProvider>(context,
+                            listen: false)
+                        .franchiseId,
+                    onSchemaIssuesChanged: (issues) {
+                      if (!mounted) return;
+                      setState(() => _inlineSchemaIssues = List.from(issues));
+                    },
+                    onSave: (updatedItem) async {
+                      final adminService = AdminFirestoreService();
+                      final franchiseId = Provider.of<shared.FranchiseProvider>(
+                              context,
+                              listen: false)
+                          .franchiseId;
 
-                            final menuProvider =
-                                Provider.of<shared.MenuItemProvider>(context,
-                                    listen: false);
+                      final menuProvider = Provider.of<shared.MenuItemProvider>(
+                          context,
+                          listen: false);
 
-                            menuProvider.addOrUpdateMenuItem(updatedItem);
+                      menuProvider.addOrUpdateMenuItem(updatedItem);
 
-                            try {
-                              await adminService.saveMenuItem(
-                                franchiseId: franchiseId,
-                                menuItem: updatedItem,
-                              );
-                              await menuProvider.persistChanges();
+                      try {
+                        await adminService.saveMenuItem(
+                          franchiseId: franchiseId,
+                          menuItem: updatedItem,
+                        );
+                        await menuProvider.persistChanges();
 
-                              if (mounted) {
-                                setState(() => _isEditing = false);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('✅ Item saved to Firestore'),
-                                    backgroundColor: Colors.green,
-                                  ),
-                                );
-                              }
-                            } catch (e, stack) {
-                              shared.ErrorLogger.log(
-                                message: 'save_menu_item_failed',
-                                stack: stack.toString(),
-                                source: 'onboarding_menu_items_screen',
-                                severity: 'error',
-                              );
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('❌ Save failed: $e'),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
-                              }
-                            }
-                          },
-                          onCancel: () => setState(() => _isEditing = false),
-                        ),
-                      ),
-                      const VerticalDivider(
-                          width: 1, thickness: 1, color: Colors.grey),
-                      Expanded(
-                        flex: 2,
-                        child: SchemaIssueSidebar(
-                          issues: _inlineSchemaIssues,
-                          franchiseId: Provider.of<shared.FranchiseProvider>(
-                                  context,
-                                  listen: false)
-                              .franchiseId,
-                          onRepair: (issue, value) {
-                            _editorKey.currentState
-                                ?.repairSchemaIssue(issue, value);
-                            _onFullRefresh();
-                          },
-                          onFullRefresh: _onFullRefresh,
-                          onNormalizeAll: _onNormalizeAll,
-                        ),
-                      ),
-                    ],
+                        if (mounted) {
+                          setState(() => _isEditing = false);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('✅ Item saved to Firestore'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
+                      } catch (e, stack) {
+                        shared.ErrorLogger.log(
+                          message: 'save_menu_item_failed',
+                          stack: stack.toString(),
+                          source: 'onboarding_menu_items_screen',
+                          severity: 'error',
+                        );
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('❌ Save failed: $e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    onCancel: () => setState(() => _isEditing = false),
                   )
                 : Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -910,7 +839,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                                                       .showSnackBar(
                                                     SnackBar(
                                                       content: Text(
-                                                        'Template applied · $errorCount item(s) still have schema errors — edit to fix',
+                                                        'Template applied · $errorCount item(s) still need fixes — edit to resolve',
                                                       ),
                                                       backgroundColor:
                                                           Colors.orange,
@@ -1228,11 +1157,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                                       const SizedBox(width: 16),
                                       ElevatedButton.icon(
                                         icon: const Icon(Icons.check_circle),
-                                        label: Text(
-                                          anyItemHasSchemaErrors
-                                              ? 'Fix schema errors first'
-                                              : 'Mark Complete',
-                                        ),
+                                        label: const Text('Mark Complete'),
                                         onPressed: anyItemHasSchemaErrors
                                             ? null
                                             : _markComplete,

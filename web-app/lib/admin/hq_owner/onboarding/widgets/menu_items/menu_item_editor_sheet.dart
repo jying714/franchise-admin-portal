@@ -17,6 +17,8 @@ import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_it
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/multi_ingredient_selector.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/wings_franchise_sauce_pool.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/category_creation_dialog.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/ingredient_creation_dialog.dart';
 
 // ===================== NEW COORDINATOR (Single Source of Truth) =====================
 // ===================== NEW COORDINATOR (Single Source of Truth) =====================
@@ -400,60 +402,239 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
     widget.onCancel();
   }
 
+  Future<void> _createAndRepairIssue(
+    shared.MenuItemSchemaIssue issue,
+  ) async {
+    final loc = AppLocalizations.of(context)!;
+
+    if (issue.type == shared.MenuItemSchemaIssueType.category) {
+      final catProvider =
+          Provider.of<shared.CategoryProvider>(context, listen: false);
+      final newCat = await showDialog<shared.Category>(
+        context: context,
+        builder: (_) => CategoryCreationDialog(
+          loc: loc,
+          suggestedName: issue.label,
+        ),
+      );
+      if (newCat == null || !mounted) return;
+      await catProvider.createCategory(newCat);
+      repairSchemaIssue(issue, newCat.id);
+      return;
+    }
+
+    if (issue.type == shared.MenuItemSchemaIssueType.ingredient) {
+      final typeProvider =
+          Provider.of<shared.IngredientTypeProvider>(context, listen: false);
+      final ingProvider = Provider.of<shared.IngredientMetadataProvider>(
+          context,
+          listen: false);
+      final newIng = await showDialog<shared.IngredientMetadata>(
+        context: context,
+        builder: (_) => IngredientCreationDialog(
+          loc: loc,
+          suggestedName: issue.label,
+          availableTypeIds: typeProvider.allTypeIds,
+          typeIdToName: typeProvider.typeIdToName,
+        ),
+      );
+      if (newIng == null || !mounted) return;
+      await ingProvider.createIngredient(newIng);
+      repairSchemaIssue(issue, newIng.id);
+      return;
+    }
+
+    // Ingredient type: foundation screen owns types (Decision 15).
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Fix ingredient types under Onboarding → Ingredient types',
+        ),
+      ),
+    );
+  }
+
   void _showFixesNeededSheet(List<shared.MenuItemSchemaIssue> issues) {
     final errorCount = issues.where((i) => i.severity == 'error').length;
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      builder: (ctx) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'Fixes needed',
-                  style: Theme.of(ctx).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  errorCount > 0
-                      ? '$errorCount must be fixed before save.'
-                      : 'Review these items when you can.',
-                  style: Theme.of(ctx).textTheme.bodySmall,
-                ),
-                const SizedBox(height: 12),
-                Flexible(
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: issues.length,
-                    itemBuilder: (_, i) {
-                      final issue = issues[i];
-                      final isError = issue.severity == 'error';
-                      return ListTile(
-                        dense: true,
-                        leading: Icon(
-                          isError
-                              ? Icons.error_outline
-                              : Icons.warning_amber_outlined,
-                          color: isError ? Colors.red : Colors.orange,
-                          size: 20,
-                        ),
-                        title: Text(issue.displayMessage),
-                      );
-                    },
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (sheetContext, setSheetState) {
+            final liveIssues = _session.issues;
+            final liveErrors =
+                liveIssues.where((i) => i.severity == 'error').length;
+            final categories =
+                Provider.of<shared.CategoryProvider>(context).categories;
+            final ingredients =
+                Provider.of<shared.IngredientMetadataProvider>(context)
+                    .allIngredients;
+
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                child: SizedBox(
+                  height: MediaQuery.of(sheetContext).size.height * 0.7,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Fixes needed',
+                        style: Theme.of(sheetContext).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        liveIssues.isEmpty
+                            ? 'All clear for this item.'
+                            : (liveErrors > 0
+                                ? '$liveErrors must be fixed before save.'
+                                : 'Review these when you can.'),
+                        style: Theme.of(sheetContext).textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 12),
+                      Expanded(
+                        child: liveIssues.isEmpty
+                            ? const Center(
+                                child: Icon(Icons.check_circle,
+                                    color: Colors.green, size: 48),
+                              )
+                            : ListView.builder(
+                                itemCount: liveIssues.length,
+                                itemBuilder: (_, i) {
+                                  final issue = liveIssues[i];
+                                  final isError = issue.severity == 'error';
+                                  final canMap = issue.type ==
+                                          shared.MenuItemSchemaIssueType
+                                              .category ||
+                                      issue.type ==
+                                          shared.MenuItemSchemaIssueType
+                                              .ingredient;
+                                  final canCreate = canMap;
+
+                                  final mapItems = <DropdownMenuItem<String>>[];
+                                  if (issue.type ==
+                                      shared.MenuItemSchemaIssueType.category) {
+                                    mapItems.addAll(categories.map(
+                                      (c) => DropdownMenuItem(
+                                        value: c.id,
+                                        child: Text(c.name),
+                                      ),
+                                    ));
+                                  } else if (issue.type ==
+                                      shared
+                                          .MenuItemSchemaIssueType.ingredient) {
+                                    mapItems.addAll(ingredients.map(
+                                      (ing) => DropdownMenuItem(
+                                        value: ing.id,
+                                        child: Text(ing.name),
+                                      ),
+                                    ));
+                                  }
+
+                                  return Card(
+                                    margin: const EdgeInsets.only(bottom: 10),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(12),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Icon(
+                                                isError
+                                                    ? Icons.error_outline
+                                                    : Icons
+                                                        .warning_amber_outlined,
+                                                color: isError
+                                                    ? Colors.red
+                                                    : Colors.orange,
+                                                size: 20,
+                                              ),
+                                              const SizedBox(width: 10),
+                                              Expanded(
+                                                child: Text(
+                                                  issue.displayMessage,
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          if (canMap &&
+                                              mapItems.isNotEmpty) ...[
+                                            const SizedBox(height: 8),
+                                            DropdownButtonFormField<String>(
+                                              isExpanded: true,
+                                              decoration: const InputDecoration(
+                                                labelText: 'Map to existing',
+                                                isDense: true,
+                                                border: OutlineInputBorder(),
+                                              ),
+                                              items: mapItems,
+                                              onChanged: (v) {
+                                                if (v == null) return;
+                                                repairSchemaIssue(issue, v);
+                                                setSheetState(() {});
+                                              },
+                                            ),
+                                          ],
+                                          if (canCreate) ...[
+                                            const SizedBox(height: 6),
+                                            Align(
+                                              alignment: Alignment.centerLeft,
+                                              child: TextButton.icon(
+                                                onPressed: () async {
+                                                  await _createAndRepairIssue(
+                                                      issue);
+                                                  setSheetState(() {});
+                                                },
+                                                icon: const Icon(Icons.add,
+                                                    size: 18),
+                                                label: Text(
+                                                  issue.type ==
+                                                          shared
+                                                              .MenuItemSchemaIssueType
+                                                              .category
+                                                      ? 'Create category'
+                                                      : 'Create ingredient',
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                          if (issue.type ==
+                                              shared.MenuItemSchemaIssueType
+                                                  .ingredientType) ...[
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              'Open Onboarding → Ingredient types to fix this.',
+                                              style: Theme.of(sheetContext)
+                                                  .textTheme
+                                                  .bodySmall,
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(sheetContext),
+                        child: const Text('Close'),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Close'),
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );

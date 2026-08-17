@@ -8,6 +8,7 @@ import '../session/force_repin_dialog.dart';
 import '../dine_in/table_status.dart';
 import 'widgets/order_detail_dialog.dart';
 import '../../services/print_service.dart';
+import '../../services/drawer_service.dart';
 
 enum _OrderTypeFilter { all, dineIn, carryOut, delivery }
 
@@ -565,9 +566,8 @@ class _ClosedOrdersScreenState extends State<ClosedOrdersScreen> {
         }, SetOptions(merge: true));
 
     // ignore: avoid_print
-    print(
-      '[POS] cash drawer kick (mock) — refund ${order.id} '
-      '\$${order.total.toStringAsFixed(2)}',
+    await const DrawerService().openDrawer(
+      reason: 'refund ${order.id} \$${order.total.toStringAsFixed(2)}',
     );
 
     final t = _normalizeType(order);
