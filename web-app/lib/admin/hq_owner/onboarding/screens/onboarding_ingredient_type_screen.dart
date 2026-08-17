@@ -852,6 +852,25 @@ class _IngredientTypeFormDialogState extends State<IngredientTypeFormDialog> {
               return;
             }
 
+            final nameKey = name.trim().toLowerCase();
+            final nameTaken = provider.ingredientTypes.any(
+              (t) =>
+                  t.id != widget.initial?.id &&
+                  t.name.trim().toLowerCase() == nameKey,
+            );
+            if (nameTaken) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'A type with this name already exists (case does not matter)',
+                    ),
+                  ),
+                );
+              }
+              return;
+            }
+
             final newType = shared.IngredientType(
               id: widget.initial?.id,
               name: name.trim(),

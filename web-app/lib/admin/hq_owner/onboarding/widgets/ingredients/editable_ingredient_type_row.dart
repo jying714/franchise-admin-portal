@@ -101,6 +101,23 @@ class _EditableIngredientTypeRowState extends State<EditableIngredientTypeRow> {
       return;
     }
 
+    final nameKey = newName.toLowerCase();
+    final nameTaken = provider.ingredientTypes.any(
+      (t) => t.id != widget.type.id && t.name.trim().toLowerCase() == nameKey,
+    );
+    if (nameTaken) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'A type with this name already exists (case does not matter)',
+            ),
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() => _updating = true);
 
     try {

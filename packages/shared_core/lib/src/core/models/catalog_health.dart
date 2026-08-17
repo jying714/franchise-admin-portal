@@ -37,6 +37,46 @@ class IngredientTypeMergePlan {
   int get ingredientRetargetCount => ingredientIdsToRetarget.length;
 }
 
+/// Ingredient whose type link/label should be normalized to a foundation type.
+class IngredientTypeLabelIssue {
+  final IngredientMetadata ingredient;
+
+  /// Matched foundation type, if any (case-insensitive on name or by typeId).
+  final IngredientType? resolvedType;
+
+  /// true when typeId is null/empty.
+  final bool missingTypeId;
+
+  /// true when typeId points at an unknown type.
+  final bool unknownTypeId;
+
+  /// true when type string ≠ resolved type name (e.g. "Sauces" vs "sauces").
+  final bool labelMismatch;
+
+  const IngredientTypeLabelIssue({
+    required this.ingredient,
+    required this.resolvedType,
+    required this.missingTypeId,
+    required this.unknownTypeId,
+    required this.labelMismatch,
+  });
+
+  String get ingredientId => ingredient.id;
+}
+
+/// Dry-run: ingredients to rewrite with canonical typeId + type name.
+class IngredientTypeLabelNormalizePlan {
+  final List<IngredientTypeLabelIssue> issues;
+  final Map<String, IngredientType> targetByIngredientId;
+
+  const IngredientTypeLabelNormalizePlan({
+    required this.issues,
+    required this.targetByIngredientId,
+  });
+
+  int get count => issues.length;
+}
+
 /// Catalog health scanners (Decision 15). Detection only — no writes.
 class CatalogHealth {
   CatalogHealth._();
@@ -117,6 +157,105 @@ class CatalogHealth {
       losers: losers,
       ingredientIdsToRetarget: retarget,
       normalizedName: group.normalizedName,
+    );
+  }
+
+  /// Resolve foundation type for an ingredient (by typeId, else by type name).
+  static IngredientType? resolveIngredientType(
+    IngredientMetadata ingredient,
+    List<IngredientType> types,
+  ) {
+    final tid = ingredient.typeId?.trim() ?? '';
+    if (tid.isNotEmpty) {
+      for (final t in types) {
+        if (t.id == tid) return t;
+      }
+    }
+    final label = ingredient.type.trim().toLowerCase();
+    if (label.isEmpty) return null;
+    for (final t in types) {
+      if (t.name.trim().toLowerCase() == label) return t;
+      if ((t.id ?? '').trim().toLowerCase() == label) return t;
+    }
+    return null;
+  }
+
+  /// Ingredients missing typeId, unknown typeId, or type label ≠ type name.
+  static List<IngredientTypeLabelIssue> detectIngredientTypeLabelIssues(
+    List<IngredientMetadata> ingredients,
+    List<IngredientType> types,
+  ) {
+    final byId = <String, IngredientType>{
+      for (final t in types)
+        if (t.id != null && t.id!.isNotEmpty) t.id!: t,
+    };
+
+    final issues = <IngredientTypeLabelIssue>[];
+    for (final ing in ingredients) {
+      final tid = ing.typeId?.trim() ?? '';
+      final missingTypeId = tid.isEmpty;
+      final unknownTypeId = tid.isNotEmpty && !byId.containsKey(tid);
+      final resolved = resolveIngredientType(ing, types);
+
+      var labelMismatch = false;
+      if (resolved != null) {
+        final canonical = resolved.name.trim();
+        if (canonical.isNotEmpty && ing.type.trim() != canonical) {
+          labelMismatch = true;
+        }
+        if (resolved.id != null &&
+            resolved.id!.isNotEmpty &&
+            tid != resolved.id) {
+          // Missing or wrong typeId but name matched a type.
+          labelMismatch = true;
+        }
+      }
+
+      if (!missingTypeId && !unknownTypeId && !labelMismatch) {
+        continue;
+      }
+      // No type string and no typeId and no resolve → still report missing.
+      if (missingTypeId &&
+          unknownTypeId == false &&
+          resolved == null &&
+          ing.type.trim().isEmpty) {
+        issues.add(IngredientTypeLabelIssue(
+          ingredient: ing,
+          resolvedType: null,
+          missingTypeId: true,
+          unknownTypeId: false,
+          labelMismatch: false,
+        ));
+        continue;
+      }
+
+      if (missingTypeId || unknownTypeId || labelMismatch) {
+        issues.add(IngredientTypeLabelIssue(
+          ingredient: ing,
+          resolvedType: resolved,
+          missingTypeId: missingTypeId,
+          unknownTypeId: unknownTypeId,
+          labelMismatch: labelMismatch,
+        ));
+      }
+    }
+    return issues;
+  }
+
+  /// Dry-run normalize: only issues that have a resolved foundation type.
+  static IngredientTypeLabelNormalizePlan planNormalizeIngredientTypeLabels(
+    List<IngredientMetadata> ingredients,
+    List<IngredientType> types,
+  ) {
+    final issues = detectIngredientTypeLabelIssues(ingredients, types)
+        .where((i) => i.resolvedType != null && i.resolvedType!.id != null)
+        .toList();
+    final targets = <String, IngredientType>{
+      for (final i in issues) i.ingredientId: i.resolvedType!,
+    };
+    return IngredientTypeLabelNormalizePlan(
+      issues: issues,
+      targetByIngredientId: targets,
     );
   }
 }

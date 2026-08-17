@@ -203,6 +203,69 @@ class _OnboardingIngredientsScreenState
     );
   }
 
+  Future<void> _normalizeIngredientTypeLabels() async {
+    final typeProvider =
+        Provider.of<shared.IngredientTypeProvider>(context, listen: false);
+    final metadataProvider =
+        Provider.of<shared.IngredientMetadataProvider>(context, listen: false);
+    final franchiseId =
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
+    if (franchiseId.isEmpty) return;
+
+    final plan = shared.CatalogHealth.planNormalizeIngredientTypeLabels(
+      metadataProvider.ingredients,
+      typeProvider.ingredientTypes,
+    );
+    if (plan.count == 0) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No type labels to normalize')),
+      );
+      return;
+    }
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Normalize type labels'),
+        content: Text(
+          'Update ${plan.count} ingredient(s): set typeId and type name '
+          'from the matching foundation type (fixes sauces / Sauces drift).',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Normalize'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+
+    for (final issue in plan.issues) {
+      final target = plan.targetByIngredientId[issue.ingredientId];
+      if (target == null || target.id == null) continue;
+      metadataProvider.updateIngredient(
+        issue.ingredient.copyWith(
+          typeId: target.id,
+          type: target.name,
+        ),
+      );
+    }
+
+    await metadataProvider.saveAllChanges(franchiseId);
+    if (!mounted) return;
+    setState(() {});
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Normalized ${plan.count} ingredient(s)')),
+    );
+  }
+
   Future<void> _markComplete() async {
     final provider =
         Provider.of<shared.IngredientMetadataProvider>(context, listen: false);
@@ -620,6 +683,60 @@ class _OnboardingIngredientsScreenState
               ],
             ),
             const SizedBox(height: 12),
+            Builder(
+              builder: (context) {
+                final typeProvider =
+                    Provider.of<shared.IngredientTypeProvider>(context);
+                final issues =
+                    shared.CatalogHealth.detectIngredientTypeLabelIssues(
+                  metadataProvider.ingredients,
+                  typeProvider.ingredientTypes,
+                );
+                final fixable = issues
+                    .where((i) =>
+                        i.resolvedType != null && i.resolvedType!.id != null)
+                    .length;
+                if (issues.isEmpty) return const SizedBox.shrink();
+                return Card(
+                  color: Colors.orange.shade50,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'Catalog health: ${issues.length} ingredient(s) need '
+                          'type cleanup',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.deepOrange,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Missing typeId or label mismatch (e.g. type "Sauces" '
+                          'vs foundation "sauces"). $fixable can be fixed automatically.',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        if (fixable > 0) ...[
+                          const SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton.icon(
+                              onPressed: _normalizeIngredientTypeLabels,
+                              icon: const Icon(Icons.build_circle_outlined,
+                                  size: 18),
+                              label: Text('Normalize $fixable'),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
             if (metadataProvider.isDirty)
               Row(
                 children: [

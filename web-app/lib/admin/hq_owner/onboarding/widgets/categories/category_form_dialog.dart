@@ -73,13 +73,30 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _loading = true);
     final loc = widget.loc;
+    final categoryProvider =
+        Provider.of<CategoryProviderImpl>(context, listen: false);
+
+    final nameKey = _nameController.text.trim().toLowerCase();
+    final nameTaken = categoryProvider.categories.any(
+      (c) =>
+          c.id != widget.initialCategory?.id &&
+          c.name.trim().toLowerCase() == nameKey,
+    );
+    if (nameTaken) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'A category with this name already exists (case does not matter)',
+          ),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _loading = true);
 
     try {
-      final categoryProvider =
-          Provider.of<CategoryProviderImpl>(context, listen: false);
-
       final isEdit = widget.initialCategory != null;
       final id = widget.initialCategory?.id ?? UniqueKey().toString();
 
