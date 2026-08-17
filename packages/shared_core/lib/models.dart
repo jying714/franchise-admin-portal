@@ -28,6 +28,7 @@ export 'src/core/models/inventory.dart';
 export 'src/core/models/invoice.dart';
 export 'src/core/models/menu_item.dart';
 export 'src/core/models/menu_item_schema_issue.dart';
+export 'src/core/models/catalog_health.dart';
 export 'src/core/models/modifier_group.dart';
 export 'src/core/models/menu_profile_templates.dart';
 export 'src/core/models/menu_template_ref.dart';

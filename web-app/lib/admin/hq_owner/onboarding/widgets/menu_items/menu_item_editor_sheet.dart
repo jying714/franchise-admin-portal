@@ -207,7 +207,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
     final hasErrors = _session.issues.any((i) => i.severity == 'error');
     if (hasErrors) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Resolve remaining schema errors first'),
+        content: Text('Resolve remaining fixes before saving'),
         backgroundColor: Colors.red,
       ));
       return;
@@ -400,6 +400,65 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
     widget.onCancel();
   }
 
+  void _showFixesNeededSheet(List<shared.MenuItemSchemaIssue> issues) {
+    final errorCount = issues.where((i) => i.severity == 'error').length;
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Fixes needed',
+                  style: Theme.of(ctx).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  errorCount > 0
+                      ? '$errorCount must be fixed before save.'
+                      : 'Review these items when you can.',
+                  style: Theme.of(ctx).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 12),
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: issues.length,
+                    itemBuilder: (_, i) {
+                      final issue = issues[i];
+                      final isError = issue.severity == 'error';
+                      return ListTile(
+                        dense: true,
+                        leading: Icon(
+                          isError
+                              ? Icons.error_outline
+                              : Icons.warning_amber_outlined,
+                          color: isError ? Colors.red : Colors.orange,
+                          size: 20,
+                        ),
+                        title: Text(issue.displayMessage),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Close'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
@@ -409,6 +468,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       child: Consumer<MenuItemEditSession>(
         builder: (context, session, _) {
           final hasErrors = session.issues.any((i) => i.severity == 'error');
+          final issueCount = session.issues.length;
           return Scaffold(
             appBar: AppBar(
               automaticallyImplyLeading: false,
@@ -416,6 +476,27 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                   ? 'New Menu Item'
                   : 'Edit ${session.draft.name}'),
               actions: [
+                if (issueCount > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 4),
+                    child: TextButton.icon(
+                      onPressed: () => _showFixesNeededSheet(session.issues),
+                      icon: Icon(
+                        hasErrors
+                            ? Icons.error_outline
+                            : Icons.warning_amber_outlined,
+                        color: hasErrors ? Colors.redAccent : Colors.orange,
+                        size: 20,
+                      ),
+                      label: Text(
+                        '$issueCount ${issueCount == 1 ? 'fix' : 'fixes'} needed',
+                        style: TextStyle(
+                          color: hasErrors ? Colors.redAccent : Colors.orange,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
                 IconButton(
                   tooltip: 'Back to menu list',
                   onPressed: widget.onCancel,
@@ -1619,42 +1700,6 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                       title: const Text('Live mobile preview'),
                       children: [PreviewMenuItemCard(menuItem: session.draft)],
                     ),
-                    const SizedBox(height: 16),
-
-                    if (session.issues.isNotEmpty)
-                      Card(
-                        color: Colors.orange.shade50,
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Active schema issues: ${session.issues.length}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.orange,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              ...session.issues.map(
-                                (issue) => ListTile(
-                                  dense: true,
-                                  leading: const Icon(Icons.error_outline,
-                                      color: Colors.orange, size: 18),
-                                  title: Text(issue.displayMessage),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    else
-                      const ListTile(
-                        leading: Icon(Icons.check_circle, color: Colors.green),
-                        title: Text('Schema clean – ready to publish'),
-                      ),
-
                     const SizedBox(height: 100),
                   ],
                 ),

@@ -78,6 +78,155 @@ class _IngredientTypeManagementScreenState
     }
   }
 
+  Future<void> _showMergeDuplicateTypesDialog(
+    shared.DuplicateIngredientTypeGroup group,
+  ) async {
+    final types = group.types;
+    final fid = franchiseId;
+    if (fid == null || fid.isEmpty) return;
+
+    final metaProvider =
+        Provider.of<shared.IngredientMetadataProvider>(context, listen: false);
+    final typeProvider =
+        Provider.of<IngredientTypeProviderImpl>(context, listen: false);
+    final ingredients = metaProvider.allIngredients;
+
+    var survivorId = types.first.id ?? '';
+    if (survivorId.isEmpty) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setLocal) {
+            final plan = shared.CatalogHealth.planIngredientTypeMerge(
+              group: group,
+              survivorId: survivorId,
+              ingredients: ingredients,
+            );
+            return AlertDialog(
+              title: const Text('Merge duplicate types'),
+              content: SizedBox(
+                width: 420,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'These categories share the same name '
+                      '(“${group.normalizedName}”). Pick which one to keep.',
+                      style: Theme.of(ctx).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 12),
+                    ...types.map((t) {
+                      final id = t.id ?? '';
+                      return RadioListTile<String>(
+                        dense: true,
+                        title: Text(t.name),
+                        subtitle: Text('id: $id'),
+                        value: id,
+                        groupValue: survivorId,
+                        onChanged: id.isEmpty
+                            ? null
+                            : (v) {
+                                if (v == null) return;
+                                setLocal(() => survivorId = v);
+                              },
+                      );
+                    }),
+                    if (plan != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'Will move ${plan.ingredientRetargetCount} ingredient(s) '
+                        'and remove ${plan.loserCount} duplicate type(s).',
+                        style: Theme.of(ctx).textTheme.bodySmall,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: plan == null
+                      ? null
+                      : () async {
+                          Navigator.pop(ctx);
+                          await _applyTypeMerge(plan);
+                          await _refreshIngredientTypes();
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Merged “${plan.normalizedName}”: '
+                                '${plan.ingredientRetargetCount} ingredient(s) updated.',
+                              ),
+                            ),
+                          );
+                        },
+                  child: const Text('Merge'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _applyTypeMerge(shared.IngredientTypeMergePlan plan) async {
+    final fid = franchiseId;
+    if (fid == null || fid.isEmpty) return;
+
+    final metaProvider =
+        Provider.of<shared.IngredientMetadataProvider>(context, listen: false);
+    final typeProvider =
+        Provider.of<IngredientTypeProviderImpl>(context, listen: false);
+    final firestore =
+        Provider.of<shared.FirestoreService>(context, listen: false);
+
+    final survivor = plan.survivor;
+    final survivorId = survivor.id!;
+    final byId = {
+      for (final i in metaProvider.allIngredients) i.id: i,
+    };
+
+    final updated = <shared.IngredientMetadata>[];
+    for (final id in plan.ingredientIdsToRetarget) {
+      final ing = byId[id];
+      if (ing == null) continue;
+      updated.add(
+        ing.copyWith(
+          typeId: survivorId,
+          type: survivor.name,
+        ),
+      );
+    }
+
+    if (updated.isNotEmpty) {
+      // Prefer batch if your service exposes it; otherwise loop save.
+      try {
+        await firestore.saveIngredientMetadataBatch(fid, updated);
+      } catch (_) {
+        for (final u in updated) {
+          await firestore.saveIngredientMetadata(fid, u);
+        }
+      }
+      for (final u in updated) {
+        metaProvider.updateIngredient(u);
+      }
+    }
+
+    for (final loser in plan.losers) {
+      final lid = loser.id;
+      if (lid == null || lid.isEmpty) continue;
+      await typeProvider.deleteIngredientType(fid, lid);
+    }
+  }
+
   void _showFormDialog({shared.IngredientType? initial}) {
     final loc = AppLocalizations.of(context);
     final franchiseId =
@@ -261,6 +410,67 @@ class _IngredientTypeManagementScreenState
                   ],
                 ),
                 const SizedBox(height: 12),
+                Builder(
+                  builder: (context) {
+                    final groups =
+                        shared.CatalogHealth.detectDuplicateIngredientTypes(
+                      types,
+                    );
+                    if (groups.isEmpty) return const SizedBox.shrink();
+                    return Card(
+                      color: Colors.red.shade50,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              'Catalog health: ${groups.length} duplicate '
+                              'type name(s)',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.red,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Same name with different capitalization or ids '
+                              '(e.g. sauces / Sauces). Merge so the menu stays consistent.',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            const SizedBox(height: 8),
+                            ...groups.map((g) {
+                              final labels = g.types
+                                  .map((t) => '“${t.name}” (${t.id})')
+                                  .join(' · ');
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 6),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        labels,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall,
+                                      ),
+                                    ),
+                                    TextButton(
+                                      onPressed: () =>
+                                          _showMergeDuplicateTypesDialog(g),
+                                      child: const Text('Merge…'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
                 if (types.isEmpty)
                   Expanded(
                     child: Center(

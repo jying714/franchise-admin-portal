@@ -303,24 +303,31 @@ class MenuItemSchemaIssue {
         severity: 'error',
       ));
     }
-    if (menuItem.price == null) {
-      issues.add(MenuItemSchemaIssue(
-        type: MenuItemSchemaIssueType.missingField,
-        missingReference: '',
-        label: 'Price',
-        field: 'price',
-        menuItemId: menuItem.id,
-        severity: 'error',
-      ));
-    } else if (menuItem.price == 0.0) {
-      issues.add(MenuItemSchemaIssue(
-        type: MenuItemSchemaIssueType.missingField,
-        missingReference: '0',
-        label: 'Price is \$0 (free item)',
-        field: 'price',
-        menuItemId: menuItem.id,
-        severity: 'warning',
-      ));
+    // Item-level price is required only when the item has no size pricing.
+    // Any profile can price via sizes[]; empty/zero item.price is then OK.
+    final sizes = menuItem.sizes;
+    final hasSizePricing = sizes is List && sizes.isNotEmpty;
+
+    if (!hasSizePricing) {
+      if (menuItem.price == null) {
+        issues.add(MenuItemSchemaIssue(
+          type: MenuItemSchemaIssueType.missingField,
+          missingReference: '',
+          label: 'Price',
+          field: 'price',
+          menuItemId: menuItem.id,
+          severity: 'error',
+        ));
+      } else if (menuItem.price == 0.0) {
+        issues.add(MenuItemSchemaIssue(
+          type: MenuItemSchemaIssueType.missingField,
+          missingReference: '0',
+          label: 'Price is \$0 (free item)',
+          field: 'price',
+          menuItemId: menuItem.id,
+          severity: 'warning',
+        ));
+      }
     }
 // Add more as needed (e.g., description, image, etc.)
 
