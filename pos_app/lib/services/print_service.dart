@@ -170,6 +170,74 @@ class PrintService {
     }
   }
 
+  static bool kitchenHasTicket(String status) {
+    switch (status.trim().toLowerCase()) {
+      case OrderStatus.sentToKitchen:
+      case OrderStatus.ready:
+      case OrderStatus.preparing:
+      case OrderStatus.outForDelivery:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  /// VOID chit after a ticket was already sent to kitchen.
+  Future<bool> printKitchenVoid({
+    required Order order,
+    String? tableLabel,
+    List<OrderItem>? onlyItems,
+  }) async {
+    try {
+      final body = _formatKitchenVoid(
+        order: order,
+        tableLabel: tableLabel,
+        onlyItems: onlyItems,
+      );
+      return _emit(role: PosPrintRole.kitchen, body: body);
+    } catch (e, st) {
+      debugPrint('[POS] kitchen VOID failed: $e\n$st');
+      return false;
+    }
+  }
+
+  String _formatKitchenVoid({
+    required Order order,
+    String? tableLabel,
+    List<OrderItem>? onlyItems,
+  }) {
+    final buf = StringBuffer();
+    buf.writeln('========== VOID ==========');
+    final store = PosPrinterConfig.storeName;
+    if (store.isNotEmpty) buf.writeln(store);
+    buf.writeln('Time:  ${_stamp(DateTime.now())}');
+    buf.writeln('Order: ${_shortOrderId(order.id)}');
+    buf.writeln('Type:  ${_typeLabel(order.deliveryType)}');
+    if (tableLabel != null && tableLabel.isNotEmpty) {
+      buf.writeln('Table: $tableLabel');
+    }
+    final name = order.userNameDisplay.trim();
+    if (name.isNotEmpty) buf.writeln('Name:  $name');
+    buf.writeln('--------------------------------------');
+    final lines = onlyItems ?? order.items;
+    if (onlyItems == null) {
+      buf.writeln('*** VOID ENTIRE TICKET ***');
+    } else {
+      buf.writeln('*** VOID ITEM ***');
+    }
+    for (final item in lines) {
+      buf.writeln('${item.quantity}x ${item.name}');
+      if (item.customizations.isNotEmpty) {
+        for (final e in item.customizations.entries) {
+          final line = _modLine(e.key, e.value);
+          if (line != null) buf.writeln(line);
+        }
+      }
+    }
+    buf.writeln('======================================');
+    return buf.toString();
+  }
+
   String _formatKitchenTicket({
     required Order order,
     String? tableLabel,
@@ -177,6 +245,8 @@ class PrintService {
   }) {
     final buf = StringBuffer();
     buf.writeln('======== KITCHEN TICKET ========');
+    final store = PosPrinterConfig.storeName;
+    if (store.isNotEmpty) buf.writeln(store);
     if (isAppend) buf.writeln('*** ADD-ON / APPEND ***');
     buf.writeln('Time:  ${_stamp(DateTime.now())}');
     buf.writeln('Order: ${_shortOrderId(order.id)}');
@@ -188,6 +258,8 @@ class PrintService {
     if (name.isNotEmpty) buf.writeln('Name:  $name');
     buf.writeln('--------------------------------------');
     for (final item in order.items) {
+      final status = item.lineStatus.trim().toLowerCase();
+      if (status == 'voided' || status == 'comped') continue;
       buf.writeln('${item.quantity}x ${item.name}');
       if (item.customizations.isNotEmpty) {
         for (final e in item.customizations.entries) {
@@ -232,6 +304,8 @@ class PrintService {
   }) {
     final buf = StringBuffer();
     buf.writeln('======= CUSTOMER RECEIPT =======');
+    final store = PosPrinterConfig.storeName;
+    if (store.isNotEmpty) buf.writeln(store);
     buf.writeln('Time:  ${_stamp(DateTime.now())}');
     buf.writeln('Order: ${_shortOrderId(order.id)}');
     buf.writeln('Type:  ${_typeLabel(order.deliveryType)}');
@@ -239,7 +313,9 @@ class PrintService {
     if (name.isNotEmpty) buf.writeln('Name:  $name');
     buf.writeln('--------------------------------------');
     for (final item in order.items) {
-      final line = item.price * item.quantity;
+      final status = item.lineStatus.trim().toLowerCase();
+      if (status == 'voided' || status == 'comped') continue;
+      final line = item.effectiveLineTotal;
       buf.writeln(
         '${item.quantity}x ${item.name}  \$${line.toStringAsFixed(2)}',
       );
@@ -262,6 +338,8 @@ class PrintService {
       buf.writeln('Tendered  \$${amountTendered.toStringAsFixed(2)}');
       buf.writeln('Change    \$${changeDue.toStringAsFixed(2)}');
     }
+    buf.writeln('--------------------------------------');
+    buf.writeln('Thank you!');
     buf.writeln('======================================');
     return buf.toString();
   }

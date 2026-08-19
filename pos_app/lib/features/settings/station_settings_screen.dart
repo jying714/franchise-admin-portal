@@ -21,6 +21,7 @@ class _StationSettingsScreenState extends State<StationSettingsScreen> {
   String _todayHours = '—';
   bool _todayClosed = false;
   late final TextEditingController _printerHostCtrl;
+  late final TextEditingController _storeNameCtrl;
 
   static String _weekdayKey(DateTime dt) {
     switch (dt.weekday) {
@@ -48,12 +49,14 @@ class _StationSettingsScreenState extends State<StationSettingsScreen> {
   void initState() {
     super.initState();
     _printerHostCtrl = TextEditingController(text: PosPrinterConfig.host);
+    _storeNameCtrl = TextEditingController(text: PosPrinterConfig.storeName);
     _load();
   }
 
   @override
   void dispose() {
     _printerHostCtrl.dispose();
+    _storeNameCtrl.dispose();
     super.dispose();
   }
 
@@ -173,12 +176,23 @@ class _StationSettingsScreenState extends State<StationSettingsScreen> {
                   keyboardType: TextInputType.url,
                 ),
                 const SizedBox(height: 8),
+                TextField(
+                  controller: _storeNameCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Ticket header name',
+                    hintText: 'Doughboys Pizzeria',
+                    border: OutlineInputBorder(),
+                  ),
+                  textCapitalization: TextCapitalization.words,
+                ),
+                const SizedBox(height: 8),
                 FilledButton.icon(
                   onPressed: () async {
                     await PosPrinterConfig.save(_printerHostCtrl.text);
+                    await PosPrinterConfig.saveName(_storeNameCtrl.text);
                     if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Printer host saved')),
+                      const SnackBar(content: Text('Printer settings saved')),
                     );
                   },
                   icon: const Icon(Icons.save),

@@ -7,6 +7,7 @@ import '../../../core/constants/pos_permissions.dart';
 import '../../../providers/pin_session_provider.dart';
 import '../../session/force_repin_dialog.dart';
 import '../order_line_ops.dart';
+import '../../../services/print_service.dart';
 
 /// Large order workspace (P-OD-1 / P-OD-2).
 /// Streams the order doc so voids update in place without closing.
@@ -336,6 +337,25 @@ class OrderDetailDialog extends StatelessWidget {
       tax: priced.tax,
       total: priced.total,
     );
+
+    if (status == 'voided' && PrintService.kitchenHasTicket(liveOrder.status)) {
+      try {
+        await const PrintService().printKitchenVoid(
+          order: liveOrder,
+          onlyItems: [
+            OrderItem(
+              menuItemId: item.menuItemId,
+              name: item.name,
+              price: item.price,
+              quantity: qty.clamp(1, item.quantity),
+              customizations: item.customizations,
+            ),
+          ],
+        );
+      } catch (e) {
+        debugPrint('[POS] kitchen VOID on line void skipped: $e');
+      }
+    }
 
     if (status == 'voided') {
       final restoredLine = OrderItem(

@@ -385,6 +385,15 @@ class _OpenOrdersScreenState extends State<OpenOrdersScreen> {
               );
               if (ok == true) {
                 await _updateStatus(liveOrder.id, OrderStatus.cancelled);
+                if (PrintService.kitchenHasTicket(liveOrder.status)) {
+                  try {
+                    await const PrintService().printKitchenVoid(
+                      order: liveOrder,
+                    );
+                  } catch (e) {
+                    debugPrint('[POS] kitchen VOID on order void skipped: $e');
+                  }
+                }
                 if (_normalizeType(liveOrder) == 'dine_in') {
                   try {
                     final snap = await FirebaseFirestore.instance
