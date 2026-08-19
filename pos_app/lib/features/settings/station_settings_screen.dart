@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../../services/pos_printer_config.dart';
 
 /// Pilot settings: franchise bind + store_ops summary (read-only).
 class StationSettingsScreen extends StatefulWidget {
@@ -17,6 +18,7 @@ class _StationSettingsScreenState extends State<StationSettingsScreen> {
   double? _taxRate;
   String _todayHours = '—';
   bool _todayClosed = false;
+  late final TextEditingController _printerHostCtrl;
 
   static String _weekdayKey(DateTime dt) {
     switch (dt.weekday) {
@@ -43,7 +45,14 @@ class _StationSettingsScreenState extends State<StationSettingsScreen> {
   @override
   void initState() {
     super.initState();
+    _printerHostCtrl = TextEditingController(text: PosPrinterConfig.host);
     _load();
+  }
+
+  @override
+  void dispose() {
+    _printerHostCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -147,9 +156,31 @@ class _StationSettingsScreenState extends State<StationSettingsScreen> {
                     'PaymentSheet (Connect). Physical reader = later.',
                   ),
                 ),
-                ListTile(
-                  title: const Text('Printers'),
-                  subtitle: const Text('Mock kitchen ticket + receipt only.'),
+                const Text(
+                  'Printer (this station)',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _printerHostCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'TSP100 IP or host',
+                    hintText: '192.168.1.21',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.url,
+                ),
+                const SizedBox(height: 8),
+                FilledButton.icon(
+                  onPressed: () async {
+                    await PosPrinterConfig.save(_printerHostCtrl.text);
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Printer host saved')),
+                    );
+                  },
+                  icon: const Icon(Icons.save),
+                  label: const Text('Save printer host'),
                 ),
                 const SizedBox(height: 8),
                 OutlinedButton.icon(

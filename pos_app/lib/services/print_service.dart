@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_star_prnt_plus/flutter_star_prnt.dart';
 import 'package:shared_core/shared_core.dart';
+import 'pos_printer_config.dart';
 
 /// Print roles for routing (Admin category map comes later).
 enum PosPrintRole { kitchen, receipt }
@@ -18,11 +19,7 @@ class PrintService {
   String get _effectiveHost {
     final fromField = host?.trim() ?? '';
     if (fromField.isNotEmpty) return fromField;
-    const fromEnv = String.fromEnvironment(
-      'POS_PRINTER_HOST',
-      defaultValue: '',
-    );
-    return fromEnv.trim();
+    return PosPrinterConfig.host;
   }
 
   /// Console is the guaranteed dev fail-safe (no paper / no LAN yet).

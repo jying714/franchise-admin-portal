@@ -1,18 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_star_prnt_plus/flutter_star_prnt.dart';
+import 'pos_printer_config.dart';
 
 /// Cash drawer via the receipt TSP100 DK port (Star Graphic).
 /// Console always; LAN kick when POS_PRINTER_HOST is set. Never throws.
 class DrawerService {
   const DrawerService();
 
-  String get _effectiveHost {
-    const fromEnv = String.fromEnvironment(
-      'POS_PRINTER_HOST',
-      defaultValue: '',
-    );
-    return fromEnv.trim();
-  }
+  String get _effectiveHost => PosPrinterConfig.host;
 
   /// Open drawer. Never throws into payment / refund paths.
   Future<bool> openDrawer({String? reason}) async {
