@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../../services/pos_printer_config.dart';
+import '../../services/print_service.dart';
+import '../../services/drawer_service.dart';
 
 /// Pilot settings: franchise bind + store_ops summary (read-only).
 class StationSettingsScreen extends StatefulWidget {
@@ -181,6 +183,44 @@ class _StationSettingsScreenState extends State<StationSettingsScreen> {
                   },
                   icon: const Icon(Icons.save),
                   label: const Text('Save printer host'),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await PosPrinterConfig.save(_printerHostCtrl.text);
+                    final ok = await const PrintService().printTestPage();
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          ok ? 'Test page sent' : 'Test page failed — see log',
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.print),
+                  label: const Text('Test print'),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await PosPrinterConfig.save(_printerHostCtrl.text);
+                    final ok = await const DrawerService().openDrawer(
+                      reason: 'settings_test',
+                    );
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          ok
+                              ? 'Drawer kick sent'
+                              : 'Drawer kick failed — see log',
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.point_of_sale),
+                  label: const Text('Test drawer'),
                 ),
                 const SizedBox(height: 8),
                 OutlinedButton.icon(

@@ -391,6 +391,19 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
       if (widget.closeOutOrder) {
         try {
+          final kitchenOrder = _order;
+          final dtype = (kitchenOrder?.deliveryType ?? '').trim().toLowerCase();
+          if (kitchenOrder != null &&
+              (dtype == 'dine_in' || dtype == 'dine-in' || dtype == 'dinein')) {
+            await const PrintService().printKitchenTicket(order: kitchenOrder);
+          }
+        } catch (e) {
+          debugPrint('[POS] dine-in kitchen ticket on card close skipped: $e');
+        }
+      }
+
+      if (widget.closeOutOrder) {
+        try {
           final snap = await ref.get();
           final data = snap.data();
           final tableId = data?['tableId'] as String?;
@@ -535,6 +548,19 @@ class _PaymentScreenState extends State<PaymentScreen> {
         }
       } catch (e) {
         debugPrint('[POS] customer receipt mock skipped: $e');
+      }
+
+      if (widget.closeOutOrder) {
+        try {
+          final kitchenOrder = _order;
+          final dtype = (kitchenOrder?.deliveryType ?? '').trim().toLowerCase();
+          if (kitchenOrder != null &&
+              (dtype == 'dine_in' || dtype == 'dine-in' || dtype == 'dinein')) {
+            await const PrintService().printKitchenTicket(order: kitchenOrder);
+          }
+        } catch (e) {
+          debugPrint('[POS] dine-in kitchen ticket on cash close skipped: $e');
+        }
       }
 
       if (widget.closeOutOrder) {
