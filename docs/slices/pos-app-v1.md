@@ -59,7 +59,8 @@ Unchanged Decision 14 summary: thin `pos_app`; pay carry-out at pickup; order `s
 - [x] **Print guest check + reprint kitchen** from detail (open + closed)
 - [x] **Closed line refund** (cash skeleton) + source/payment chips on closed list
 - [ ] Stripe Terminal hardware
-- [ ] Real ESC-POS printers
+- [x] Real Star TSP100 print (StarGraphic, 2026-08-18)
+- [x] Cash drawer DK via same printer
 - [ ] Staff/driver manager UI
 - [ ] 86 / large-order flows
 - [ ] Check/item discounts beyond payment-time discount (optional)
@@ -71,7 +72,8 @@ Unchanged Decision 14 summary: thin `pos_app`; pay carry-out at pickup; order `s
 | ID | Item | Status |
 |----|------|--------|
 | R1–R2 | Tax + hours | **Done** |
-| R3–R4 | Terminal / printers | Open |
+| R3 | Stripe Terminal | Open |
+| R4 | TSP100 print + drawer | **Done** (StarGraphic) |
 | R5–R6 | Offline / settings | **Done** |
 | R7 | Customer website | Separate epic |
 | R8 | Staff bootstrap docs | Open |
@@ -90,17 +92,19 @@ Unchanged Decision 14 summary: thin `pos_app`; pay carry-out at pickup; order `s
 
 ## 6. Bottom line
 
-**Thin counter POS software pilot is complete on main.** Order-detail workspace (void/comp/add/print/line refund) is also complete. Remaining POS work is hardware, staff ops UI, 86/large-order, and optional ticket discounts — not core money/intake. Product hard release still requires **customer website**.
+**Thin counter POS software pilot is complete on main.** Order-detail workspace (void/comp/add/print/line refund) is also complete. Print/drawer on the lab TSP100 is done. Remaining POS work is ticket layout, staff ops UI, 86/large-order, Stripe Terminal, and optional ticket discounts — not core money/intake. Product hard release still requires **customer website**.
 
 ---
 
-## Station hardware inventory (2026-08-17)
+## Station hardware inventory (2026-08-18)
 
 | Device | Status |
 |--------|--------|
-| Star TSP100 (network) | On site, LAN; paper on order |
-| Stripe card reader | On site |
-| Cash drawer | Inbound (DK via receipt printer) |
-| Second kitchen printer | Later — required for live so receipts stay at counter |
+| Star TSP143 / TSP100 LAN (`192.168.1.21`) | Kitchen + receipt + mobile ticket **PASS** (StarGraphic) |
+| Cash drawer | **PASS** via DK / `openCashDrawer` |
+| Stripe reader | On site — does not print |
+| Extra printers | Doughboys floor; MVP uses **one** TSP100 for all roles |
 
-**Dev rule:** `PrintService` / `DrawerService` stay the only call sites. Console fallback OK when paper missing. Order/pay must not fail on print errors.
+**Stack:** `PrintService` / `DrawerService` only. Host via `--dart-define=POS_PRINTER_HOST`. Plugin vendored at `pos_app/vendor/flutter_star_prnt_plus`. Console fallback; pay/send never fails on print.
+
+**Do not use raw ESC/POS on 9100** for this model. HQ printer registry / category routing / ticket editor = after MVP or Doughboys install.
