@@ -1,10 +1,67 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_star_prnt_plus/flutter_star_prnt.dart';
 import 'package:shared_core/shared_core.dart';
 
-/// Mock kitchen / receipt printer for pilot.
-/// Real ESC/POS or cloud print comes later — do not invent hardware config fields yet.
+/// Print roles for routing (Admin category map comes later).
+enum PosPrintRole { kitchen, receipt }
+
+/// Station print entry point.
+/// Dev / no-paper: always emit full ticket to console.
+/// Later: same methods try LAN (TSP100) then fall back to console — order path never throws.
 class PrintService {
-  const PrintService();
+  /// Optional LAN host/IP for TSP100 (or any raw-9100 printer).
+  /// Prefer `--dart-define=POS_PRINTER_HOST=192.168.x.x` for station builds.
+  final String? host;
+
+  const PrintService({this.host});
+
+  String get _effectiveHost {
+    final fromField = host?.trim() ?? '';
+    if (fromField.isNotEmpty) return fromField;
+    const fromEnv = String.fromEnvironment(
+      'POS_PRINTER_HOST',
+      defaultValue: '',
+    );
+    return fromEnv.trim();
+  }
+
+  /// Console is the guaranteed dev fail-safe (no paper / no LAN yet).
+  /// When a host is configured later, try device first, then still console on failure.
+  Future<bool> _emit({required PosPrintRole role, required String body}) async {
+    final header = '[POS][print][${role.name}]';
+    // Always console first (dev / no-paper fail-safe).
+    // ignore: avoid_print
+    print('$header\n$body');
+    debugPrint('$header\n$body');
+
+    final target = _effectiveHost;
+    if (target.isEmpty) {
+      return true;
+    }
+
+    try {
+      await _sendStarGraphic(host: target, body: body);
+      debugPrint('$header StarGraphic ok → TCP:$target');
+    } catch (e, st) {
+      debugPrint('$header StarGraphic failed (TCP:$target): $e\n$st');
+    }
+    return true;
+  }
+
+  /// TSP100 / TSP143 LAN: Star Raster (StarGraphic), not ESC/POS on 9100.
+  Future<void> _sendStarGraphic({
+    required String host,
+    required String body,
+  }) async {
+    final commands = PrintCommands();
+    commands.appendBitmapText(text: body);
+    commands.appendCutPaper(StarCutPaperAction.FullCutWithFeed);
+    await StarPrnt.sendCommands(
+      portName: 'TCP:$host',
+      emulation: 'StarGraphic',
+      printCommands: commands,
+    );
+  }
 
   /// Kitchen ticket when an order is sent to kitchen (or paid → kitchen).
   /// Never throws into the order path; failures are logged only.
@@ -19,12 +76,9 @@ class PrintService {
         tableLabel: tableLabel,
         isAppend: isAppend,
       );
-      // ignore: avoid_print
-      print(body);
-      debugPrint(body);
-      return true;
+      return _emit(role: PosPrintRole.kitchen, body: body);
     } catch (e, st) {
-      debugPrint('[POS] kitchen ticket mock failed: $e\n$st');
+      debugPrint('[POS] kitchen ticket failed: $e\n$st');
       return false;
     }
   }
@@ -35,7 +89,7 @@ class PrintService {
     required bool isAppend,
   }) {
     final buf = StringBuffer();
-    buf.writeln('======== KITCHEN TICKET (MOCK) ========');
+    buf.writeln('======== KITCHEN TICKET ========');
     if (isAppend) buf.writeln('*** ADD-ON / APPEND ***');
     buf.writeln('Order: ${order.id}');
     buf.writeln('Type:  ${order.deliveryType}');
@@ -74,12 +128,9 @@ class PrintService {
         changeDue: changeDue,
         paymentMethod: paymentMethod,
       );
-      // ignore: avoid_print
-      print(body);
-      debugPrint(body);
-      return true;
+      return _emit(role: PosPrintRole.receipt, body: body);
     } catch (e, st) {
-      debugPrint('[POS] customer receipt mock failed: $e\n$st');
+      debugPrint('[POS] customer receipt failed: $e\n$st');
       return false;
     }
   }
@@ -91,7 +142,7 @@ class PrintService {
     required String paymentMethod,
   }) {
     final buf = StringBuffer();
-    buf.writeln('======= CUSTOMER RECEIPT (MOCK) =======');
+    buf.writeln('======= CUSTOMER RECEIPT =======');
     buf.writeln('Order: ${order.id}');
     buf.writeln('Type:  ${order.deliveryType}');
     final name = order.userNameDisplay.trim();

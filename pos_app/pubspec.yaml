@@ -40,6 +40,8 @@ dependencies:
   cloud_functions: ^5.5.0
   flutter_stripe: ^11.4.0
   connectivity_plus: ^6.1.0
+  flutter_star_prnt_plus:
+    path: vendor/flutter_star_prnt_plus
 
 dev_dependencies:
   flutter_test:
