@@ -49,3 +49,18 @@ Multi-tenant white-label Flutter platform: web + mobile + counter station, franc
 | Stage | Criteria |
 |-------|----------|
 | **Soft** | POS parallel; inventory + labor live; optional Modern storefront |
+| **Hard swap** | Manager accepts day-to-day ops; stable parallel |
+| **Growth** | Notifications, loyalty, upsells, home studio |
+
+---
+
+## Success criteria
+
+- Guests order on brand-capable web/mobile  
+- Counter runs FranchiseHQ POS as primary after burn-in  
+- Managers track stock and labor without Owner.com  
+- Owners self-serve catalog integrity (Catalog health) with zero support for common fixes
+
+## How to use
+
+Agents: STATUS + HANDOFF + Decision 15 + `docs/slices/catalog-health-v1.md` + closed `docs/plans/*` + app READMEs.
