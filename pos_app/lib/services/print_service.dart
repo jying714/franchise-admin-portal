@@ -172,13 +172,15 @@ class PrintService {
 
   static bool kitchenHasTicket(String status) {
     switch (status.trim().toLowerCase()) {
-      case OrderStatus.sentToKitchen:
-      case OrderStatus.ready:
-      case OrderStatus.preparing:
-      case OrderStatus.outForDelivery:
-        return true;
-      default:
+      case OrderStatus.draft:
+      case OrderStatus.open:
+      case OrderStatus.needsApproval:
+      case '':
         return false;
+      default:
+        // sent_to_kitchen, ready, completed, cancelled, etc.
+        // If kitchen already saw the ticket, void must print.
+        return true;
     }
   }
 
@@ -238,6 +240,67 @@ class PrintService {
     return buf.toString();
   }
 
+  Future<bool> printKitchenUpdate({
+    required Order order,
+    required List<OrderItem> onlyItems,
+    String? tableLabel,
+  }) async {
+    try {
+      final body = _formatKitchenUpdate(
+        order: order,
+        onlyItems: onlyItems,
+        tableLabel: tableLabel,
+      );
+      return _emit(role: PosPrintRole.kitchen, body: body);
+    } catch (e, st) {
+      debugPrint('[POS] kitchen UPDATE failed: $e\n$st');
+      return false;
+    }
+  }
+
+  String _formatKitchenUpdate({
+    required Order order,
+    required List<OrderItem> onlyItems,
+    String? tableLabel,
+  }) {
+    final buf = StringBuffer();
+    buf.writeln('========== UPDATE ==========');
+    final store = PosPrinterConfig.storeName;
+    if (store.isNotEmpty) buf.writeln(store);
+    buf.writeln('Time:  ${_stamp(DateTime.now())}');
+    buf.writeln('Order: ${_shortOrderId(order.id)}');
+    buf.writeln('Type:  ${_typeLabel(order.deliveryType)}');
+    if (tableLabel != null && tableLabel.isNotEmpty) {
+      buf.writeln('Table: $tableLabel');
+    }
+    final name = order.userNameDisplay.trim();
+    if (name.isNotEmpty) buf.writeln('Name:  $name');
+    buf.writeln('--------------------------------------');
+    buf.writeln('*** ITEM UPDATE ***');
+    for (final item in onlyItems) {
+      buf.writeln('${item.quantity}x ${item.name}');
+      if (item.customizations.isNotEmpty) {
+        for (final e in item.customizations.entries) {
+          if (e.key == 'voidedAddOns') continue;
+          final line = _modLine(e.key, e.value);
+          if (line != null) buf.writeln(line);
+        }
+        final voided = item.customizations['voidedAddOns'];
+        if (voided is List && voided.isNotEmpty) {
+          final parts = voided
+              .map((e) => e.toString().trim())
+              .where((s) => s.isNotEmpty)
+              .toList();
+          if (parts.isNotEmpty) {
+            buf.writeln('   - VOIDED: ${parts.join(', ')}');
+          }
+        }
+      }
+    }
+    buf.writeln('======================================');
+    return buf.toString();
+  }
+
   String _formatKitchenTicket({
     required Order order,
     String? tableLabel,
@@ -263,6 +326,7 @@ class PrintService {
       buf.writeln('${item.quantity}x ${item.name}');
       if (item.customizations.isNotEmpty) {
         for (final e in item.customizations.entries) {
+          if (e.key == 'voidedAddOns') continue;
           final line = _modLine(e.key, e.value);
           if (line != null) buf.writeln(line);
         }

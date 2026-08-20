@@ -394,7 +394,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
           final kitchenOrder = _order;
           final dtype = (kitchenOrder?.deliveryType ?? '').trim().toLowerCase();
           if (kitchenOrder != null &&
-              (dtype == 'dine_in' || dtype == 'dine-in' || dtype == 'dinein')) {
+              (dtype == 'dine_in' || dtype == 'dine-in' || dtype == 'dinein') &&
+              !PrintService.kitchenHasTicket(kitchenOrder.status)) {
             await const PrintService().printKitchenTicket(order: kitchenOrder);
           }
         } catch (e) {
@@ -555,7 +556,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
           final kitchenOrder = _order;
           final dtype = (kitchenOrder?.deliveryType ?? '').trim().toLowerCase();
           if (kitchenOrder != null &&
-              (dtype == 'dine_in' || dtype == 'dine-in' || dtype == 'dinein')) {
+              (dtype == 'dine_in' || dtype == 'dine-in' || dtype == 'dinein') &&
+              !PrintService.kitchenHasTicket(kitchenOrder.status)) {
             await const PrintService().printKitchenTicket(order: kitchenOrder);
           }
         } catch (e) {

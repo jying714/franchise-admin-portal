@@ -178,11 +178,14 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
           quantity: _lines[existing].quantity + 1,
         );
       } else {
+        final priced = customizations['_linePrice'];
+        final unit = (priced is num) ? priced.toDouble() : item.price;
+        customizations.remove('_linePrice');
         _lines.add(
           _TicketLine(
             menuItemId: item.id,
             name: item.name,
-            unitPrice: item.price,
+            unitPrice: unit,
             quantity: 1,
             customizations: customizations,
           ),

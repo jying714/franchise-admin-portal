@@ -258,6 +258,31 @@ class OrderDetailDialog extends StatelessWidget {
       context: context,
       builder: (ctx) => _LineBreakdownDialog(
         item: item,
+        showSendUpdate: PrintService.kitchenHasTicket(liveOrder.status),
+        onSendUpdate: PrintService.kitchenHasTicket(liveOrder.status)
+            ? () async {
+                try {
+                  final snap = await FirebaseFirestore.instance
+                      .collection('franchises')
+                      .doc(franchiseId)
+                      .collection('orders')
+                      .doc(liveOrder.id)
+                      .get();
+                  if (!snap.exists || snap.data() == null) return;
+                  final latest = Order.fromFirestore(snap.data()!, snap.id);
+                  if (lineIndex < 0 || lineIndex >= latest.items.length) {
+                    return;
+                  }
+                  final updated = latest.items[lineIndex];
+                  await const PrintService().printKitchenUpdate(
+                    order: latest,
+                    onlyItems: [updated],
+                  );
+                } catch (e) {
+                  debugPrint('[POS] kitchen UPDATE skipped: $e');
+                }
+              }
+            : null,
         onVoidQty: (qty) async {
           Navigator.pop(ctx);
           await _applyPartialLineStatus(
@@ -278,13 +303,13 @@ class OrderDetailDialog extends StatelessWidget {
             status: 'comped',
           );
         },
-        onVoidAddOn: (addOnId) async {
-          // Keep breakdown open so multiple add-ons can be voided.
+        onVoidAddOn: (addOnId, {bool requirePin = true}) async {
           return _confirmAndVoidAddOn(
             context,
             liveOrder.id,
             lineIndex,
             addOnId,
+            requirePin: requirePin,
           );
         },
       ),
@@ -392,8 +417,9 @@ class OrderDetailDialog extends StatelessWidget {
     BuildContext context,
     String orderId,
     int lineIndex,
-    String addOnId,
-  ) async {
+    String addOnId, {
+    bool requirePin = true,
+  }) async {
     if (isClosed) return false;
 
     final confirm = await showDialog<bool>(
@@ -418,11 +444,13 @@ class OrderDetailDialog extends StatelessWidget {
     );
     if (confirm != true || !context.mounted) return false;
 
-    final okPin = await _ensureVoidPin(
-      context,
-      'Void add-on $addOnId on order $orderId',
-    );
-    if (!okPin || !context.mounted) return false;
+    if (requirePin) {
+      final okPin = await _ensureVoidPin(
+        context,
+        'Void add-on $addOnId on order $orderId',
+      );
+      if (!okPin || !context.mounted) return false;
+    }
 
     // Always read latest so sequential voids do not clobber each other.
     final snap = await FirebaseFirestore.instance
@@ -939,17 +967,21 @@ class _TotalsRow extends StatelessWidget {
 /// Expand line: pick qty to void/comp + void each nested modifier/add-on.
 class _LineBreakdownDialog extends StatefulWidget {
   final OrderItem item;
+  final bool showSendUpdate;
   final Future<void> Function(int qty) onVoidQty;
   final Future<void> Function(int qty) onCompQty;
 
   /// Return true when void succeeded so the list can drop that add-on.
-  final Future<bool> Function(String addOnId) onVoidAddOn;
+  final Future<bool> Function(String addOnId, {bool requirePin}) onVoidAddOn;
+  final Future<void> Function()? onSendUpdate;
 
   const _LineBreakdownDialog({
     required this.item,
+    required this.showSendUpdate,
     required this.onVoidQty,
     required this.onCompQty,
     required this.onVoidAddOn,
+    this.onSendUpdate,
   });
 
   @override
@@ -959,6 +991,7 @@ class _LineBreakdownDialog extends StatefulWidget {
 class _LineBreakdownDialogState extends State<_LineBreakdownDialog> {
   late int _qty;
   late List<String> _nested;
+  bool _pinUnlocked = false;
 
   @override
   void initState() {
@@ -1067,9 +1100,15 @@ class _LineBreakdownDialogState extends State<_LineBreakdownDialog> {
                     title: Text(id),
                     trailing: TextButton(
                       onPressed: () async {
-                        final ok = await widget.onVoidAddOn(id);
+                        final ok = await widget.onVoidAddOn(
+                          id,
+                          requirePin: !_pinUnlocked,
+                        );
                         if (ok && mounted) {
-                          setState(() => _nested.remove(id));
+                          setState(() {
+                            _nested.remove(id);
+                            _pinUnlocked = true;
+                          });
                         }
                       },
                       child: Text(
@@ -1084,6 +1123,18 @@ class _LineBreakdownDialogState extends State<_LineBreakdownDialog> {
         ),
       ),
       actions: [
+        if (widget.showSendUpdate && widget.onSendUpdate != null)
+          TextButton(
+            onPressed: () async {
+              await widget.onSendUpdate!();
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Update sent to kitchen')),
+              );
+              Navigator.pop(context);
+            },
+            child: const Text('Send update'),
+          ),
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: const Text('Close'),

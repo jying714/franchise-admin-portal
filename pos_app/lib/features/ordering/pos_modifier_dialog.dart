@@ -132,6 +132,57 @@ class _PosModifierDialogState extends State<PosModifierDialog> {
                     for (final e in _selected.entries)
                       if (e.value.isNotEmpty) e.key: e.value.toList(),
                   };
+
+                  String? selectedSize;
+                  for (final g in _groups) {
+                    final label = g.label.trim().toLowerCase();
+                    if (label != 'size' && g.id.toLowerCase() != 'size') {
+                      continue;
+                    }
+                    final ids = _selected[_groupKey(g)];
+                    if (ids != null && ids.isNotEmpty) {
+                      selectedSize = ids.first;
+                      break;
+                    }
+                  }
+
+                  final addonPrices = <String, double>{};
+                  var extras = 0.0;
+                  for (final g in _groups) {
+                    for (final id in _selected[_groupKey(g)] ?? {}) {
+                      ModifierOption? opt;
+                      for (final o in g.options) {
+                        if (_optionKey(o) == id) {
+                          opt = o;
+                          break;
+                        }
+                      }
+                      if (opt == null || opt.defaultSelected) continue;
+                      final ingId =
+                          (opt.ingredientId != null &&
+                              opt.ingredientId!.trim().isNotEmpty)
+                          ? opt.ingredientId!
+                          : id;
+                      final fromOpt = opt.upcharge;
+                      final p = (fromOpt != null && fromOpt > 0)
+                          ? fromOpt
+                          : MenuPricing.resolveExtraIngredientPrice(
+                              item: widget.item,
+                              selectedSize: selectedSize,
+                              ingId: ingId,
+                              ingredientMetadata: const {},
+                            );
+                      if (p > 0) {
+                        addonPrices[id] = p;
+                        extras += p;
+                      }
+                    }
+                  }
+                  if (addonPrices.isNotEmpty) {
+                    out['addonPrices'] = addonPrices;
+                  }
+                  out['_linePrice'] = widget.item.price + extras;
+
                   Navigator.pop(context, out);
                 }
               : null,
