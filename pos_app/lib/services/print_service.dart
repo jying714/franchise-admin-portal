@@ -324,18 +324,112 @@ class PrintService {
       final status = item.lineStatus.trim().toLowerCase();
       if (status == 'voided' || status == 'comped') continue;
       buf.writeln('${item.quantity}x ${item.name}');
-      if (item.customizations.isNotEmpty) {
-        for (final e in item.customizations.entries) {
-          if (e.key == 'voidedAddOns') continue;
-          final line = _modLine(e.key, e.value);
-          if (line != null) buf.writeln(line);
-        }
+      for (final line in _itemSideLines(item)) {
+        buf.writeln(line);
       }
     }
     buf.writeln('--------------------------------------');
     buf.writeln('Items: ${order.items.length}');
     buf.writeln('======================================');
     return buf.toString();
+  }
+
+  static bool _isDetailKey(String key) {
+    final k = key.trim().toLowerCase();
+    return k == 'crust' || k == 'cook' || k == 'cut' || k == 'size';
+  }
+
+  List<String> _itemSideLines(OrderItem item) {
+    final c = item.customizations;
+    final portions = <String, String>{};
+    final rawP = c['portions'];
+    if (rawP is Map) {
+      rawP.forEach((k, v) {
+        portions[k.toString()] = v.toString().toLowerCase();
+      });
+    }
+    final doubles = <String>{};
+    final rawD = c['doubles'];
+    if (rawD is Map) {
+      rawD.forEach((k, v) {
+        if (v == true) doubles.add(k.toString());
+      });
+    }
+
+    final labels = <String, String>{};
+    final rawL = c['optionLabels'];
+    if (rawL is Map) {
+      rawL.forEach((k, v) {
+        labels[k.toString()] = v.toString();
+      });
+    }
+    String nameOf(String id) => labels[id] ?? id;
+
+    String decorate(String id) {
+      final n = nameOf(id);
+      return doubles.contains(id) ? '$n DOUBLE' : n;
+    }
+
+    final whole = <String>[];
+    final left = <String>[];
+    final right = <String>[];
+    final details = <String>[];
+
+    c.forEach((k, v) {
+      if (k == 'addonPrices' ||
+          k == 'portions' ||
+          k == 'doubles' ||
+          k == '_linePrice' ||
+          k == 'voidedAddOns') {
+        return;
+      }
+      if (_isDetailKey(k)) {
+        if (v is List) {
+          details.add('$k: ${v.join(', ')}');
+        } else if (v != null && v.toString().trim().isNotEmpty) {
+          details.add('$k: $v');
+        }
+        return;
+      }
+      if (v is! List) return;
+      for (final e in v) {
+        final id = e.toString().trim();
+        if (id.isEmpty) continue;
+        final p = portions[id] ?? 'whole';
+        final line = decorate(id);
+        if (p == 'left') {
+          left.add(line);
+        } else if (p == 'right') {
+          right.add(line);
+        } else {
+          whole.add(line);
+        }
+      }
+    });
+
+    final out = <String>[];
+    for (final d in details) {
+      out.add('   $d');
+    }
+    if (whole.isNotEmpty) {
+      out.add('   WHOLE');
+      for (final l in whole) {
+        out.add('      $l');
+      }
+    }
+    if (left.isNotEmpty) {
+      out.add('   LEFT');
+      for (final l in left) {
+        out.add('      $l');
+      }
+    }
+    if (right.isNotEmpty) {
+      out.add('   RIGHT');
+      for (final l in right) {
+        out.add('      $l');
+      }
+    }
+    return out;
   }
 
   /// Customer receipt after successful cash / split pay.

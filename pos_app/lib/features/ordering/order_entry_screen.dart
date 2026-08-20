@@ -9,6 +9,7 @@ import '../payments/payment_screen.dart';
 import '../../services/print_service.dart';
 import 'pos_modifier_dialog.dart';
 import 'package:flutter/foundation.dart' hide Category;
+import '../customization/pos_customization_sheet.dart';
 
 class _DeliveryCustomer {
   final String name;
@@ -161,8 +162,11 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
     }
 
     Map<String, dynamic> customizations = {};
-    if (item.effectiveModifierGroups.isNotEmpty) {
-      final result = await PosModifierDialog.show(context, item);
+    final needsBuilder =
+        item.effectiveModifierGroups.isNotEmpty ||
+        (item.sizes?.isNotEmpty ?? false);
+    if (needsBuilder) {
+      final result = await PosCustomizationSheet.show(context, item);
       if (result == null) return;
       customizations = result;
     }
@@ -192,6 +196,92 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
         );
       }
     });
+  }
+
+  List<String> _ticketModLines(Map<String, dynamic> c) {
+    final portions = <String, String>{};
+    final rawP = c['portions'];
+    if (rawP is Map) {
+      rawP.forEach((k, v) {
+        portions[k.toString()] = v.toString().toLowerCase();
+      });
+    }
+    final doubles = <String>{};
+    final rawD = c['doubles'];
+    if (rawD is Map) {
+      rawD.forEach((k, v) {
+        if (v == true) doubles.add(k.toString());
+      });
+    }
+
+    final labels = <String, String>{};
+    final rawL = c['optionLabels'];
+    if (rawL is Map) {
+      rawL.forEach((k, v) {
+        labels[k.toString()] = v.toString();
+      });
+    }
+
+    String decorate(String id) {
+      final name = labels[id] ?? id;
+      return doubles.contains(id) ? '$name DOUBLE' : name;
+    }
+
+    final details = <String>[];
+    final whole = <String>[];
+    final left = <String>[];
+    final right = <String>[];
+
+    final size = c['size']?.toString().trim();
+    if (size != null && size.isNotEmpty) details.add('Size: $size');
+
+    c.forEach((k, v) {
+      if (k == 'size' ||
+          k == 'addonPrices' ||
+          k == '_linePrice' ||
+          k == 'portions' ||
+          k == 'doubles') {
+        return;
+      }
+      final lk = k.toLowerCase();
+      if (lk == 'crust' || lk == 'cook' || lk == 'cut') {
+        if (v is List && v.isNotEmpty) {
+          details.add('$k: ${v.join(', ')}');
+        } else if (v is String && v.trim().isNotEmpty) {
+          details.add('$k: $v');
+        }
+        return;
+      }
+      if (v is! List) return;
+      for (final e in v) {
+        final id = e.toString().trim();
+        if (id.isEmpty) continue;
+        final p = portions[id] ?? 'whole';
+        final line = decorate(id);
+        if (p == 'left') {
+          left.add(line);
+        } else if (p == 'right') {
+          right.add(line);
+        } else {
+          whole.add(line);
+        }
+      }
+    });
+
+    final out = <String>[...details];
+    if (whole.isNotEmpty) {
+      out.add('WHOLE');
+      out.addAll(whole);
+    }
+    if (left.isNotEmpty) {
+      out.add('LEFT');
+      out.addAll(left);
+    }
+    if (right.isNotEmpty) {
+      out.add('RIGHT');
+      out.addAll(right);
+    }
+    return out;
   }
 
   bool _mapEquals(Map<String, dynamic> a, Map<String, dynamic> b) {
@@ -967,7 +1057,24 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
                             itemBuilder: (context, index) {
                               final line = _lines[index];
                               return ListTile(
-                                title: Text(line.name),
+                                title: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(line.name),
+                                    for (final m in _ticketModLines(
+                                      line.customizations,
+                                    ))
+                                      Text(
+                                        m,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
+                                        ),
+                                      ),
+                                  ],
+                                ),
                                 subtitle: Text(
                                   '\$${line.unitPrice.toStringAsFixed(2)} × ${line.quantity}',
                                 ),
