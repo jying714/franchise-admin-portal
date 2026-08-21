@@ -30,10 +30,14 @@ class _PosCustomizationSheetState extends State<PosCustomizationSheet> {
   final Map<String, String> _portions = {}; // whole | left | right
   final Map<String, bool> _doubles = {};
   String? _selectedSize;
+  String? _wingHalfA; // 'plain' or option id
+  String? _wingHalfB;
 
   List<ModifierGroup> get _groups {
     if (_isPizza || _isCalzone) return _pizzaCalzoneGroups();
     if (_isSalad) return _saladGroups();
+    if (_isSub) return _subGroups();
+    if (_isDinner) return _dinnerGroups();
     final effective = widget.item.effectiveModifierGroups;
     if (effective.isNotEmpty) return effective;
     return widget.item.modifierGroups ?? const [];
@@ -47,6 +51,46 @@ class _PosCustomizationSheetState extends State<PosCustomizationSheet> {
 
   String _rowName(Map<String, dynamic> row) =>
       (row['name'] ?? row['label'] ?? _rowId(row)).toString();
+
+  List<ModifierGroup> _dinnerGroups() {
+    final extras = <ModifierOption>[];
+    final seen = <String>{};
+    for (final raw in widget.item.optionalAddOns ?? const []) {
+      if (raw is! Map) continue;
+      final row = Map<String, dynamic>.from(raw);
+      final id = _rowId(row);
+      if (id.isEmpty || seen.contains(id)) continue;
+      seen.add(id);
+      extras.add(
+        ModifierOption(id: id, label: _rowName(row), ingredientId: id),
+      );
+    }
+    if (extras.isEmpty) return const [];
+    return [
+      ModifierGroup(
+        id: 'optional_addons',
+        label: 'Optional add-ons',
+        selectMode: ModifierSelectMode.multi,
+        min: 0,
+        max: 40,
+        options: extras,
+      ),
+    ];
+  }
+
+  List<ModifierGroup> _subGroups() {
+    final seed = MenuProfileTemplates.seedGroups(MenuProfile.sub);
+    final out = <ModifierGroup>[];
+    for (final g in seed) {
+      if (g.id.toLowerCase() == 'cook') out.add(g);
+    }
+    out.add(_groupFromType('meats', 'Meats'));
+    out.add(_groupFromType('veggies', 'Veggies'));
+    out.add(_groupFromType('cheeses', 'Cheeses'));
+    return out
+        .where((g) => g.options.isNotEmpty || g.id.toLowerCase() == 'cook')
+        .toList();
+  }
 
   List<ModifierGroup> _saladGroups() {
     final fromItem = widget.item.effectiveModifierGroups.where((g) {
@@ -171,6 +215,21 @@ class _PosCustomizationSheetState extends State<PosCustomizationSheet> {
   bool get _isSalad =>
       (widget.item.menuProfile ?? '').trim().toLowerCase() == 'salad';
 
+  bool get _isWings =>
+      (widget.item.menuProfile ?? '').trim().toLowerCase() == 'wings';
+
+  bool get _isSub =>
+      (widget.item.menuProfile ?? '').trim().toLowerCase() == 'sub';
+
+  bool get _isDinner {
+    final p = (widget.item.menuProfile ?? '').trim().toLowerCase();
+    if (p == 'dinner') return true;
+    if (p == 'standard' || p.isEmpty) {
+      return widget.item.optionalAddOns?.isNotEmpty ?? false;
+    }
+    return false;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -217,6 +276,13 @@ class _PosCustomizationSheetState extends State<PosCustomizationSheet> {
   bool get _valid {
     for (final g in _groups) {
       if (!_isVisibleGroup(g)) continue;
+      if (_isWings) {
+        final t = '${g.id} ${g.label}'.toLowerCase();
+        if (t.contains('wing_sauce') ||
+            (t.contains('sauce') && !t.contains('dip'))) {
+          continue;
+        }
+      }
       final count = _selected[_groupKey(g)]?.length ?? 0;
       if (count < g.min) return false;
       if (count > g.max) return false;
@@ -226,7 +292,25 @@ class _PosCustomizationSheetState extends State<PosCustomizationSheet> {
       return false;
     }
     if (!_sauceSplitOk()) return false;
+    if (_isWings && (_wingHalfA == null || _wingHalfA!.isEmpty)) {
+      return false;
+    }
     return true;
+  }
+
+  void _applyWingHalves() {
+    final sauceGroups = _groups.where((g) {
+      final t = '${g.id} ${g.label}'.toLowerCase();
+      return t.contains('wing_sauce') ||
+          (t.contains('sauce') && !t.contains('dip'));
+    });
+    final ids = <String>{};
+    for (final h in [_wingHalfA, _wingHalfB]) {
+      if (h != null && h.isNotEmpty && h != 'plain') ids.add(h);
+    }
+    for (final g in sauceGroups) {
+      _selected[_groupKey(g)] = ids;
+    }
   }
 
   double get _basePrice {
@@ -263,6 +347,12 @@ class _PosCustomizationSheetState extends State<PosCustomizationSheet> {
       }
       final isDressing = label.contains('dressing') || id.contains('dressing');
       if (_isSalad && isDressing) continue;
+      if (_isWings &&
+          (label.contains('sauce') || id.contains('sauce')) &&
+          !label.contains('dip') &&
+          !id.contains('dip')) {
+        continue;
+      }
       for (final optId in _selected[_groupKey(g)] ?? {}) {
         ModifierOption? opt;
         for (final o in g.options) {
@@ -288,6 +378,14 @@ class _PosCustomizationSheetState extends State<PosCustomizationSheet> {
         if (p <= 0 && (_isPizza || _isCalzone)) {
           p = MenuPricing.toppingUpcharge(widget.item, _selectedSize);
         }
+        if (p <= 0 && _isDinner) {
+          p = MenuPricing.resolveExtraIngredientPrice(
+            item: widget.item,
+            selectedSize: _selectedSize,
+            ingId: ingId,
+            ingredientMetadata: const {},
+          );
+        }
         if (p <= 0) continue;
         final doubled = _doubles[optId] == true;
         final included = _wasIncluded(ingId) || _wasIncluded(optId);
@@ -312,6 +410,38 @@ class _PosCustomizationSheetState extends State<PosCustomizationSheet> {
       final paid = (dressingIds.length - free).clamp(0, 100);
       if (paid > 0 && extra > 0) {
         prices['_dressings_extra'] = extra * paid;
+      }
+    }
+
+    if (_isWings) {
+      final dipIds = <String>{};
+      for (final g in _groups) {
+        final t = '${g.id} ${g.label}'.toLowerCase();
+        if (!t.contains('dip')) continue;
+        dipIds.addAll(_selected[_groupKey(g)] ?? {});
+        for (final id in dipIds) {
+          prices.remove(id);
+        }
+      }
+      var free = 0;
+      final map = widget.item.freeDipCupCount;
+      if (map != null && _selectedSize != null) {
+        for (final e in map.entries) {
+          if (e.key.toString() == _selectedSize) {
+            free = e.value;
+            break;
+          }
+        }
+      }
+      var extra = 0.0;
+      final up = widget.item.sideDipUpcharge;
+      if (up != null && _selectedSize != null) {
+        extra = up[_selectedSize] ?? up.values.firstOrNull ?? 0.0;
+      }
+      extra = extra > 0 ? extra : 0.75;
+      final paid = (dipIds.length - free).clamp(0, 100);
+      if (paid > 0) {
+        prices['_dips_extra'] = extra * paid;
       }
     }
     return prices;
@@ -441,7 +571,7 @@ class _PosCustomizationSheetState extends State<PosCustomizationSheet> {
   bool _allowsPortion(ModifierGroup g) => _isPizza && !_isDetailsGroup(g);
 
   bool _allowsDouble(ModifierGroup g) =>
-      (_isPizza || _isCalzone) && !_isDetailsGroup(g);
+      (_isPizza || _isCalzone || _isSub || _isDinner) && !_isDetailsGroup(g);
 
   bool _sauceSplitOk() {
     if (!_isPizza) return true;
@@ -456,11 +586,61 @@ class _PosCustomizationSheetState extends State<PosCustomizationSheet> {
     return (a == 'left' && b == 'right') || (a == 'right' && b == 'left');
   }
 
+  List<ModifierOption> get _wingSauces {
+    for (final g in _groups) {
+      final t = '${g.id} ${g.label}'.toLowerCase();
+      if (t.contains('wing_sauce') ||
+          (t.contains('sauce') && !t.contains('dip'))) {
+        return g.options;
+      }
+    }
+    return const [];
+  }
+
+  Widget _wingHalfRow(
+    BuildContext context, {
+    required String label,
+    required String? value,
+    required ValueChanged<String> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: Theme.of(context).textTheme.titleSmall),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            ChoiceChip(
+              label: const Text('Plain'),
+              selected: value == 'plain',
+              onSelected: (_) => onChanged('plain'),
+            ),
+            for (final o in _wingSauces)
+              ChoiceChip(
+                label: Text(o.label),
+                selected: value == _optionKey(o),
+                onSelected: (_) => onChanged(_optionKey(o)),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
   Map<String, dynamic> _payload() {
+    if (_isWings) _applyWingHalves();
     final out = <String, dynamic>{
       for (final e in _selected.entries)
         if (e.value.isNotEmpty) e.key: e.value.toList(),
     };
+    if (_isWings) {
+      out['wingHalves'] = {
+        if (_wingHalfA != null) 'a': _wingHalfA,
+        if (_wingHalfB != null) 'b': _wingHalfB,
+      };
+    }
     if (_selectedSize != null && _selectedSize!.trim().isNotEmpty) {
       out['size'] = _selectedSize;
     }
@@ -496,6 +676,12 @@ class _PosCustomizationSheetState extends State<PosCustomizationSheet> {
         ? 'Build calzone'
         : _isSalad
         ? 'Build salad'
+        : _isWings
+        ? 'Build wings'
+        : _isSub
+        ? 'Build sub'
+        : _isDinner
+        ? 'Build dinner'
         : 'Customize ${widget.item.name}';
 
     final bottomInset =
@@ -539,62 +725,134 @@ class _PosCustomizationSheetState extends State<PosCustomizationSheet> {
                       ),
                       const SizedBox(height: 16),
                     ],
-                    ..._buildGroupSection(
-                      context,
-                      heading: 'Order details',
-                      groups: _isPizza
-                          ? _groupsWhere(_isDetailsGroup)
-                          : _isCalzone
-                          ? _groupsWhere((g) {
-                              final t = '${g.id} ${g.label}'.toLowerCase();
-                              return t.contains('cook');
-                            })
-                          : _groupsWhere(_isDetailsGroup),
-                    ),
-                    ..._buildGroupSection(
-                      context,
-                      heading: 'Cheeses',
-                      groups: _groupsWhere(_isCheeseGroup),
-                    ),
-                    ..._buildGroupSection(
-                      context,
-                      heading: 'Sauces',
-                      groups: _groupsWhere(_isSauceGroup),
-                    ),
-                    ..._buildGroupSection(
-                      context,
-                      heading: 'Optional add-ons',
-                      groups: () {
-                        final extras = _groups.where((g) {
-                          if (!_isVisibleGroup(g)) return false;
-                          if (_isDetailsGroup(g) ||
-                              _isCheeseGroup(g) ||
-                              _isSauceGroup(g)) {
-                            return false;
-                          }
-                          return true;
-                        }).toList();
-                        if (extras.isNotEmpty) return extras;
-                        final anySection =
-                            _groupsWhere(_isDetailsGroup).isNotEmpty ||
-                            _groupsWhere(_isCheeseGroup).isNotEmpty ||
-                            _groupsWhere(_isSauceGroup).isNotEmpty;
-                        if (!anySection) {
-                          return _groups.where(_isVisibleGroup).toList();
-                        }
-                        return extras;
-                      }(),
-                    ),
-                    if (!_isPizza &&
-                        !_isCalzone &&
-                        _groupsWhere(_isDetailsGroup).isEmpty &&
-                        _groupsWhere(_isCheeseGroup).isEmpty &&
-                        _groupsWhere(_isSauceGroup).isEmpty)
+                    if (_isWings) ...[
+                      Text(
+                        'Build your wings',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      _wingHalfRow(
+                        context,
+                        label: 'Half 1',
+                        value: _wingHalfA,
+                        onChanged: (v) => setState(() => _wingHalfA = v),
+                      ),
+                      const SizedBox(height: 8),
+                      _wingHalfRow(
+                        context,
+                        label: 'Half 2',
+                        value: _wingHalfB,
+                        onChanged: (v) => setState(() => _wingHalfB = v),
+                      ),
+                      const SizedBox(height: 16),
                       ..._buildGroupSection(
                         context,
-                        heading: 'Options',
+                        heading: 'Dipping cups',
+                        groups: _groups.where((g) {
+                          final t = '${g.id} ${g.label}'.toLowerCase();
+                          return t.contains('dip');
+                        }).toList(),
+                      ),
+                    ] else if (_isSub) ...[
+                      ..._buildGroupSection(
+                        context,
+                        heading: 'Order details',
+                        groups: _groupsWhere((g) {
+                          final t = '${g.id} ${g.label}'.toLowerCase();
+                          return t.contains('cook');
+                        }),
+                      ),
+                      ..._buildGroupSection(
+                        context,
+                        heading: 'Optional add-ons',
+                        groups: _groups.where((g) {
+                          final t = '${g.id} ${g.label}'.toLowerCase();
+                          return !t.contains('cook');
+                        }).toList(),
+                      ),
+                    ] else if (_isDinner) ...[
+                      ..._buildGroupSection(
+                        context,
+                        heading: 'Optional add-ons',
                         groups: _groups,
                       ),
+                    ] else if (_isSalad) ...[
+                      ..._buildGroupSection(
+                        context,
+                        heading: 'Optional add-ons',
+                        groups: _groups.where((g) {
+                          final t = '${g.id} ${g.label}'.toLowerCase();
+                          return !t.contains('dressing');
+                        }).toList(),
+                      ),
+                      ..._buildGroupSection(
+                        context,
+                        heading: 'Dressings',
+                        groups: _groups.where((g) {
+                          final t = '${g.id} ${g.label}'.toLowerCase();
+                          return t.contains('dressing');
+                        }).toList(),
+                      ),
+                    ] else ...[
+                      ..._buildGroupSection(
+                        context,
+                        heading: 'Order details',
+                        groups: _isPizza
+                            ? _groupsWhere(_isDetailsGroup)
+                            : _isCalzone
+                            ? _groupsWhere((g) {
+                                final t = '${g.id} ${g.label}'.toLowerCase();
+                                return t.contains('cook');
+                              })
+                            : _groupsWhere(_isDetailsGroup),
+                      ),
+                      ..._buildGroupSection(
+                        context,
+                        heading: 'Cheeses',
+                        groups: _groupsWhere(_isCheeseGroup),
+                      ),
+                      ..._buildGroupSection(
+                        context,
+                        heading: 'Sauces',
+                        groups: _groupsWhere(_isSauceGroup),
+                      ),
+                      ..._buildGroupSection(
+                        context,
+                        heading: 'Optional add-ons',
+                        groups: () {
+                          final extras = _groups.where((g) {
+                            if (!_isVisibleGroup(g)) return false;
+                            if (_isDetailsGroup(g) ||
+                                _isCheeseGroup(g) ||
+                                _isSauceGroup(g)) {
+                              return false;
+                            }
+                            return true;
+                          }).toList();
+                          if (extras.isNotEmpty) return extras;
+                          final anySection =
+                              _groupsWhere(_isDetailsGroup).isNotEmpty ||
+                              _groupsWhere(_isCheeseGroup).isNotEmpty ||
+                              _groupsWhere(_isSauceGroup).isNotEmpty;
+                          if (!anySection) {
+                            return _groups.where(_isVisibleGroup).toList();
+                          }
+                          return extras;
+                        }(),
+                      ),
+                      if (!_isPizza &&
+                          !_isCalzone &&
+                          !_isSalad &&
+                          !_isWings &&
+                          _groupsWhere(_isDetailsGroup).isEmpty &&
+                          _groupsWhere(_isCheeseGroup).isEmpty &&
+                          _groupsWhere(_isSauceGroup).isEmpty)
+                        ..._buildGroupSection(
+                          context,
+                          heading: 'Options',
+                          groups: _groups,
+                        ),
+                    ],
                   ],
                 ),
               ),

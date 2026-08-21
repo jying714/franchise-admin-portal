@@ -164,7 +164,8 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
     Map<String, dynamic> customizations = {};
     final needsBuilder =
         item.effectiveModifierGroups.isNotEmpty ||
-        (item.sizes?.isNotEmpty ?? false);
+        (item.sizes?.isNotEmpty ?? false) ||
+        (item.optionalAddOns?.isNotEmpty ?? false);
     if (needsBuilder) {
       final result = await PosCustomizationSheet.show(context, item);
       if (result == null) return;
@@ -235,12 +236,31 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
     final size = c['size']?.toString().trim();
     if (size != null && size.isNotEmpty) details.add('Size: $size');
 
+    final halves = c['wingHalves'];
+    if (halves is Map) {
+      String halfName(Object? v) {
+        final s = v?.toString() ?? '';
+        if (s.isEmpty || s == 'plain') return 'Plain';
+        return labels[s] ?? s;
+      }
+
+      if (halves['a'] != null) {
+        details.add('HALF 1  ${halfName(halves['a'])}');
+      }
+      if (halves['b'] != null) {
+        details.add('HALF 2  ${halfName(halves['b'])}');
+      }
+    }
+
     c.forEach((k, v) {
       if (k == 'size' ||
           k == 'addonPrices' ||
           k == '_linePrice' ||
           k == 'portions' ||
-          k == 'doubles') {
+          k == 'doubles' ||
+          k == 'wingHalves' ||
+          k == 'optionLabels' ||
+          k == 'wing_sauce') {
         return;
       }
       final lk = k.toLowerCase();

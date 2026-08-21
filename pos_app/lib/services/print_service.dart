@@ -380,7 +380,10 @@ class PrintService {
           k == 'portions' ||
           k == 'doubles' ||
           k == '_linePrice' ||
-          k == 'voidedAddOns') {
+          k == 'voidedAddOns' ||
+          k == 'wingHalves' ||
+          k == 'optionLabels' ||
+          k == 'wing_sauce') {
         return;
       }
       if (_isDetailKey(k)) {
@@ -410,6 +413,21 @@ class PrintService {
     final out = <String>[];
     for (final d in details) {
       out.add('   $d');
+    }
+    final halves = c['wingHalves'];
+    if (halves is Map) {
+      String halfName(Object? v) {
+        final s = v?.toString() ?? '';
+        if (s.isEmpty || s == 'plain') return 'Plain';
+        return nameOf(s);
+      }
+
+      if (halves['a'] != null) {
+        out.add('   HALF 1  ${halfName(halves['a'])}');
+      }
+      if (halves['b'] != null) {
+        out.add('   HALF 2  ${halfName(halves['b'])}');
+      }
     }
     if (whole.isNotEmpty) {
       out.add('   WHOLE');
@@ -477,6 +495,9 @@ class PrintService {
       buf.writeln(
         '${item.quantity}x ${item.name}  \$${line.toStringAsFixed(2)}',
       );
+      for (final side in _itemSideLines(item)) {
+        buf.writeln(side);
+      }
     }
     buf.writeln('--------------------------------------');
     buf.writeln('Subtotal  \$${order.subtotal.toStringAsFixed(2)}');
