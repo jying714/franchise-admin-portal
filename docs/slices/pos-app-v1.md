@@ -1,110 +1,50 @@
 # Slice: POS App v1 (Thin Counter Station)
 
-**Status**: **Software pilot COMPLETE on `main`** (2026-08-01 smoke PASS) + **order-detail workspace COMPLETE** (same day)  
-**Branch**: merged via `feat/pos-app-v1` → `main`; cleanup via `fix/cleanup-web-mobile-pos` → `main`; feature branches deleted  
-**Authority**: Decision **14** · STATUS · HANDOFF · this file · **`docs/plans/pos-app-v1-development-plan.md`**  
-**Depends on**: Decision 12 **COMPLETE**; franchise-scoped orders; shared_core menu/modifier system  
-**Pilot device**: Android tablet / S25; PaymentSheet interim for card  
-**Supersedes**: Pure kitchen-only framing of Decision 13 / `kitchen-ops-v1.md`
+**Status**: Software pilot on `main` + print/drawer live + **station UX on `feat/pre-hardware-hq-polish`** (2026-08-21)  
+**Authority**: Decision **14** · STATUS · HANDOFF · this file · **`docs/plans/pos-app-v1-development-plan.md`**
 
 ---
 
-## 1. Problem
+## Product locks
 
-Counter station must create dine-in / carry-out / delivery, take cash + card, print, surface online tickets — not a kitchen-only binary.
+Thin `pos_app`; pay carry-out at pickup; order `source`; manager void/refund; no second menu tree.
 
----
-
-## 2. Product locks
-
-Unchanged Decision 14 summary: thin `pos_app`; pay carry-out at pickup; order `source`; manager void/refund; no second menu tree; offline cash-only honesty.
-
-**store_ops (locked path):** `franchises/{id}/config/store_ops` — `taxRate` + per-weekday `hours`.
-
-**Order lines (2026-08-01):** `OrderItem.lineStatus` = `active` | `voided` | `comped`; totals via `effectiveLineTotal`. Nested add-on void strips POS modifier group lists and mobile `selectedAddOns` / `currentIngredients`.
+**store_ops:** `franchises/{id}/config/store_ops` — `taxRate`, `deliveryFee`, hours. Delivery **range** (distance or drive time) is the next shared setting — do not invent keys until the live doc is quoted.
 
 ---
 
-## 3. Phase status
+## Station UX (2026-08-20/21)
 
-| Phase | Status |
-|-------|--------|
-| 0–7 ops + 5 software money | **PASS** |
-| 8 Staff UI | Open |
-| 9 Large/86 | Open |
-| 10 Print mock | **PASS** |
-| 11 Online intake MVP | **PASS** |
-| 12 Station settings read-only | **PASS** |
-| 13 Offline honesty | **PASS** |
-| 14 Software pilot smoke | **PASS** 2026-08-01 |
-| Order-detail workspace | **PASS** 2026-08-01 |
+| Area | Path / rule |
+|------|----------------|
+| Profile builder | `pos_app/lib/features/customization/pos_customization_sheet.dart` |
+| Pizza | L/R + Dbl; sauce split = one whole or opposite halves |
+| Calzone / sub / dinner | Dbl only; dinner also covers `menuProfile: standard` with extras |
+| Salad | Optional add-ons then dressings; free/extra from item |
+| Wings | Half 1/2 + dipping cups; free cups by size |
+| Ticket / print | WHOLE / LEFT / RIGHT / HALF; `optionLabels`; skip raw `wing_sauce` |
+| Cash | Tender → drawer → change; status stays open; **Close out (tip)** writes `cashTip` |
+| Card | Optional `cardTip` then complete |
+| EOD | `pos_app/lib/features/reports/end_of_day_screen.dart` — manager/owner/admin |
+| Idle | `session_timeout_overlay.dart` + `lockForRepin` — **timer smoke FAIL** |
+
+Firestore extras on close (merge-only, not required `Order` fields): `cashTip`, `cardTip`, `closedByStaffId`, `closedByStaffName`, `paymentMethod`, `tableId`.
 
 ---
 
-## 4. Acceptance
+## Acceptance (added)
 
-- [x] Carry-out / dine-in / delivery ops baselines
-- [x] Cash / split / card PaymentSheet
-- [x] Pre-tax discount stack; tax from store_ops
-- [x] Closed board + cash refund
-- [x] Mock kitchen + receipt
-- [x] Mobile in-hours → kitchen + auto ticket; closed day blocks
-- [x] HQ Tax & hours editor + Quick Link
-- [x] Station settings AppBar entry
-- [x] Offline banner + card blocked
-- [x] Software pilot smoke PASS
-- [x] **Order detail large dialog** (stream live order; stays open on line ops)
-- [x] **Line void / comp / partial qty** + nested add-on void (manager PIN)
-- [x] **Add item** via `OrderEntryScreen(existingOrderId:)` under dialog; append preserves lineStatus
-- [x] **Print guest check + reprint kitchen** from detail (open + closed)
-- [x] **Closed line refund** (cash skeleton) + source/payment chips on closed list
+- [x] Star TSP100 StarGraphic print + DK drawer
+- [x] Profile-accurate POS builders
+- [x] Cash tip close-out + EOD rollup
+- [ ] Idle overlay timer verified
+- [ ] HQ idle + grace seconds
+- [ ] Delivery range gate (3 clients)
 - [ ] Stripe Terminal hardware
-- [x] Real Star TSP100 print (StarGraphic, 2026-08-18)
-- [x] Cash drawer DK via same printer
-- [ ] Staff/driver manager UI
-- [ ] 86 / large-order flows
-- [ ] Check/item discounts beyond payment-time discount (optional)
+- [ ] HQ printer-by-category
 
 ---
 
-## 5. Residual
+## Hardware (2026-08-18)
 
-| ID | Item | Status |
-|----|------|--------|
-| R1–R2 | Tax + hours | **Done** |
-| R3 | Stripe Terminal | Open |
-| R4 | TSP100 print + drawer | **Done** (StarGraphic) |
-| R5–R6 | Offline / settings | **Done** |
-| R7 | Customer website | Separate epic |
-| R8 | Staff bootstrap docs | Open |
-| R9 | Software smoke | **Done** |
-| R10 | Order-detail workspace | **Done** |
-
-### Key paths (order workspace)
-
-- `pos_app/lib/features/orders/widgets/order_detail_dialog.dart`
-- `pos_app/lib/features/orders/order_line_ops.dart`
-- `pos_app/lib/features/orders/open_orders_screen.dart`
-- `pos_app/lib/features/orders/closed_orders_screen.dart`
-- `packages/shared_core/lib/src/core/models/order.dart` (`lineStatus`, `effectiveLineTotal`)
-
----
-
-## 6. Bottom line
-
-**Thin counter POS software pilot is complete on main.** Order-detail workspace (void/comp/add/print/line refund) is also complete. Print/drawer on the lab TSP100 is done. Remaining POS work is ticket layout, staff ops UI, 86/large-order, Stripe Terminal, and optional ticket discounts — not core money/intake. Product hard release still requires **customer website**.
-
----
-
-## Station hardware inventory (2026-08-18)
-
-| Device | Status |
-|--------|--------|
-| Star TSP143 / TSP100 LAN (`192.168.1.21`) | Kitchen + receipt + mobile ticket **PASS** (StarGraphic) |
-| Cash drawer | **PASS** via DK / `openCashDrawer` |
-| Stripe reader | On site — does not print |
-| Extra printers | Doughboys floor; MVP uses **one** TSP100 for all roles |
-
-**Stack:** `PrintService` / `DrawerService` only. Host via `--dart-define=POS_PRINTER_HOST`. Plugin vendored at `pos_app/vendor/flutter_star_prnt_plus`. Console fallback; pay/send never fails on print.
-
-**Do not use raw ESC/POS on 9100** for this model. HQ printer registry / category routing / ticket editor = after MVP or Doughboys install.
+TSP143 `192.168.1.21` · StarGraphic only (not raw 9100) · vendored `pos_app/vendor/flutter_star_prnt_plus` · `--dart-define=POS_PRINTER_HOST`.
