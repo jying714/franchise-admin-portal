@@ -7,17 +7,22 @@ import 'package:shared_core/shared_core.dart';
 class PosCustomizationSheet extends StatefulWidget {
   final MenuItem item;
 
-  const PosCustomizationSheet({super.key, required this.item});
+  final Map<String, dynamic>? initial;
+
+  const PosCustomizationSheet({super.key, required this.item, this.initial});
 
   static Future<Map<String, dynamic>?> show(
     BuildContext context,
-    MenuItem item,
-  ) {
+    MenuItem item, {
+    Map<String, dynamic>? initial,
+  }) {
     return showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (_) => SafeArea(child: PosCustomizationSheet(item: item)),
+      builder: (_) => SafeArea(
+        child: PosCustomizationSheet(item: item, initial: initial),
+      ),
     );
   }
 
@@ -242,6 +247,35 @@ class _PosCustomizationSheetState extends State<PosCustomizationSheet> {
       for (final opt in g.options) {
         if (opt.defaultSelected) {
           _selected[key]!.add(_optionKey(opt));
+        }
+      }
+    }
+    final init = widget.initial;
+    if (init != null && init.isNotEmpty) {
+      final size = init['size']?.toString();
+      if (size != null && size.isNotEmpty) _selectedSize = size;
+      final halves = init['wingHalves'];
+      if (halves is Map) {
+        _wingHalfA = halves['a']?.toString();
+        _wingHalfB = halves['b']?.toString();
+      }
+      final portions = init['portions'];
+      if (portions is Map) {
+        portions.forEach((k, v) {
+          _portions[k.toString()] = v.toString();
+        });
+      }
+      final doubles = init['doubles'];
+      if (doubles is Map) {
+        doubles.forEach((k, v) {
+          if (v == true) _doubles[k.toString()] = true;
+        });
+      }
+      for (final g in _groups) {
+        final key = _groupKey(g);
+        final raw = init[key] ?? init[g.label];
+        if (raw is List) {
+          _selected[key] = raw.map((e) => e.toString()).toSet();
         }
       }
     }
@@ -490,32 +524,37 @@ class _PosCustomizationSheetState extends State<PosCustomizationSheet> {
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     const Spacer(),
-                    ChoiceChip(
-                      label: const Text('L'),
-                      selected:
-                          (_portions[_optionKey(opt)] ?? 'whole') == 'left',
-                      onSelected: (_) => _setPortion(_optionKey(opt), 'left'),
-                    ),
-                    const SizedBox(width: 4),
-                    ChoiceChip(
-                      label: const Text('W'),
-                      selected:
-                          (_portions[_optionKey(opt)] ?? 'whole') == 'whole',
-                      onSelected: (_) => _setPortion(_optionKey(opt), 'whole'),
-                    ),
-                    const SizedBox(width: 4),
-                    ChoiceChip(
-                      label: const Text('R'),
-                      selected:
-                          (_portions[_optionKey(opt)] ?? 'whole') == 'right',
-                      onSelected: (_) => _setPortion(_optionKey(opt), 'right'),
-                    ),
-                    const SizedBox(width: 8),
-                    FilterChip(
-                      label: const Text('Dbl'),
-                      selected: _doubles[_optionKey(opt)] == true,
-                      onSelected: (_) => _toggleDouble(_optionKey(opt)),
-                    ),
+                    if (_allowsPortion(g)) ...[
+                      ChoiceChip(
+                        label: const Text('L'),
+                        selected:
+                            (_portions[_optionKey(opt)] ?? 'whole') == 'left',
+                        onSelected: (_) => _setPortion(_optionKey(opt), 'left'),
+                      ),
+                      const SizedBox(width: 4),
+                      ChoiceChip(
+                        label: const Text('W'),
+                        selected:
+                            (_portions[_optionKey(opt)] ?? 'whole') == 'whole',
+                        onSelected: (_) =>
+                            _setPortion(_optionKey(opt), 'whole'),
+                      ),
+                      const SizedBox(width: 4),
+                      ChoiceChip(
+                        label: const Text('R'),
+                        selected:
+                            (_portions[_optionKey(opt)] ?? 'whole') == 'right',
+                        onSelected: (_) =>
+                            _setPortion(_optionKey(opt), 'right'),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    if (_allowsDouble(g))
+                      FilterChip(
+                        label: const Text('Dbl'),
+                        selected: _doubles[_optionKey(opt)] == true,
+                        onSelected: (_) => _toggleDouble(_optionKey(opt)),
+                      ),
                   ],
                 ),
               ),

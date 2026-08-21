@@ -8,6 +8,8 @@ import '../../providers/pin_session_provider.dart';
 import 'widgets/order_type_tile.dart';
 import '../ordering/order_entry_screen.dart';
 import '../dine_in/dine_in_floor_map_screen.dart';
+import '../reports/end_of_day_screen.dart';
+import '../../core/constants/pos_permissions.dart';
 
 class StationHomeScreen extends StatefulWidget {
   final String franchiseId;
@@ -24,6 +26,16 @@ class _StationHomeScreenState extends State<StationHomeScreen> {
   static bool _isOffline(List<ConnectivityResult> results) {
     return results.isEmpty ||
         results.every((r) => r == ConnectivityResult.none);
+  }
+
+  bool _canViewEndOfDay(PinSessionProvider session) {
+    final role = session.staff?.role.trim().toLowerCase() ?? '';
+    if (role.contains('owner') ||
+        role.contains('manager') ||
+        role.contains('admin')) {
+      return true;
+    }
+    return session.hasPermission(PosPermissions.managerOverride);
   }
 
   @override
@@ -184,6 +196,7 @@ class _StationHomeScreenState extends State<StationHomeScreen> {
                   subtitle: 'POS + mobile + web in one list',
                   icon: Icons.receipt_long,
                   onTap: () {
+                    session.touch();
                     Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) =>
@@ -206,6 +219,22 @@ class _StationHomeScreenState extends State<StationHomeScreen> {
                     );
                   },
                 ),
+                if (_canViewEndOfDay(session)) ...[
+                  const SizedBox(height: 8),
+                  OrderTypeTile(
+                    title: 'End of day',
+                    subtitle: 'Cash, card, tips for today',
+                    icon: Icons.summarize_outlined,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) =>
+                              EndOfDayScreen(franchiseId: franchiseId),
+                        ),
+                      );
+                    },
+                  ),
+                ],
                 const SizedBox(height: 24),
                 Text(
                   'Franchise: $franchiseId',

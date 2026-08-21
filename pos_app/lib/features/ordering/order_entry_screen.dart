@@ -61,7 +61,7 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
   /// null = category picker; non-null = items in that category.
   String? _selectedCategoryId;
   String? _selectedCategoryName;
-
+  String? _customerName;
   bool get _isDelivery => widget.orderType == 'delivery';
 
   @override
@@ -75,9 +75,8 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
         if (mounted) _promptDeliveryCustomer();
       });
     } else if (widget.existingOrderId == null) {
-      // New carryout / dine-in ticket — collect contact phone once.
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _promptCustomerPhone();
+        if (mounted) _promptCustomerContact();
       });
     }
   }
@@ -99,18 +98,31 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
     });
   }
 
-  Future<void> _promptCustomerPhone() async {
-    final result = await showDialog<String>(
+  Future<void> _promptCustomerContact() async {
+    final optional = widget.orderType == 'dine_in';
+    final result = await showDialog<_CustomerContact>(
       context: context,
-      barrierDismissible: false,
-      builder: (_) => const _CustomerPhoneDialog(),
+      barrierDismissible: optional,
+      builder: (_) => _CustomerPhoneDialog(optional: optional),
     );
     if (!mounted) return;
-    if (result == null || result.trim().isEmpty) {
+    if (optional) {
+      if (result != null) {
+        setState(() {
+          _customerName = result.name.trim();
+          _customerPhone = result.phone.trim();
+        });
+      }
+      return;
+    }
+    if (result == null || result.phone.trim().isEmpty) {
       Navigator.of(context).pop();
       return;
     }
-    setState(() => _customerPhone = result.trim());
+    setState(() {
+      _customerName = result.name.trim();
+      _customerPhone = result.phone.trim();
+    });
   }
 
   Stream<List<Category>> _categoryStream() {
@@ -196,7 +208,46 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
           ),
         );
       }
+      _selectedCategoryId = null;
+      _selectedCategoryName = null;
     });
+  }
+
+  Future<void> _editLine(int index) async {
+    if (index < 0 || index >= _lines.length) return;
+    final line = _lines[index];
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('franchises')
+          .doc(widget.franchiseId)
+          .collection('menu_items')
+          .doc(line.menuItemId)
+          .get();
+      if (!snap.exists || snap.data() == null) return;
+      final item = MenuItem.fromFirestore(snap.data()!, snap.id);
+      if (!mounted) return;
+      final result = await PosCustomizationSheet.show(
+        context,
+        item,
+        initial: line.customizations,
+      );
+      if (result == null || !mounted) return;
+      final customizations = Map<String, dynamic>.from(result);
+      final priced = customizations['_linePrice'];
+      final unit = (priced is num) ? priced.toDouble() : line.unitPrice;
+      customizations.remove('_linePrice');
+      setState(() {
+        _lines[index] = _TicketLine(
+          menuItemId: line.menuItemId,
+          name: line.name,
+          unitPrice: unit,
+          quantity: line.quantity,
+          customizations: customizations,
+        );
+      });
+    } catch (e) {
+      debugPrint('[POS] edit line failed: $e');
+    }
   }
 
   List<String> _ticketModLines(Map<String, dynamic> c) {
@@ -440,7 +491,11 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
       deliveryFee: deliveryFee,
     );
     final customer = _deliveryCustomer;
-    final customerName = _isDelivery ? customer!.name : staff.name;
+    final customerName = _isDelivery
+        ? customer!.name
+        : ((_customerName ?? '').trim().isNotEmpty
+              ? _customerName!.trim()
+              : staff.name);
 
     Address? deliveryAddress;
     if (_isDelivery && customer != null) {
@@ -1077,6 +1132,7 @@ class _OrderEntryScreenState extends State<OrderEntryScreen> {
                             itemBuilder: (context, index) {
                               final line = _lines[index];
                               return ListTile(
+                                onTap: () => _editLine(index),
                                 title: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -1366,50 +1422,67 @@ class _DeliveryCustomerDialogState extends State<_DeliveryCustomerDialog> {
   }
 }
 
+class _CustomerContact {
+  final String name;
+  final String phone;
+  const _CustomerContact({this.name = '', this.phone = ''});
+}
+
 class _CustomerPhoneDialog extends StatefulWidget {
-  const _CustomerPhoneDialog();
+  final bool optional;
+  const _CustomerPhoneDialog({this.optional = false});
 
   @override
   State<_CustomerPhoneDialog> createState() => _CustomerPhoneDialogState();
 }
 
 class _CustomerPhoneDialogState extends State<_CustomerPhoneDialog> {
+  final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   String? _error;
 
   @override
   void dispose() {
+    _nameController.dispose();
     _phoneController.dispose();
     super.dispose();
   }
 
-  void _submit() {
+  void _submit({bool skip = false}) {
+    if (skip) {
+      Navigator.of(context).pop(const _CustomerContact());
+      return;
+    }
+    final name = _nameController.text.trim();
     final phone = _phoneController.text.trim();
-    if (phone.isEmpty) {
+    if (!widget.optional && phone.isEmpty) {
       setState(() => _error = 'Phone number is required');
       return;
     }
-    Navigator.of(context).pop(phone);
+    Navigator.of(context).pop(_CustomerContact(name: name, phone: phone));
   }
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
     return AlertDialog(
-      title: const Text('Customer phone'),
+      title: Text(widget.optional ? 'Guest (optional)' : 'Customer phone'),
       content: SizedBox(
         width: 360,
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextField(
+              controller: _nameController,
+              textInputAction: TextInputAction.next,
+              decoration: const InputDecoration(
+                labelText: 'Name',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
               controller: _phoneController,
-              autofocus: true,
               keyboardType: TextInputType.phone,
-              textInputAction: TextInputAction.done,
-              onSubmitted: (_) => _submit(),
               decoration: const InputDecoration(
                 labelText: 'Phone',
                 border: OutlineInputBorder(),
@@ -1417,16 +1490,25 @@ class _CustomerPhoneDialogState extends State<_CustomerPhoneDialog> {
             ),
             if (_error != null) ...[
               const SizedBox(height: 10),
-              Text(_error!, style: TextStyle(color: scheme.error)),
+              Text(
+                _error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
             ],
           ],
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
+        if (widget.optional)
+          TextButton(
+            onPressed: () => _submit(skip: true),
+            child: const Text('Skip'),
+          )
+        else
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
         FilledButton(onPressed: _submit, child: const Text('Continue')),
       ],
     );

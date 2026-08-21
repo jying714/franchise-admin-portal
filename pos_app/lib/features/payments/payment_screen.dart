@@ -335,6 +335,44 @@ class _PaymentScreenState extends State<PaymentScreen> {
       return;
     }
 
+    final tipCtrl = TextEditingController(text: '0.00');
+    final cardTip = await showDialog<double>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('Card tip'),
+          content: TextField(
+            controller: tipCtrl,
+            autofocus: true,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(
+              labelText: 'Tip (optional)',
+              prefixText: '\$ ',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, 0.0),
+              child: const Text('No tip'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final v = double.tryParse(tipCtrl.text.trim()) ?? 0;
+                if (v < 0) return;
+                Navigator.pop(ctx, v);
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) => tipCtrl.dispose());
+    if (!mounted) return;
+    final tip = cardTip ?? 0.0;
+
     try {
       final now = DateTime.now();
       final ref = FirebaseFirestore.instance
@@ -372,6 +410,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
         if (widget.closeOutOrder) 'timestamps.completed': now.toIso8601String(),
         if (!widget.closeOutOrder)
           'timestamps.${widget.statusWhenPaid}': now.toIso8601String(),
+        'cardTip': tip,
+        if (session.staff?.id != null) 'closedByStaffId': session.staff!.id,
+        if (session.staff?.name != null)
+          'closedByStaffName': session.staff!.name,
       }, SetOptions(merge: true));
 
       // Optional mock receipt — same as cash path if PrintService is wired.
@@ -459,13 +501,58 @@ class _PaymentScreenState extends State<PaymentScreen> {
       setState(() => _error = 'No open_drawer permission — cannot take cash');
       return;
     }
-    final tendered = _tendered;
-    if (tendered == null || tendered < _dueAfterDiscount) {
-      setState(() => _error = 'Tender must cover amount due');
-      return;
-    }
+    final due = _dueAfterDiscount;
+    final prompted = await _promptCashTender(due);
+    if (prompted == null || !mounted) return;
+    final tendered = prompted.$1;
+    _tenderController.text = tendered.toStringAsFixed(2);
 
     await _completeWithTenders([TenderLine(method: 'cash', amount: tendered)]);
+  }
+
+  Future<(double tendered, double change)?> _promptCashTender(
+    double due,
+  ) async {
+    final ctrl = TextEditingController(text: due.toStringAsFixed(2));
+    final tendered = await showDialog<double>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('Cash tendered'),
+          content: TextField(
+            controller: ctrl,
+            autofocus: true,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(
+              labelText: 'Amount received',
+              helperText: 'Due  \$${due.toStringAsFixed(2)}',
+              border: const OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final v = double.tryParse(ctrl.text.trim());
+                if (v == null || v < due) return;
+                Navigator.pop(ctx, v);
+              },
+              child: const Text('Submit'),
+            ),
+          ],
+        );
+      },
+    );
+    if (tendered == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => ctrl.dispose());
+      return null;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) => ctrl.dispose());
+    return (tendered, tendered - due);
   }
 
   Future<void> _completeWithTenders(List<TenderLine> lines) async {
@@ -508,6 +595,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
       final nextStatus = widget.closeOutOrder
           ? OrderStatus.completed
           : widget.statusWhenPaid;
+      final cashOnly = lines.every((l) => l.method == 'cash');
+      final statusToWrite = cashOnly
+          ? (_order?.status ?? widget.statusWhenPaid)
+          : nextStatus;
 
       final orderDiscount = _order?.discount ?? 0.0;
       final combinedDiscount = _moneyRound(orderDiscount + _discountAmount);
@@ -516,7 +607,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       final due = _dueAfterDiscount;
 
       await ref.set({
-        'status': nextStatus,
+        'status': statusToWrite,
         'paymentMethod': isSplit ? 'split' : 'cash',
         'tenders': lines.map((l) => l.toMap()).toList(),
         'amountTendered': cashTotal,
@@ -528,7 +619,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
         'total': due,
         'amountDueAtPay': due,
         'paidAt': now.toIso8601String(),
-        if (widget.closeOutOrder) 'timestamps.completed': now.toIso8601String(),
+        if (widget.closeOutOrder && !cashOnly)
+          'timestamps.completed': now.toIso8601String(),
         'timestamps.paid': now.toIso8601String(),
         if (!widget.closeOutOrder)
           'timestamps.${widget.statusWhenPaid}': now.toIso8601String(),
@@ -551,7 +643,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         debugPrint('[POS] customer receipt mock skipped: $e');
       }
 
-      if (widget.closeOutOrder) {
+      if (widget.closeOutOrder && !cashOnly) {
         try {
           final kitchenOrder = _order;
           final dtype = (kitchenOrder?.deliveryType ?? '').trim().toLowerCase();
@@ -565,7 +657,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         }
       }
 
-      if (widget.closeOutOrder) {
+      if (widget.closeOutOrder && !cashOnly) {
         try {
           final snap = await ref.get();
           final data = snap.data();
@@ -602,6 +694,24 @@ class _PaymentScreenState extends State<PaymentScreen> {
         }
       }
 
+      if (!mounted) return;
+      final changeDue = cashTotal - due;
+      if (changeDue > 0) {
+        await showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Change'),
+            content: Text('\$${changeDue.toStringAsFixed(2)}'),
+            actions: [
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (e) {

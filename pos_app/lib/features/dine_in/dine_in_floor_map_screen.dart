@@ -10,6 +10,7 @@ import '../payments/payment_screen.dart';
 import '../session/force_repin_dialog.dart';
 import 'table_pick_sheet.dart';
 import 'table_status.dart';
+import '../orders/widgets/order_detail_dialog.dart';
 
 /// Full-screen dine-in floor plan. Free = green, seated/other = red.
 class DineInFloorMapScreen extends StatefulWidget {
@@ -150,6 +151,48 @@ class _DineInFloorMapScreenState extends State<DineInFloorMapScreen> {
                           existingOrderId: order.id,
                         ),
                       ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+                _MapActionRow(
+                  icon: Icons.edit_note,
+                  label: 'Modify ticket',
+                  enabled: session.hasPermission(PosPermissions.takeOrder),
+                  onTap: () async {
+                    Navigator.pop(dialogContext);
+                    await OrderDetailDialog.show(
+                      context: context,
+                      franchiseId: widget.franchiseId,
+                      order: order,
+                      typeLabel: 'Dine-in',
+                      sourceLabel: 'POS',
+                      isClosed: false,
+                      actionsBuilder: (ctx, live) {
+                        return [
+                          TextButton.icon(
+                            onPressed:
+                                session.hasPermission(PosPermissions.takeOrder)
+                                ? () {
+                                    Navigator.pop(ctx);
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute<void>(
+                                        builder: (_) => OrderEntryScreen(
+                                          franchiseId: widget.franchiseId,
+                                          orderType: 'dine_in',
+                                          tableId: table.id,
+                                          tableLabel: label,
+                                          existingOrderId: live.id,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                : null,
+                            icon: const Icon(Icons.add_circle_outline),
+                            label: const Text('Add items'),
+                          ),
+                        ];
+                      },
                     );
                   },
                 ),

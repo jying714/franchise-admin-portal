@@ -73,6 +73,105 @@ class _OpenOrdersScreenState extends State<OpenOrdersScreen> {
     return t.isEmpty ? 'carryout' : t;
   }
 
+  bool _isCashPaidOpen(Order order) {
+    final status = order.status.trim().toLowerCase();
+    if (status == OrderStatus.completed || status == OrderStatus.cancelled) {
+      return false;
+    }
+    return true;
+  }
+
+  Future<void> _closeOutCashTip(Order order) async {
+    final ctrl = TextEditingController(text: '0.00');
+    final tip = await showDialog<double>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('Cash tip'),
+          content: TextField(
+            controller: ctrl,
+            autofocus: true,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(
+              labelText: 'Tip received',
+              prefixText: '\$ ',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final v = double.tryParse(ctrl.text.trim()) ?? 0;
+                if (v < 0) return;
+                Navigator.pop(ctx, v);
+              },
+              child: const Text('Close out'),
+            ),
+          ],
+        );
+      },
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) => ctrl.dispose());
+    if (tip == null || !mounted) return;
+
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('franchises')
+          .doc(widget.franchiseId)
+          .collection('orders')
+          .doc(order.id)
+          .get();
+      final data = snap.data() ?? {};
+      final method =
+          (data['paymentMethod'] as String?)?.trim().toLowerCase() ?? '';
+      if (method != 'cash' && method != 'split') {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Take cash payment first')),
+          );
+        }
+        return;
+      }
+
+      final now = DateTime.now().toIso8601String();
+      final session = Provider.of<PinSessionProvider>(context, listen: false);
+      await snap.reference.set({
+        'status': OrderStatus.completed,
+        'cashTip': tip,
+        'timestamps.completed': now,
+        if (session.staff?.id != null) 'closedByStaffId': session.staff!.id,
+        if (session.staff?.name != null)
+          'closedByStaffName': session.staff!.name,
+      }, SetOptions(merge: true));
+
+      final tableId = data['tableId'] as String?;
+      if (tableId != null && tableId.isNotEmpty) {
+        await setTableStatus(
+          franchiseId: widget.franchiseId,
+          tableId: tableId,
+          status: 'free',
+        );
+      }
+    } catch (e) {
+      debugPrint('[POS] cash tip close failed: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Close out failed: $e')));
+      }
+      return;
+    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Closed · tip \$${tip.toStringAsFixed(2)}')),
+    );
+  }
+
   String _typeLabel(String normalized) {
     switch (normalized) {
       case 'dine_in':
@@ -314,6 +413,16 @@ class _OpenOrdersScreenState extends State<OpenOrdersScreen> {
                     ),
                   );
                 }
+              },
+            ),
+          if (_isCashPaidOpen(liveOrder))
+            _ActionRow(
+              icon: Icons.done_all,
+              label: 'Close out (tip)',
+              enabled: session.hasPermission(PosPermissions.takePayment),
+              onTap: () async {
+                Navigator.pop(ctx);
+                await _closeOutCashTip(liveOrder);
               },
             ),
           _ActionRow(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
+import '../features/session/session_timeout_overlay.dart';
 import '../features/home/station_home_screen.dart';
 import '../features/session/pin_unlock_screen.dart';
 import '../providers/pin_session_provider.dart';
@@ -13,22 +13,32 @@ class PosApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'POS Station',
-      debugShowCheckedModeBanner: false,
-      theme: buildPosTheme(),
-      home: Consumer<PinSessionProvider>(
-        builder: (context, session, _) {
-          if (!session.isUnlocked) {
-            return PinUnlockScreen(
-              franchiseId: franchiseId,
-              onUnlocked: () {
-                // Consumer rebuilds on notifyListeners from unlock().
-              },
-            );
-          }
-          return StationHomeScreen(franchiseId: franchiseId);
-        },
+    return Listener(
+      behavior: HitTestBehavior.translucent,
+      onPointerDown: (_) {
+        Provider.of<PinSessionProvider>(context, listen: false).touch();
+      },
+      child: MaterialApp(
+        title: 'POS Station',
+        debugShowCheckedModeBanner: false,
+        theme: buildPosTheme(),
+        home: Consumer<PinSessionProvider>(
+          builder: (context, session, _) {
+            if (!session.isUnlocked) {
+              if (session.requiresRepin && session.staff != null) {
+                return SessionTimeoutOverlay(
+                  franchiseId: franchiseId,
+                  grace: const Duration(seconds: 30),
+                );
+              }
+              return PinUnlockScreen(
+                franchiseId: franchiseId,
+                onUnlocked: () {},
+              );
+            }
+            return StationHomeScreen(franchiseId: franchiseId);
+          },
+        ),
       ),
     );
   }
