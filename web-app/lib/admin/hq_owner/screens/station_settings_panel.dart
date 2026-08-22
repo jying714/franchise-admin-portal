@@ -21,10 +21,13 @@ class _StationSettingsPanelState extends State<StationSettingsPanel> {
   final _maxSplitTenders = TextEditingController(text: '3');
   final _pinTimeoutMinutes = TextEditingController(text: '15');
   final _defaultPrepMinutes = TextEditingController(text: '30');
+  final _pinGraceSeconds = TextEditingController(text: '30');
 
   bool _largeOrderApprovalRequired = true;
   bool _autoPrintOnPaid = true;
   bool _autoPrintOnAccept = true;
+
+  final _posFs = shared.PosFirestoreService();
 
   bool _loading = true;
   bool _saving = false;
@@ -38,6 +41,7 @@ class _StationSettingsPanelState extends State<StationSettingsPanel> {
     _maxSplitTenders.dispose();
     _pinTimeoutMinutes.dispose();
     _defaultPrepMinutes.dispose();
+    _pinGraceSeconds.dispose();
     super.dispose();
   }
 
@@ -75,9 +79,6 @@ class _StationSettingsPanelState extends State<StationSettingsPanel> {
         if (data['maxSplitTenders'] != null) {
           _maxSplitTenders.text = '${data['maxSplitTenders']}';
         }
-        if (data['pinTimeoutMinutes'] != null) {
-          _pinTimeoutMinutes.text = '${data['pinTimeoutMinutes']}';
-        }
         if (data['defaultPrepMinutes'] != null) {
           _defaultPrepMinutes.text = '${data['defaultPrepMinutes']}';
         }
@@ -86,6 +87,12 @@ class _StationSettingsPanelState extends State<StationSettingsPanel> {
         _autoPrintOnPaid = data['autoPrintOnPaid'] as bool? ?? true;
         _autoPrintOnAccept = data['autoPrintOnAccept'] as bool? ?? true;
       }
+
+      final settings = await _posFs.getPosSettings(franchiseId);
+      final legacyPin = (data?['pinTimeoutMinutes'] as num?)?.toInt();
+      _pinTimeoutMinutes.text =
+          '${legacyPin ?? settings.pinSessionTimeoutMinutes}';
+      _pinGraceSeconds.text = '${settings.pinSessionGraceSeconds}';
     } catch (e) {
       _loadError = '$e';
     }
@@ -106,6 +113,7 @@ class _StationSettingsPanelState extends State<StationSettingsPanel> {
     final itemCount = int.tryParse(_largeOrderItemCount.text.trim());
     final splits = int.tryParse(_maxSplitTenders.text.trim());
     final pinMin = int.tryParse(_pinTimeoutMinutes.text.trim());
+    final graceSec = int.tryParse(_pinGraceSeconds.text.trim());
     final prep = int.tryParse(_defaultPrepMinutes.text.trim());
 
     if (amount == null ||
@@ -116,6 +124,8 @@ class _StationSettingsPanelState extends State<StationSettingsPanel> {
         splits < 1 ||
         pinMin == null ||
         pinMin < 1 ||
+        graceSec == null ||
+        graceSec < 1 ||
         prep == null ||
         prep < 0) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -136,12 +146,19 @@ class _StationSettingsPanelState extends State<StationSettingsPanel> {
         'largeOrderItemCount': itemCount,
         'largeOrderApprovalRequired': _largeOrderApprovalRequired,
         'maxSplitTenders': splits,
-        'pinTimeoutMinutes': pinMin,
         'defaultPrepMinutes': prep,
         'autoPrintOnPaid': _autoPrintOnPaid,
         'autoPrintOnAccept': _autoPrintOnAccept,
         'updatedAt': DateTime.now().toIso8601String(),
       }, SetOptions(merge: true));
+
+      final current = await _posFs.getPosSettings(franchiseId);
+      await _posFs.savePosSettings(
+        current.copyWith(
+          pinSessionTimeoutMinutes: pinMin,
+          pinSessionGraceSeconds: graceSec,
+        ),
+      );
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -244,6 +261,17 @@ class _StationSettingsPanelState extends State<StationSettingsPanel> {
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           decoration: const InputDecoration(
             labelText: 'PIN session timeout (minutes)',
+            border: OutlineInputBorder(),
+            isDense: true,
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _pinGraceSeconds,
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          decoration: const InputDecoration(
+            labelText: 'PIN re-lock grace (seconds)',
             border: OutlineInputBorder(),
             isDense: true,
           ),

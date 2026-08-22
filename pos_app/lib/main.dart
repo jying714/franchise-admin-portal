@@ -22,7 +22,13 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => PinSessionProvider()),
+        ChangeNotifierProvider(
+          create: (_) {
+            final session = PinSessionProvider();
+            session.bindFranchise(franchiseId);
+            return session;
+          },
+        ),
         // ChangeNotifierProvider.value(value: franchiseProvider),
       ],
       child: PosApp(franchiseId: franchiseId),

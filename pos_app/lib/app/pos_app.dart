@@ -22,15 +22,28 @@ class PosApp extends StatelessWidget {
         title: 'POS Station',
         debugShowCheckedModeBanner: false,
         theme: buildPosTheme(),
-        home: Consumer<PinSessionProvider>(
-          builder: (context, session, _) {
-            if (!session.isUnlocked) {
+        builder: (context, child) {
+          return Consumer<PinSessionProvider>(
+            builder: (context, session, _) {
               if (session.requiresRepin && session.staff != null) {
                 return SessionTimeoutOverlay(
                   franchiseId: franchiseId,
-                  grace: const Duration(seconds: 30),
+                  grace: Duration(seconds: session.pinSessionGraceSeconds),
                 );
               }
+              if (session.staff == null) {
+                return PinUnlockScreen(
+                  franchiseId: franchiseId,
+                  onUnlocked: () {},
+                );
+              }
+              return child ?? const SizedBox.shrink();
+            },
+          );
+        },
+        home: Consumer<PinSessionProvider>(
+          builder: (context, session, _) {
+            if (session.staff == null) {
               return PinUnlockScreen(
                 franchiseId: franchiseId,
                 onUnlocked: () {},

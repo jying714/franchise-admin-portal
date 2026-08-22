@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:shared_core/shared_core.dart';
-
 import '../core/constants/pos_permissions.dart';
 
 /// Active station session after successful PIN unlock.
@@ -10,8 +9,12 @@ class PinSessionProvider extends ChangeNotifier {
   Staff? _staff;
   DateTime? _unlockedAt;
   DateTime? _lastActivityAt;
+
+  StreamSubscription<PosSettings>? _settingsSub;
+  final PosFirestoreService _posFs = PosFirestoreService();
   Timer? _idleTimer;
   int _pinSessionTimeoutMinutes = 15;
+  int _pinSessionGraceSeconds = 30;
   bool _requiresRepin = false;
 
   Staff? get staff => _staff;
@@ -19,11 +22,29 @@ class PinSessionProvider extends ChangeNotifier {
   bool get requiresRepin => _requiresRepin;
   DateTime? get unlockedAt => _unlockedAt;
 
+  int get pinSessionGraceSeconds => _pinSessionGraceSeconds;
+
   /// Call when PosSettings load (or default 15).
   void setTimeoutMinutes(int minutes) {
     if (minutes <= 0) return;
+    if (minutes == _pinSessionTimeoutMinutes) return;
     _pinSessionTimeoutMinutes = minutes;
     _armIdleTimer();
+  }
+
+  void setGraceSeconds(int seconds) {
+    if (seconds <= 0) return;
+    if (seconds == _pinSessionGraceSeconds) return;
+    _pinSessionGraceSeconds = seconds;
+  }
+
+  void bindFranchise(String franchiseId) {
+    _settingsSub?.cancel();
+    if (franchiseId.isEmpty) return;
+    _settingsSub = _posFs.streamPosSettings(franchiseId).listen((settings) {
+      setTimeoutMinutes(settings.pinSessionTimeoutMinutes);
+      setGraceSeconds(settings.pinSessionGraceSeconds);
+    });
   }
 
   bool hasPermission(String permission) {
@@ -84,6 +105,7 @@ class PinSessionProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _settingsSub?.cancel();
     _idleTimer?.cancel();
     super.dispose();
   }

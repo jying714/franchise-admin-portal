@@ -19,6 +19,9 @@ class PosSettings {
   /// PIN session idle timeout in minutes.
   final int pinSessionTimeoutMinutes;
 
+  /// Overlay countdown before full lock (seconds).
+  final int pinSessionGraceSeconds;
+
   /// Auto-print kitchen ticket when card order is paid.
   final bool autoPrintOnCardPaid;
 
@@ -39,6 +42,7 @@ class PosSettings {
     this.maxSplitTenders = 3,
     this.prepTimeMinutes = 20,
     this.pinSessionTimeoutMinutes = 15,
+    this.pinSessionGraceSeconds = 30,
     this.autoPrintOnCardPaid = true,
     this.autoPrintOnCashPaid = true,
     this.autoPrintOnOnlineOrder = true,
@@ -70,6 +74,7 @@ class PosSettings {
       maxSplitTenders: data['maxSplitTenders'] as int? ?? 3,
       prepTimeMinutes: data['prepTimeMinutes'] as int? ?? 20,
       pinSessionTimeoutMinutes: data['pinSessionTimeoutMinutes'] as int? ?? 15,
+      pinSessionGraceSeconds: data['pinSessionGraceSeconds'] as int? ?? 30,
       autoPrintOnCardPaid: data['autoPrintOnCardPaid'] as bool? ?? true,
       autoPrintOnCashPaid: data['autoPrintOnCashPaid'] as bool? ?? true,
       autoPrintOnOnlineOrder: data['autoPrintOnOnlineOrder'] as bool? ?? true,
@@ -86,6 +91,7 @@ class PosSettings {
       'maxSplitTenders': maxSplitTenders,
       'prepTimeMinutes': prepTimeMinutes,
       'pinSessionTimeoutMinutes': pinSessionTimeoutMinutes,
+      'pinSessionGraceSeconds': pinSessionGraceSeconds,
       'autoPrintOnCardPaid': autoPrintOnCardPaid,
       'autoPrintOnCashPaid': autoPrintOnCashPaid,
       'autoPrintOnOnlineOrder': autoPrintOnOnlineOrder,
@@ -101,6 +107,7 @@ class PosSettings {
     int? maxSplitTenders,
     int? prepTimeMinutes,
     int? pinSessionTimeoutMinutes,
+    int? pinSessionGraceSeconds,
     bool? autoPrintOnCardPaid,
     bool? autoPrintOnCashPaid,
     bool? autoPrintOnOnlineOrder,
@@ -118,6 +125,8 @@ class PosSettings {
       prepTimeMinutes: prepTimeMinutes ?? this.prepTimeMinutes,
       pinSessionTimeoutMinutes:
           pinSessionTimeoutMinutes ?? this.pinSessionTimeoutMinutes,
+      pinSessionGraceSeconds:
+          pinSessionGraceSeconds ?? this.pinSessionGraceSeconds,
       autoPrintOnCardPaid: autoPrintOnCardPaid ?? this.autoPrintOnCardPaid,
       autoPrintOnCashPaid: autoPrintOnCashPaid ?? this.autoPrintOnCashPaid,
       autoPrintOnOnlineOrder:
