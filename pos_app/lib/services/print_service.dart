@@ -383,7 +383,9 @@ class PrintService {
           k == 'voidedAddOns' ||
           k == 'wingHalves' ||
           k == 'optionLabels' ||
-          k == 'wing_sauce') {
+          k == 'wing_sauce' ||
+          k == 'groups' ||
+          k == 'sideDipCups') {
         return;
       }
       if (_isDetailKey(k)) {

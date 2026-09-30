@@ -87,6 +87,7 @@ class CartScreen extends StatelessWidget {
                     item: item,
                     initialQuantity: line.quantity,
                     cartItemKeyToReplace: line.cartItemKey,
+                    initialCustomizations: line.customizations,
                   ),
                 ),
               ),

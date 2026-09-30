@@ -28,6 +28,7 @@ class MenuItemDetailScreen extends StatefulWidget {
     required this.item,
     this.initialQuantity = 1,
     this.cartItemKeyToReplace,
+    this.initialCustomizations,
   });
 
   final shared.MenuItem item;
@@ -35,6 +36,9 @@ class MenuItemDetailScreen extends StatefulWidget {
   /// When editing a cart line.
   final int initialQuantity;
   final String? cartItemKeyToReplace;
+
+  /// POS-shaped map from cart line (`size`, lists, portions, doubles, …).
+  final Map<String, dynamic>? initialCustomizations;
 
   @override
   State<MenuItemDetailScreen> createState() => _MenuItemDetailScreenState();
@@ -1044,6 +1048,104 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
         _wingPortionRight = defaults.length > 1 ? defaults[1] : defaults.first;
       }
     }
+    _applyInitialCustomizations(widget.initialCustomizations);
+  }
+
+  void _applyInitialCustomizations(Map<String, dynamic>? raw) {
+    if (raw == null || raw.isEmpty) return;
+
+    // Size
+    final size = raw['size']?.toString().trim();
+    if (size != null && size.isNotEmpty) {
+      _selectedSize = size;
+    }
+
+    // Structural scalars
+    for (final key in ['crust', 'cook', 'cut']) {
+      final id = raw[key]?.toString().trim();
+      if (id == null || id.isEmpty) continue;
+      for (final g in _structuralGroupsForUi()) {
+        final label = (g['label'] ?? '').toString();
+        if (label.toLowerCase() != key) continue;
+        _structuralSelections[label] = id;
+      }
+    }
+
+    final portions = <String, String>{};
+    final rawP = raw['portions'];
+    if (rawP is Map) {
+      rawP.forEach((k, v) {
+        final id = k.toString().trim();
+        final p = v.toString().trim().toLowerCase();
+        if (id.isNotEmpty &&
+            (p == _portionLeft || p == _portionRight || p == _portionWhole)) {
+          portions[id] = p;
+        }
+      });
+    }
+
+    final doubles = <String>{};
+    final rawD = raw['doubles'];
+    if (rawD is Map) {
+      rawD.forEach((k, v) {
+        if (v == true) doubles.add(k.toString().trim());
+      });
+    }
+
+    List<String> asIds(Object? v) {
+      if (v is! List) return const [];
+      return v
+          .map((e) => e.toString().trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
+
+    final toppings = asIds(raw['toppings']);
+    if (toppings.isNotEmpty) {
+      _currentIngredients
+        ..clear()
+        ..addAll(toppings);
+    }
+
+    final cheeses = asIds(raw['cheeses']);
+    if (cheeses.isNotEmpty) {
+      _selectedCheeses
+        ..clear()
+        ..addAll(cheeses);
+    }
+
+    final sauces = asIds(raw['sauces']);
+    if (sauces.isNotEmpty) {
+      _selectedSauces
+        ..clear()
+        ..addAll(sauces);
+    }
+
+    _portion
+      ..clear()
+      ..addAll(portions);
+    _isDouble.clear();
+    for (final id in doubles) {
+      if (id.isNotEmpty) _isDouble[id] = true;
+    }
+
+    // Wings
+    final halves = raw['wingHalves'];
+    if (halves is Map) {
+      final a = halves['a']?.toString().trim();
+      final b = halves['b']?.toString().trim();
+      if (a != null && a.isNotEmpty) _wingPortionLeft = a;
+      if (b != null && b.isNotEmpty) _wingPortionRight = b;
+    }
+    final dips = raw['sideDipCups'];
+    if (dips is Map) {
+      _wingDipCounts.clear();
+      dips.forEach((k, v) {
+        final id = k.toString().trim();
+        final n = v is int ? v : int.tryParse(v.toString()) ?? 0;
+        if (id.isNotEmpty && n > 0) _wingDipCounts[id] = n;
+      });
+    }
   }
 
   /// Resolve upchargeBySize with exact, then case-insensitive key match.
@@ -1448,6 +1550,225 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
     return list;
   }
 
+  /// POS / PrintService shape: id lists + labels + portions + doubles.
+  /// Do not write Customization.toMap() lists under `groups` — that dumps
+  /// exhaustive maps on kitchen tickets.
+  Map<String, dynamic> _buildPosCustomizationsMap() {
+    final optionLabels = <String, String>{};
+    final portions = <String, String>{};
+    final doubles = <String, bool>{};
+
+    void label(String id, String name) {
+      final k = id.trim();
+      if (k.isEmpty) return;
+      if (name.trim().isNotEmpty) optionLabels[k] = name.trim();
+    }
+
+    // Structural: crust / cook / cut (and size).
+    for (final g in _structuralGroupsForUi()) {
+      final rawLabel = (g['label'] ?? '').toString();
+      final selectedId = _structuralSelections[rawLabel];
+      if (selectedId == null || selectedId.isEmpty) continue;
+      final labels =
+          (g['optionLabels'] as Map?)?.map(
+            (k, v) => MapEntry(k.toString(), v.toString()),
+          ) ??
+          const <String, String>{};
+      final name = labels[selectedId] ?? selectedId;
+      label(selectedId, name);
+      final key = rawLabel.trim().toLowerCase();
+      if (key == 'crust' || key == 'cook' || key == 'cut') {
+        // PrintService treats these as detail keys with scalar values.
+      }
+    }
+
+    final toppings = <String>[];
+    for (final id in _currentIngredients) {
+      final lower = id.toLowerCase();
+      if (lower.startsWith('crust_') ||
+          lower.startsWith('cook_') ||
+          lower.startsWith('cut_')) {
+        continue;
+      }
+      toppings.add(id);
+      label(id, _ingredientDisplayName(id));
+      final p = _getPortion(id);
+      if (p != _portionWhole) portions[id] = p;
+      if (_getDouble(id)) doubles[id] = true;
+    }
+
+    final cheeses = <String>[];
+    for (final id in _selectedCheeses) {
+      cheeses.add(id);
+      label(id, _optionalLabel(id, 'cheeses'));
+      final p = _getPortion(id);
+      if (p != _portionWhole) portions[id] = p;
+      if (_getDouble(id)) doubles[id] = true;
+    }
+
+    final sauces = <String>[];
+    for (final id in _selectedSauces) {
+      sauces.add(id);
+      label(id, _optionalLabel(id, 'sauces'));
+      final p = _getPortion(id);
+      if (p != _portionWhole) portions[id] = p;
+      if (_getDouble(id)) doubles[id] = true;
+    }
+
+    final map = <String, dynamic>{
+      if (_selectedSize != null && _selectedSize!.isNotEmpty)
+        'size': _selectedSize,
+    };
+
+    for (final e in _structuralSelections.entries) {
+      final id = e.value;
+      if (id == null || id.isEmpty) continue;
+      final k = e.key.trim().toLowerCase();
+      if (k == 'crust' || k == 'cook' || k == 'cut') {
+        map[k] = id;
+        final g = _structuralGroupsForUi().firstWhere(
+          (x) => (x['label'] ?? '').toString() == e.key,
+          orElse: () => <String, dynamic>{},
+        );
+        final labels =
+            (g['optionLabels'] as Map?)?.map(
+              (a, b) => MapEntry(a.toString(), b.toString()),
+            ) ??
+            const <String, String>{};
+        label(id, labels[id] ?? id);
+      }
+    }
+
+    if (toppings.isNotEmpty) map['toppings'] = toppings;
+    if (cheeses.isNotEmpty) map['cheeses'] = cheeses;
+    if (sauces.isNotEmpty) map['sauces'] = sauces;
+    if (optionLabels.isNotEmpty) map['optionLabels'] = optionLabels;
+    if (portions.isNotEmpty) map['portions'] = portions;
+    if (doubles.isNotEmpty) map['doubles'] = doubles;
+
+    if (_isWings()) {
+      map['wingHalves'] = {'a': _wingPortionLeft, 'b': _wingPortionRight};
+      label(
+        _wingPortionLeft,
+        _isWingPlain(_wingPortionLeft)
+            ? 'Plain'
+            : _wingOptionLabel('wing_sauce', _wingPortionLeft),
+      );
+      label(
+        _wingPortionRight,
+        _isWingPlain(_wingPortionRight)
+            ? 'Plain'
+            : _wingOptionLabel('wing_sauce', _wingPortionRight),
+      );
+      if (_wingDipCounts.isNotEmpty) {
+        map['sideDipCups'] = Map<String, int>.from(_wingDipCounts);
+        for (final id in _wingDipCounts.keys) {
+          label(id, _wingOptionLabel('wing_dips', id));
+        }
+      }
+    }
+
+    // Cart UI only — not used by kitchen ticket.
+    final summary = <String>[];
+    if (_selectedSize != null && _selectedSize!.isNotEmpty) {
+      summary.add(_selectedSize!);
+    }
+    for (final e in _structuralSelections.entries) {
+      final id = e.value;
+      if (id == null || id.isEmpty) continue;
+      final g = _structuralGroupsForUi().firstWhere(
+        (x) => (x['label'] ?? '').toString() == e.key,
+        orElse: () => <String, dynamic>{},
+      );
+      final labels =
+          (g['optionLabels'] as Map?)?.map(
+            (a, b) => MapEntry(a.toString(), b.toString()),
+          ) ??
+          const <String, String>{};
+      final name = labels[id] ?? id;
+      summary.add('${e.key}: $name');
+    }
+    for (final id in _currentIngredients) {
+      final lower = id.toLowerCase();
+      if (lower.startsWith('crust_') ||
+          lower.startsWith('cook_') ||
+          lower.startsWith('cut_')) {
+        continue;
+      }
+      final wasIncluded = _isOriginallyIncluded(id);
+      final doubled = _getDouble(id);
+      final p = _getPortion(id);
+      if (wasIncluded && !doubled && p == _portionWhole) continue;
+      final name = _ingredientDisplayName(id);
+      final bits = <String>[];
+      if (!wasIncluded) bits.add('Extra');
+      if (doubled) bits.add('Double');
+      if (p == _portionLeft) bits.add('Left');
+      if (p == _portionRight) bits.add('Right');
+      summary.add(bits.isEmpty ? name : '$name (${bits.join(', ')})');
+    }
+    for (final id in _originalIncludedIds) {
+      if (_currentIngredients.contains(id)) continue;
+      final lower = id.toLowerCase();
+      if (lower.startsWith('crust_') ||
+          lower.startsWith('cook_') ||
+          lower.startsWith('cut_')) {
+        continue;
+      }
+      // Cheese/sauce originals tracked separately below.
+      if (_selectedCheeses.contains(id) || _selectedSauces.contains(id)) {
+        continue;
+      }
+      summary.add('No ${_ingredientDisplayName(id)}');
+    }
+    for (final id in _selectedCheeses) {
+      final wasIncluded = _isOriginallyIncluded(id);
+      final doubled = _getDouble(id);
+      final p = _getPortion(id);
+      if (wasIncluded && !doubled && p == _portionWhole) continue;
+      final name = _optionalLabel(id, 'cheeses');
+      final bits = <String>[];
+      if (!wasIncluded) bits.add('Extra');
+      if (doubled) bits.add('Double');
+      if (p == _portionLeft) bits.add('Left');
+      if (p == _portionRight) bits.add('Right');
+      summary.add(
+        bits.isEmpty ? 'Cheese: $name' : 'Cheese: $name (${bits.join(', ')})',
+      );
+    }
+    for (final id in _selectedSauces) {
+      final wasIncluded = _isOriginallyIncluded(id);
+      final doubled = _getDouble(id);
+      final p = _getPortion(id);
+      if (wasIncluded && !doubled && p == _portionWhole) continue;
+      final name = _optionalLabel(id, 'sauces');
+      final bits = <String>[];
+      if (!wasIncluded) bits.add('Extra');
+      if (doubled) bits.add('Double');
+      if (p == _portionLeft) bits.add('Left');
+      if (p == _portionRight) bits.add('Right');
+      summary.add(
+        bits.isEmpty ? 'Sauce: $name' : 'Sauce: $name (${bits.join(', ')})',
+      );
+    }
+    if (_isWings()) {
+      summary.add(
+        'Half 1: ${_isWingPlain(_wingPortionLeft) ? 'Plain' : _wingOptionLabel('wing_sauce', _wingPortionLeft)}',
+      );
+      summary.add(
+        'Half 2: ${_isWingPlain(_wingPortionRight) ? 'Plain' : _wingOptionLabel('wing_sauce', _wingPortionRight)}',
+      );
+      _wingDipCounts.forEach((id, n) {
+        if (n > 0) {
+          summary.add('${_wingOptionLabel('wing_dips', id)} ×$n cup');
+        }
+      });
+    }
+    if (summary.isNotEmpty) map['cartSummary'] = summary;
+
+    return map;
+  }
+
   Future<void> _addToCart() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -1465,7 +1786,6 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
       return;
     }
 
-    final customizations = _buildCustomizations();
     final unit = _unitPrice;
     final replaceKey = widget.cartItemKeyToReplace?.trim();
     if (replaceKey != null && replaceKey.isNotEmpty) {
@@ -1476,9 +1796,7 @@ class _MenuItemDetailScreenState extends State<MenuItemDetailScreen> {
         userId: user.uid,
         franchiseId: franchiseId,
         menuItem: item,
-        customizations: {
-          'groups': customizations.map((c) => c.toMap()).toList(),
-        },
+        customizations: _buildPosCustomizationsMap(),
         quantity: _qty,
         price: unit,
         specialInstructions: _notesController.text.trim().isEmpty

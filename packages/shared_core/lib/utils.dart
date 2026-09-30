@@ -17,3 +17,4 @@ export 'src/core/utils/features/feature_extensions.dart';
 export 'src/core/utils/features/feature_gate.dart';
 export 'src/core/utils/features/feature_guard.dart';
 export 'src/core/utils/features/feature_lock_overlay.dart';
+export 'src/core/utils/delivery_range.dart';

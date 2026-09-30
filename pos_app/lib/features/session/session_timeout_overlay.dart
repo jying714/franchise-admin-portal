@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart';
-
+import 'pos_pin_pad.dart';
 import '../../providers/pin_session_provider.dart';
 
 class SessionTimeoutOverlay extends StatefulWidget {
@@ -103,13 +103,11 @@ class _SessionTimeoutOverlayState extends State<SessionTimeoutOverlay> {
                   const SizedBox(height: 24),
                   TextField(
                     controller: _pin,
+                    readOnly: true,
+                    showCursor: false,
                     obscureText: true,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(8),
-                    ],
-                    onSubmitted: (_) => _submit(),
+                    enableInteractiveSelection: false,
+                    keyboardType: TextInputType.none,
                     decoration: const InputDecoration(
                       labelText: 'PIN',
                       border: OutlineInputBorder(),
@@ -125,9 +123,37 @@ class _SessionTimeoutOverlayState extends State<SessionTimeoutOverlay> {
                     ),
                   ],
                   const SizedBox(height: 16),
-                  FilledButton(
-                    onPressed: _busy ? null : _submit,
-                    child: const Text('Unlock'),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _busy
+                              ? null
+                              : () {
+                                  Provider.of<PinSessionProvider>(
+                                    context,
+                                    listen: false,
+                                  ).lock();
+                                },
+                          child: const Text('Lock'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: _busy ? null : _submit,
+                          child: const Text('Unlock'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  PosPinPad(
+                    controller: _pin,
+                    enabled: !_busy,
+                    onChanged: () {
+                      if (_error != null) setState(() => _error = null);
+                    },
                   ),
                 ],
               ),

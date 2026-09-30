@@ -26,6 +26,9 @@ class _StoreOpsScreenState extends State<StoreOpsScreen> {
   final _taxController = TextEditingController(text: '9.25');
   final _deliveryFeeController = TextEditingController(text: '0');
   final _deliveryMinimumController = TextEditingController(text: '0');
+  final _deliveryRadiusMilesController = TextEditingController(text: '0');
+  final _deliveryMaxDriveMinutesController = TextEditingController(text: '0');
+  String _deliveryRangeMode = 'radius'; // 'radius' | 'driveTime'
   bool _deliveryEnabled = false;
   bool _pickupEnabled = true;
   bool _acceptingOnlineOrders = true;
@@ -104,6 +107,8 @@ class _StoreOpsScreenState extends State<StoreOpsScreen> {
     _taxController.dispose();
     _deliveryFeeController.dispose();
     _deliveryMinimumController.dispose();
+    _deliveryRadiusMilesController.dispose();
+    _deliveryMaxDriveMinutesController.dispose();
     for (final c in _openByDay.values) {
       c.dispose();
     }
@@ -153,6 +158,16 @@ class _StoreOpsScreenState extends State<StoreOpsScreen> {
         final minOrder = (data['deliveryMinimum'] as num?)?.toDouble();
         if (minOrder != null) {
           _deliveryMinimumController.text = minOrder.toStringAsFixed(2);
+        }
+        final rangeMode = data['deliveryRangeMode']?.toString().trim();
+        _deliveryRangeMode = rangeMode == 'driveTime' ? 'driveTime' : 'radius';
+        final radiusMiles = (data['deliveryRadiusMiles'] as num?)?.toDouble();
+        if (radiusMiles != null) {
+          _deliveryRadiusMilesController.text = radiusMiles.toStringAsFixed(1);
+        }
+        final maxDrive = (data['deliveryMaxDriveMinutes'] as num?)?.toInt();
+        if (maxDrive != null) {
+          _deliveryMaxDriveMinutesController.text = '$maxDrive';
         }
         final tz = data['timezone']?.toString().trim();
         if (tz != null && tz.isNotEmpty) {
@@ -231,6 +246,10 @@ class _StoreOpsScreenState extends State<StoreOpsScreen> {
     final deliveryFee = double.tryParse(_deliveryFeeController.text.trim());
     final deliveryMinimum =
         double.tryParse(_deliveryMinimumController.text.trim());
+    final deliveryRadiusMiles =
+        double.tryParse(_deliveryRadiusMilesController.text.trim());
+    final deliveryMaxDriveMinutes =
+        int.tryParse(_deliveryMaxDriveMinutesController.text.trim());
     if (deliveryFee == null || deliveryFee < 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Delivery fee must be ≥ 0')),
@@ -240,6 +259,20 @@ class _StoreOpsScreenState extends State<StoreOpsScreen> {
     if (deliveryMinimum == null || deliveryMinimum < 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Delivery minimum must be ≥ 0')),
+      );
+      return;
+    }
+    if (deliveryRadiusMiles == null || deliveryRadiusMiles < 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Delivery radius (miles) must be ≥ 0')),
+      );
+      return;
+    }
+    if (deliveryMaxDriveMinutes == null || deliveryMaxDriveMinutes < 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Max drive time (minutes) must be ≥ 0'),
+        ),
       );
       return;
     }
@@ -293,6 +326,9 @@ class _StoreOpsScreenState extends State<StoreOpsScreen> {
         'acceptingOnlineOrders': _acceptingOnlineOrders,
         'deliveryFee': deliveryFee,
         'deliveryMinimum': deliveryMinimum,
+        'deliveryRangeMode': _deliveryRangeMode,
+        'deliveryRadiusMiles': deliveryRadiusMiles,
+        'deliveryMaxDriveMinutes': deliveryMaxDriveMinutes,
         'timezone': _timezone,
         'updatedAt': DateTime.now().toIso8601String(),
       }, SetOptions(merge: true));
@@ -491,6 +527,69 @@ class _StoreOpsScreenState extends State<StoreOpsScreen> {
                               ],
                               decoration: const InputDecoration(
                                 labelText: 'Delivery minimum (\$)',
+                                border: OutlineInputBorder(),
+                                isDense: true,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            DropdownButtonFormField<String>(
+                              value: _deliveryRangeMode,
+                              isExpanded: true,
+                              decoration: const InputDecoration(
+                                labelText: 'Delivery range mode',
+                                border: OutlineInputBorder(),
+                                isDense: true,
+                                helperText:
+                                    '0 = not enforced yet. Gate comes after HQ Save.',
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'radius',
+                                  child: Text('Radius (miles)'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'driveTime',
+                                  child: Text('Max drive time (minutes)'),
+                                ),
+                              ],
+                              onChanged: !_deliveryEnabled
+                                  ? null
+                                  : (v) {
+                                      if (v == null) return;
+                                      setState(() => _deliveryRangeMode = v);
+                                    },
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _deliveryRadiusMilesController,
+                              enabled: _deliveryEnabled &&
+                                  _deliveryRangeMode == 'radius',
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                decimal: true,
+                              ),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r'[0-9.]'),
+                                ),
+                              ],
+                              decoration: const InputDecoration(
+                                labelText: 'Delivery radius (miles)',
+                                border: OutlineInputBorder(),
+                                isDense: true,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _deliveryMaxDriveMinutesController,
+                              enabled: _deliveryEnabled &&
+                                  _deliveryRangeMode == 'driveTime',
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
+                              decoration: const InputDecoration(
+                                labelText: 'Max drive time (minutes)',
                                 border: OutlineInputBorder(),
                                 isDense: true,
                               ),

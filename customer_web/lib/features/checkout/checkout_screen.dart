@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart' hide Card;
+import 'package:flutter_stripe_web/flutter_stripe_web.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import '../cart/line_customization_summary.dart';
@@ -40,8 +41,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   TimeOfDay _close = const TimeOfDay(hour: 21, minute: 0);
   bool _dayClosed = false;
 
-  final CardEditController _cardController = CardEditController();
   bool _cardComplete = false;
+  String? _paymentClientSecret;
+  String? _pendingOrderId;
 
   /// POS parity: lowercase "pickup" | "delivery"
   String _deliveryType = 'pickup';
@@ -49,6 +51,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   /// Flat delivery fee in dollars. Loaded from config/store_ops.deliveryFee.
   /// Fallback 5.0 matches prior hardcode until the doc is read.
   double _deliveryFeeFlat = 5.0;
+
+  shared.Order? _checkoutCart;
+  double _checkoutSubtotal = 0;
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _streetController = TextEditingController();
@@ -66,7 +71,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   @override
   void dispose() {
-    _cardController.dispose();
     _nameController.dispose();
     _streetController.dispose();
     _cityController.dispose();
@@ -95,6 +99,117 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+  Future<void> _confirmWebPayment(shared.Order cart, double subtotal) async {
+    final secret = _paymentClientSecret;
+    final orderId = _pendingOrderId;
+    if (secret == null ||
+        secret.isEmpty ||
+        orderId == null ||
+        orderId.isEmpty) {
+      return;
+    }
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final fp = Provider.of<shared.FranchiseProvider>(context, listen: false);
+    final fs = Provider.of<shared.FirestoreService>(context, listen: false);
+    final franchiseId = fp.currentFranchiseId;
+    final t = _totalsFor(cart, subtotal);
+
+    setState(() => _paying = true);
+    try {
+      final paid = await _confirmCardWeb(
+        clientSecret: secret,
+        merchantName: fp.currentAppName,
+      );
+      debugPrint('[checkout] paid ok orderId=$orderId → kitchen write');
+      if (!paid) return;
+
+      final now = DateTime.now();
+      const kitchen = 'sent_to_kitchen';
+      final order = cart.copyWith(
+        id: orderId,
+        storeId: franchiseId,
+        userId: user.uid,
+        items: List<shared.OrderItem>.from(cart.items),
+        subtotal: subtotal,
+        tax: t.tax,
+        deliveryFee: t.deliveryFee,
+        discount: t.discount,
+        total: t.total,
+        deliveryType: _deliveryType,
+        deliveryAddress: _buildDeliveryAddress(),
+        userName: _nameController.text.trim().isNotEmpty
+            ? _nameController.text.trim()
+            : (user.displayName ?? user.email),
+        customerPhone: _phoneController.text.trim().isEmpty
+            ? null
+            : _phoneController.text.trim(),
+        time: TimeOfDay.now().format(context),
+        status: kitchen,
+        timestamp: now,
+        estimatedTime: 30,
+        source: 'web',
+        timestamps: {
+          ...cart.timestamps,
+          'pending_payment': now.toIso8601String(),
+          'placed': now.toIso8601String(),
+          kitchen: now.toIso8601String(),
+          'paid': now.toIso8601String(),
+        },
+      );
+      await fs.addOrder(order);
+      debugPrint('[checkout] order written $orderId');
+      await fs.updateCart(order.copyWith(items: []));
+
+      try {
+        await const shared.InventoryFirestoreRepository().applySaleDecrement(
+          db: FirebaseFirestore.instance,
+          franchiseId: franchiseId,
+          orderId: orderId,
+          items: order.items,
+        );
+      } catch (e) {
+        debugPrint('[checkout] inventory decrement skipped: $e');
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _paymentClientSecret = null;
+        _pendingOrderId = null;
+      });
+
+      final pickupLabel = _deliveryType == 'delivery' ? 'Delivery' : 'Pickup';
+      if (widget.embed && widget.onOrderPlaced != null) {
+        widget.onOrderPlaced!(
+          orderId: orderId,
+          total: t.total,
+          pickupLabel: pickupLabel,
+        );
+        return;
+      }
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute<void>(
+          builder: (_) => OrderConfirmationScreen(
+            orderId: orderId,
+            total: t.total,
+            pickupLabel: pickupLabel,
+          ),
+        ),
+        (route) => route.isFirst,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Checkout failed: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _paying = false);
+    }
+  }
+
   String? _validateDeliveryForm() {
     if (_deliveryType != 'delivery') return null;
     if (_nameController.text.trim().isEmpty) {
@@ -116,6 +231,56 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return 'Enter phone number';
     }
     return null;
+  }
+
+  /// Calls estimateDeliveryRange. null = ok; string = block reason.
+  Future<String?> _checkDeliveryRange(String franchiseId) async {
+    if (_deliveryType != 'delivery') return null;
+
+    final destination = [
+      _streetController.text.trim(),
+      _cityController.text.trim(),
+      _stateController.text.trim(),
+      _zipController.text.trim(),
+    ].where((s) => s.isNotEmpty).join(', ');
+
+    try {
+      final callable = FirebaseFunctions.instance.httpsCallable(
+        'estimateDeliveryRange',
+      );
+      final result = await callable.call(<String, dynamic>{
+        'franchiseId': franchiseId,
+        'destinationAddress': destination,
+      });
+      final data = Map<String, dynamic>.from(result.data as Map);
+
+      if (data['deliveryEnabled'] == false) {
+        return 'Delivery is not available from this restaurant';
+      }
+      if (data['withinRange'] == true) return null;
+
+      final mode = data['mode']?.toString() ?? 'radius';
+      if (mode == 'driveTime') {
+        final maxMin = data['maxMinutes'];
+        final dur = data['durationMinutes'];
+        if (dur != null && maxMin != null) {
+          return 'Outside delivery area ($dur min drive; max $maxMin min)';
+        }
+        return 'Outside delivery area (drive time)';
+      }
+      final maxMi = data['maxMiles'];
+      final dist = data['distanceMiles'];
+      if (dist != null && maxMi != null) {
+        return 'Outside delivery area ($dist mi; max $maxMi mi)';
+      }
+      return 'Outside delivery area';
+    } on FirebaseFunctionsException catch (e) {
+      debugPrint('[checkout] estimateDeliveryRange: ${e.code} ${e.message}');
+      return e.message ?? 'Could not verify delivery range';
+    } catch (e) {
+      debugPrint('[checkout] estimateDeliveryRange: $e');
+      return 'Could not verify delivery range';
+    }
   }
 
   static String _weekdayKey(DateTime dt) {
@@ -210,15 +375,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     required String clientSecret,
     required String merchantName,
   }) async {
-    if (!_cardComplete) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Enter card details first')),
-        );
-      }
-      return false;
-    }
     try {
+      if (kIsWeb) {
+        await WebStripe.instance.confirmPaymentElement(
+          ConfirmPaymentElementOptions(
+            redirect: PaymentConfirmationRedirect.ifRequired,
+            confirmParams: ConfirmPaymentParams(
+              // Same origin; card PM should not redirect. Keep path stable.
+              return_url: Uri.base.origin + Uri.base.path,
+            ),
+          ),
+        );
+        return true;
+      }
       await Stripe.instance.confirmPayment(
         paymentIntentClientSecret: clientSecret,
         data: PaymentMethodParams.card(
@@ -433,6 +602,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return;
     }
 
+    final rangeError = await _checkDeliveryRange(franchiseId);
+    if (rangeError != null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(rangeError)));
+      return;
+    }
+
     final t = _totalsFor(cart, subtotal);
     final tax = t.tax;
     final deliveryFee = t.deliveryFee;
@@ -441,6 +619,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final deliveryAddress = _buildDeliveryAddress();
     final recipientName = _nameController.text.trim();
     final orderId = _orderId();
+    _pendingOrderId = orderId;
 
     setState(() => _paying = true);
     try {
@@ -491,6 +670,23 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         throw StateError('Missing clientSecret');
       }
 
+      // Web: PaymentElement needs the secret in the tree before confirm.
+      if (kIsWeb) {
+        if (!mounted) return;
+        setState(() {
+          _checkoutCart = cart;
+          _checkoutSubtotal = subtotal;
+          _paymentClientSecret = clientSecret;
+          _paying = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Enter card below, then tap Confirm payment'),
+          ),
+        );
+        return;
+      }
+
       final paid = await _confirmCardWeb(
         clientSecret: clientSecret,
         merchantName: fp.currentAppName,
@@ -513,7 +709,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         },
       );
       await fs.addOrder(order);
+      debugPrint('[checkout] order written $orderId');
       await fs.updateCart(order.copyWith(items: []));
+      debugPrint('[checkout] cart cleared');
 
       try {
         await const shared.InventoryFirestoreRepository().applySaleDecrement(
@@ -586,247 +784,329 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       });
     }
 
-    final body = StreamBuilder<shared.Order?>(
-      stream: fs.getCart(user.uid, franchiseId: franchiseId),
-      builder: (context, snap) {
-        if (!snap.hasData && snap.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        final cart = snap.data;
-        final items = cart?.items ?? const <shared.OrderItem>[];
-        if (items.isEmpty) {
-          return const Center(child: Text('Cart is empty'));
-        }
+    final secret = _paymentClientSecret;
+    final payingWeb = kIsWeb && secret != null && secret.isNotEmpty;
 
-        double subtotal = 0;
-        for (final i in cart!.items) {
-          subtotal += i.price * i.quantity;
-        }
-        final t = _totalsFor(cart, subtotal);
-        final tax = t.tax;
-        final deliveryFee = t.deliveryFee;
-        final discount = t.discount;
-        final total = t.total;
+    final body = Column(
+      children: [
+        Expanded(
+          child: StreamBuilder<shared.Order?>(
+            stream: fs.getCart(user.uid, franchiseId: franchiseId),
+            builder: (context, snap) {
+              if (!snap.hasData &&
+                  snap.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final cart = snap.data;
+              final items = cart?.items ?? const <shared.OrderItem>[];
+              if (items.isEmpty && !payingWeb) {
+                return const Center(child: Text('Cart is empty'));
+              }
+              if (cart == null) {
+                return const Center(child: Text('Cart is empty'));
+              }
 
-        return Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 560),
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                if (!widget.embed) ...[
-                  Text(
-                    'Checkout',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 8),
-                ],
-                Text(
-                  _storeOpenNow
-                      ? 'Open · ${_open.format(context)}–${_close.format(context)}'
-                      : 'Closed · opens ${_open.format(context)}',
-                  style: TextStyle(
-                    color: _storeOpenNow
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.error,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Order type',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children: [
-                    ChoiceChip(
-                      label: const Text('Pickup'),
-                      selected: _deliveryType == 'pickup',
-                      onSelected: (_) =>
-                          setState(() => _deliveryType = 'pickup'),
-                    ),
-                    ChoiceChip(
-                      label: const Text('Delivery'),
-                      selected: _deliveryType == 'delivery',
-                      onSelected: (_) =>
-                          setState(() => _deliveryType = 'delivery'),
-                    ),
-                  ],
-                ),
-                if (_deliveryType == 'delivery') ...[
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _nameController,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: const InputDecoration(
-                      labelText: 'Name',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _streetController,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: const InputDecoration(
-                      labelText: 'Street',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _cityController,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: const InputDecoration(
-                      labelText: 'City',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
+              double subtotal = 0;
+              for (final i in cart.items) {
+                subtotal += i.price * i.quantity;
+              }
+              final t = _totalsFor(cart, subtotal);
+              final tax = t.tax;
+              final deliveryFee = t.deliveryFee;
+              final discount = t.discount;
+              final total = t.total;
+
+              return Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 560),
+                  child: ListView(
+                    padding: const EdgeInsets.all(16),
                     children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _stateController,
-                          textCapitalization: TextCapitalization.characters,
+                      if (!widget.embed) ...[
+                        Text(
+                          'Checkout',
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                      Text(
+                        _storeOpenNow
+                            ? 'Open · ${_open.format(context)}–${_close.format(context)}'
+                            : 'Closed · opens ${_open.format(context)}',
+                        style: TextStyle(
+                          color: _storeOpenNow
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Order type',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        children: [
+                          ChoiceChip(
+                            label: const Text('Pickup'),
+                            selected: _deliveryType == 'pickup',
+                            onSelected: payingWeb
+                                ? null
+                                : (_) =>
+                                      setState(() => _deliveryType = 'pickup'),
+                          ),
+                          ChoiceChip(
+                            label: const Text('Delivery'),
+                            selected: _deliveryType == 'delivery',
+                            onSelected: payingWeb
+                                ? null
+                                : (_) => setState(
+                                    () => _deliveryType = 'delivery',
+                                  ),
+                          ),
+                        ],
+                      ),
+                      if (_deliveryType == 'delivery') ...[
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _nameController,
+                          enabled: !payingWeb,
+                          textCapitalization: TextCapitalization.words,
                           decoration: const InputDecoration(
-                            labelText: 'State',
+                            labelText: 'Name',
                             border: OutlineInputBorder(),
                             isDense: true,
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          controller: _zipController,
-                          keyboardType: TextInputType.number,
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _streetController,
+                          enabled: !payingWeb,
+                          textCapitalization: TextCapitalization.words,
                           decoration: const InputDecoration(
-                            labelText: 'ZIP',
+                            labelText: 'Street',
                             border: OutlineInputBorder(),
                             isDense: true,
                           ),
                         ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _cityController,
+                          enabled: !payingWeb,
+                          textCapitalization: TextCapitalization.words,
+                          decoration: const InputDecoration(
+                            labelText: 'City',
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _stateController,
+                                enabled: !payingWeb,
+                                textCapitalization:
+                                    TextCapitalization.characters,
+                                decoration: const InputDecoration(
+                                  labelText: 'State',
+                                  border: OutlineInputBorder(),
+                                  isDense: true,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextField(
+                                controller: _zipController,
+                                enabled: !payingWeb,
+                                keyboardType: TextInputType.number,
+                                decoration: const InputDecoration(
+                                  labelText: 'ZIP',
+                                  border: OutlineInputBorder(),
+                                  isDense: true,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _phoneController,
+                          enabled: !payingWeb,
+                          keyboardType: TextInputType.phone,
+                          decoration: const InputDecoration(
+                            labelText: 'Phone',
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                          ),
+                        ),
+                      ],
+                      const Divider(),
+                      ...items.map((i) {
+                        final summary = lineCustomizationSummary(i);
+                        return ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(i.name),
+                          trailing: Text(
+                            '\$${(i.price * i.quantity).toStringAsFixed(2)}',
+                          ),
+                          subtitle: Text(
+                            [
+                              '×${i.quantity}',
+                              if (summary.isNotEmpty) summary,
+                            ].join('\n'),
+                          ),
+                          isThreeLine: summary.isNotEmpty,
+                        );
+                      }),
+                      const Divider(),
+                      TextField(
+                        controller: _promoController,
+                        enabled: !payingWeb && !_promoApplied,
+                        textCapitalization: TextCapitalization.characters,
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) => _applyPromo(cart, subtotal),
+                        decoration: InputDecoration(
+                          labelText: 'Promo code',
+                          errorText: _promoError,
+                          border: const OutlineInputBorder(),
+                          suffixIcon: _promoApplied
+                              ? IconButton(
+                                  icon: const Icon(Icons.close),
+                                  tooltip: 'Remove',
+                                  onPressed: payingWeb ? null : _clearPromo,
+                                )
+                              : IconButton(
+                                  icon: const Icon(Icons.local_offer),
+                                  tooltip: 'Apply',
+                                  onPressed: payingWeb
+                                      ? null
+                                      : () => _applyPromo(cart, subtotal),
+                                ),
+                        ),
                       ),
+                      if (_promoApplied && _promoSummary.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 6, bottom: 8),
+                          child: Text(
+                            _promoSummary,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      const SizedBox(height: 12),
+                      _row('Subtotal', subtotal),
+                      _row(
+                        'Tax (${(_taxRate * 100).toStringAsFixed(2)}%)',
+                        tax,
+                      ),
+                      if (deliveryFee > 0) _row('Delivery fee', deliveryFee),
+                      if (discount > 0) _row('Promo', -discount),
+                      _row('Total', total, bold: true),
+                      if (!payingWeb) ...[
+                        const SizedBox(height: 24),
+                        FilledButton(
+                          onPressed: (_paying || !_storeOpenNow)
+                              ? null
+                              : () => _placeOrder(cart, subtotal),
+                          child: _paying
+                              ? const SizedBox(
+                                  height: 22,
+                                  width: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(
+                                  kIsWeb
+                                      ? 'Continue to payment · \$${total.toStringAsFixed(2)}'
+                                      : 'Pay \$${total.toStringAsFixed(2)}',
+                                ),
+                        ),
+                      ],
+                      if (!fp.paymentsEnabled)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 8),
+                          child: Text(
+                            'Payments not set up for this restaurant',
+                          ),
+                        ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _phoneController,
-                    keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(
-                      labelText: 'Phone',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                  ),
-                ],
-                const Divider(),
-                ...items.map((i) {
-                  final summary = lineCustomizationSummary(i);
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(i.name),
-                    trailing: Text(
-                      '\$${(i.price * i.quantity).toStringAsFixed(2)}',
-                    ),
-                    subtitle: Text(
-                      [
-                        '×${i.quantity}',
-                        if (summary.isNotEmpty) summary,
-                      ].join('\n'),
-                    ),
-                    isThreeLine: summary.isNotEmpty,
-                  );
-                }),
-                const Divider(),
-                TextField(
-                  controller: _promoController,
-                  textCapitalization: TextCapitalization.characters,
-                  textInputAction: TextInputAction.done,
-                  onSubmitted: (_) => _applyPromo(cart, subtotal),
-                  enabled: !_promoApplied,
-                  decoration: InputDecoration(
-                    labelText: 'Promo code',
-                    errorText: _promoError,
-                    border: const OutlineInputBorder(),
-                    suffixIcon: _promoApplied
-                        ? IconButton(
-                            icon: const Icon(Icons.close),
-                            tooltip: 'Remove',
-                            onPressed: _clearPromo,
-                          )
-                        : IconButton(
-                            icon: const Icon(Icons.local_offer),
-                            tooltip: 'Apply',
-                            onPressed: () => _applyPromo(cart, subtotal),
+                ),
+              );
+            },
+          ),
+        ),
+        if (payingWeb)
+          Material(
+            elevation: 6,
+            child: SafeArea(
+              top: false,
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 560),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        FilledButton(
+                          onPressed: _paying
+                              ? null
+                              : () {
+                                  final c = _checkoutCart;
+                                  if (c == null) return;
+                                  _confirmWebPayment(c, _checkoutSubtotal);
+                                },
+                          child: _paying
+                              ? const SizedBox(
+                                  height: 22,
+                                  width: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text('Confirm payment'),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Card only — skip Link / “Save my information”.',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          height: 420,
+                          width: double.infinity,
+                          child: PaymentElement(
+                            key: ValueKey<String>(secret!),
+                            clientSecret: secret,
+                            height: 400,
+                            width: double.infinity,
+                            layout: PaymentElementLayout.tabs,
+                            enablePostalCode: true,
+                            onCardChanged: (details) {
+                              // Do NOT setState here — avoids remounting the element.
+                              _cardComplete = details?.complete == true;
+                            },
                           ),
-                  ),
-                ),
-                if (_promoApplied && _promoSummary.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 6, bottom: 8),
-                    child: Text(
-                      _promoSummary,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontWeight: FontWeight.w500,
-                      ),
+                        ),
+                      ],
                     ),
                   ),
-                const SizedBox(height: 12),
-                _row('Subtotal', subtotal),
-                _row('Tax (${(_taxRate * 100).toStringAsFixed(2)}%)', tax),
-                if (deliveryFee > 0) _row('Delivery fee', deliveryFee),
-                if (discount > 0) _row('Promo', -discount),
-                _row('Total', total, bold: true),
-                const SizedBox(height: 24),
-                Text('Card', style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 8),
-                CardField(
-                  controller: _cardController,
-                  onCardChanged: (details) {
-                    setState(() => _cardComplete = details?.complete == true);
-                  },
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                  ),
                 ),
-                const SizedBox(height: 16),
-                FilledButton(
-                  onPressed: (_paying || !_storeOpenNow || !_cardComplete)
-                      ? null
-                      : () => _placeOrder(cart!, subtotal),
-                  child: _paying
-                      ? const SizedBox(
-                          height: 22,
-                          width: 22,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text('Pay \$${total.toStringAsFixed(2)}'),
-                ),
-                if (!fp.paymentsEnabled)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 8),
-                    child: Text('Payments not set up for this restaurant'),
-                  ),
-                if (kIsWeb)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 8),
-                    child: Text(
-                      'Card form uses Stripe on web. Use test card 4242…',
-                      style: TextStyle(fontSize: 12),
-                    ),
-                  ),
-              ],
+              ),
             ),
           ),
-        );
-      },
+      ],
     );
 
     if (widget.embed) return body;

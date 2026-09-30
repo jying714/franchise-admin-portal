@@ -247,24 +247,41 @@ class _OpenOrdersScreenState extends State<OpenOrdersScreen> {
         continue;
       }
 
+      // Claim immediately so overlapping stream frames cannot double-print.
       _kitchenTicketPrintedIds.add(order.id);
+
       try {
-        final snap = await FirebaseFirestore.instance
+        final ref = FirebaseFirestore.instance
             .collection('franchises')
             .doc(widget.franchiseId)
             .collection('orders')
-            .doc(order.id)
-            .get();
-        final tableLabel = snap.data()?['tableLabel'] as String?;
-        await const PrintService().printKitchenTicket(
+            .doc(order.id);
+        final snap = await ref.get();
+        final data = snap.data() ?? {};
+        final already =
+            (data['kitchenTicketPrintedAt'] as String?)?.trim() ?? '';
+        if (already.isNotEmpty) {
+          continue;
+        }
+
+        final tableLabel = data['tableLabel'] as String?;
+        final ok = await const PrintService().printKitchenTicket(
           order: order,
           tableLabel: tableLabel,
           isAppend: false,
         );
+        if (!ok) {
+          _kitchenTicketPrintedIds.remove(order.id);
+          debugPrint('[POS] auto kitchen ticket failed ${order.id}');
+          continue;
+        }
+
+        await ref.set({
+          'kitchenTicketPrintedAt': DateTime.now().toIso8601String(),
+        }, SetOptions(merge: true));
         // ignore: avoid_print
         print('[POS] auto kitchen ticket (online) ${order.id}');
       } catch (e) {
-        // Allow retry on next snapshot if print failed before commit to set.
         _kitchenTicketPrintedIds.remove(order.id);
         debugPrint('[POS] auto kitchen ticket failed ${order.id}: $e');
       }

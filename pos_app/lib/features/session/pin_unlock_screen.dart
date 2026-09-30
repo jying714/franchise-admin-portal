@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart';
-
+import 'pos_pin_pad.dart';
 import '../../providers/pin_session_provider.dart';
 
 class PinUnlockScreen extends StatefulWidget {
@@ -31,9 +31,6 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _pinFocus.requestFocus();
-    });
   }
 
   @override
@@ -275,7 +272,6 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
       }
 
       _pinController.clear();
-      _pinFocus.requestFocus();
     } on StateError catch (e) {
       setState(() => _error = e.message);
     } catch (e) {
@@ -325,14 +321,11 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
                       controller: _pinController,
                       focusNode: _pinFocus,
                       enabled: !_busy,
+                      readOnly: true,
+                      showCursor: false,
                       obscureText: true,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(8),
-                      ],
-                      textInputAction: TextInputAction.done,
-                      onSubmitted: (_) => _submit(),
+                      enableInteractiveSelection: false,
+                      keyboardType: TextInputType.none,
                       decoration: const InputDecoration(
                         labelText: 'PIN',
                         border: OutlineInputBorder(),
@@ -378,6 +371,14 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
                           ),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 16),
+                    PosPinPad(
+                      controller: _pinController,
+                      enabled: !_busy,
+                      onChanged: () {
+                        if (_error != null) setState(() => _error = null);
+                      },
                     ),
                   ],
                 ),

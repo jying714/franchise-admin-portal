@@ -35,3 +35,4 @@ export {
   refreshConnectAccountStatus,
   createOrderPaymentIntent,
 } from "../functions/stripe_connect";
+export {estimateDeliveryRange} from "../functions/delivery_range";
