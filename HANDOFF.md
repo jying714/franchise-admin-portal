@@ -1,6 +1,6 @@
 # HANDOFF.md
 
-**As of:** Friday, August 21, 2026  
+**As of:** October 1, 2026  
 **Active branch:** `feat/pre-hardware-hq-polish`  
 **Soft-release:** `main`
 
@@ -12,9 +12,9 @@
 |----------|------|
 | 1 | `STATUS.md` |
 | 2 | `HANDOFF.md` |
-| 3 | `docs/slices/pos-app-v1.md` |
-| 4 | `docs/DECISIONS.md` (Decision **15**) |
-| 5 | `docs/slices/catalog-health-v1.md` |
+| 3 | `docs/slices/ordering-customization-normalize-v1.md` |
+| 4 | `docs/slices/pos-app-v1.md` |
+| 5 | `docs/DECISIONS.md` (Decision **15**) |
 
 **Repo:** https://github.com/jying714/franchise-admin-portal  
 **Local:** `C:\\projects\\franchise-admin-portal`  
@@ -27,44 +27,42 @@ git checkout feat/pre-hardware-hq-polish
 git pull origin feat/pre-hardware-hq-polish
 ```
 
-Prefer a **new chat** — this POS UX thread is long.
-
 ---
 
 ## Resume here
 
-1. **Idle timer not functional** — `PinSessionProvider` idle → `lockForRepin` → `SessionTimeoutOverlay` → `lock()`. `PosApp` wraps `Listener` `onPointerDown` → `touch()`. Smoke: overlay did not behave. Debug timer arm / `requiresRepin` / Listener swallowing. Do **not** add `pin_idle_lock_screen.dart`.
-2. Then HQ idle minutes + grace seconds (existing `pinSessionTimeoutMinutes` first; do not invent store_ops keys until traced).
-3. Delivery range v1: HQ mode = distance **or** drive time; same `store_ops` for POS / mobile / customer_web.
+Ordering flow must be normalized. Mobile is the reference. Do not start iOS, printer-by-category, loyalty, custom domains, home composition Wave 2, or WeekTally.
+
+1. Shared cart payload in `packages/shared_core`, called from mobile confirm, `pos_customization_sheet.dart` `_payload()`, and customer_web `_buildPosCustomizationsMap()`.
+2. customer_web salad dressings + dinner included/optional (`menu_item_detail_screen.dart` has neither).
+3. POS and customer_web: `franchises/{id}/config/menu_profile_wings` when the item sauce list is empty.
+4. Sauce amount on POS and web, or an explicit drop on mobile.
+5. Then merge this branch to `main`. `functions/functions/delivery_range.ts` is not on `main`.
+
+August 21 idle-fail and “delivery range next” notes are stale relative to commit `d428a034`. Re-smoke idle before checking that box. Delivery range is on HQ store_ops and customer_web on this branch; mobile checkout and POS entry still do not call `estimateDeliveryRange`.
 
 ---
 
-## Shipped on this branch (POS UX 2026-08-20/21)
+## Out of MVP
 
-- Profile builders in `pos_customization_sheet.dart` (pizza / calzone / salad / wings / sub / dinner+standard extras).
-- L/R **pizza only**; Dbl pizza/calzone/sub/dinner.
-- Kitchen/receipt/ticket side grouping + `wingHalves`.
-- Dine-in guest optional; return to categories after Add; tap line to re-edit with `initial`.
-- Floor map: seated → actions including Modify ticket + Add items.
-- Cash: tender dialog, change dialog, **leave open** until **Close out (tip)** (`cashTip`, `closedByStaffName`).
-- Card: optional `cardTip` at pay; completes immediately.
-- EOD (owner/manager/admin): expandable cash/card/overall by source; tips by staff → order ids.
-- `source: pos` already on create.
-
-**Do not add** `paymentMethod` / `tableId` to `Order` unless a dedicated model slice — read the order document.
+WeekTally (`/tally`). iOS. Printer-by-category (`station_settings_panel.dart` coming soon; one TSP143). Loyalty. Custom domains. Home composition Wave 2 (HQ widget studio). Drinks flavor until a drink is sold on web and POS.
 
 ---
 
-## Hardware (unchanged)
+## Shipped on this branch (still true)
 
-TSP143 `192.168.1.21` StarGraphic + DK drawer **PASS**. Stripe reader on site. One printer for MVP roles.
+- Profile builders in `pos_customization_sheet.dart` (not mobile-parity).
+- Cash tip close-out, EOD, StarGraphic + DK drawer.
+- `d428a034`: PIN pad, idle overlay work, delivery range callable, storefront cart/checkout polish.
+
+**Do not add** `paymentMethod` / `tableId` to `Order` — read the order document.
 
 ---
 
 ## Operating rules
 
-- Human is merge gate; agents proposal-only  
-- Prefer real paths; no invented schema fields  
-- Quote source for surgical edits  
+- Human is merge gate; agents proposal-only
+- Prefer real paths; no invented schema fields
+- Quote source for surgical edits
 
-**Bottom line:** POS can build profile items, take cash with tip close-out, and roll EOD. **Next chat: idle timer**, then delivery range.
+**Bottom line:** Next work is ordering customization normalize, then merge polish to `main`.
