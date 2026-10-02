@@ -1,8 +1,8 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: October 1, 2026 (scope note; product snapshot still August 21)  
+**Last Updated**: October 1, 2026  
 **Hardware**: MINISFORUM AI X1 Pro-470  
-**Branch**: **`feat/pre-hardware-hq-polish`** (active) · soft-release **`main`** includes salad profile merge  
+**Branch**: **`feat/pre-hardware-hq-polish`** (active) · soft-release **`main`**  
 **Firebase**: `doughboyspizzeria-2b3d2`  
 **Storefront**: https://franchise-storefront.web.app  
 **Admin/HQ**: franchisehq.io
@@ -17,22 +17,33 @@
 
 `main` `firebase.json` rewrites `/tally` to Cloud Run `weektally` (commit `fe62dafe`). That is a personal household finance tool on the same Firebase project. It is not HQ, Admin, POS, customer web, or customer mobile scope. Do not track it in burn-in, Owner.com cutover, or release %.
 
+Also deferred past MVP (do not pull into the October completion bar): **iOS**, **printer-by-category**, **loyalty**, **custom domains**, **home composition Wave 2** (`docs/plans/home-page-composition-engine-v1.md` — HQ homepage widget studio; Wave 1 shell is already complete).
+
 ---
 
 ## Current phase
 
 | Area | State |
 |------|--------|
-| Order path (web/mobile/POS software) | **On main** |
+| Order path (web/mobile/POS software) | On `main` for base; polish not merged |
+| Ordering customization parity | **Open** — `docs/slices/ordering-customization-normalize-v1.md` |
 | Salad profile + dressings + optional overrides | **Merged to main** (2026-08-15) |
 | HQ menu editor layout + type-first ingredient picker | **On main** |
-| Catalog health / schema UX | **On branch** — foundation + Fixes sheet |
+| Catalog health / schema UX | **On branch** — foundation + Fixes sheet; phase C open |
 | POS print/drawer | **StarGraphic live** on TSP143 LAN |
-| POS station UX (builders, cash tip, EOD) | **On branch** 2026-08-20/21 |
-| Station hardware · iOS | **TSP100 + drawer + Stripe reader on site**; iOS delayed |
+| POS station UX (builders, cash tip, EOD) | **On branch** 2026-08-20/21; idle docs stale vs `d428a034` |
+| Station hardware · iOS | TSP100 + drawer + reader on site; **iOS post-MVP** |
 | Soft parallel / Owner.com cutover | Soft parallel OK |
 | Portal invite email (SendGrid) | Wired; blocked on credits |
-| WeekTally `/tally` | **Out of MVP** — personal finance, not franchiseHQ |
+| WeekTally `/tally` | **Out of MVP** |
+
+---
+
+## Ordering customization (locked 2026-10-01)
+
+Mobile modal is the reference. POS and customer_web must match it. Authority: `docs/slices/ordering-customization-normalize-v1.md`.
+
+Confirmed gap: three confirm maps. customer_web has no salad/dinner builder. Sauce amount and `menu_profile_wings` fallback are mobile-only. Drinks flavor stays mobile-only until a drink is sold on web and POS.
 
 ---
 
@@ -52,8 +63,8 @@ Owners see **Catalog health** / **Fixes needed** (not “schema”). Errors bloc
 | **B / B+** | Type merge + case-insensitive names | **DONE** |
 | **C** | Catalog health onboarding hub + HQ card | **Open** |
 | **D** | POS print + drawer | **DONE** — StarGraphic + DK |
-| **POS UX** | Profile builders, cash close-out, EOD, idle | **Mostly done** — idle timer **not verified** |
-| **E** | iOS | **Delayed** |
+| **POS UX** | Profile builders, cash close-out, EOD, idle | Builders/EOD done; idle smoke not re-recorded after `d428a034` |
+| **E** | iOS | **Post-MVP** |
 
 ---
 
@@ -61,15 +72,14 @@ Owners see **Catalog health** / **Fixes needed** (not “schema”). Errors bloc
 
 | Item | State |
 |------|--------|
-| `PosCustomizationSheet` by `menuProfile` (pizza L/R+Dbl, calzone/sub/dinner Dbl, salad dressings, wings halves+dips) | **PASS** |
-| Ticket/print WHOLE/LEFT/RIGHT + HALF 1/2 + optionLabels | **PASS** |
+| `PosCustomizationSheet` by `menuProfile` (pizza L/R+Dbl, calzone/sub/dinner Dbl, salad dressings, wings halves+dips) | **PASS** — not mobile-parity; see normalize slice |
+| Ticket/print WHOLE/LEFT/RIGHT + HALF 1/2 + optionLabels | **PASS** for POS-shaped maps |
 | Dine-in optional name+phone; after Add → categories; tap line to re-edit (seeded) | **PASS** |
 | Seated table: Add items + Modify ticket (+ Add items in workspace) | **PASS** |
 | Cash tender dialog → change due; cash stays **open** until Close out (tip) | **PASS** |
 | `cashTip` / `cardTip` + `closedByStaffName` | **PASS** |
 | EOD (manager/owner): cash/card/overall by source; tips by staff → order | **PASS** |
-| Idle: `lockForRepin` → `SessionTimeoutOverlay` (30s) then `lock()` | **Wired — timer not functional in smoke** |
-| Pointer `touch()` on `PosApp` Listener | **Wired — verify with timer** |
+| Idle: `lockForRepin` → `SessionTimeoutOverlay` then `lock()` | Code advanced in `d428a034`; August 21 smoke note still says fail — re-smoke before checking the box |
 
 **Do not invent** `Order.paymentMethod` / `Order.tableId` getters — read those fields from the order doc.
 
@@ -79,12 +89,14 @@ Owners see **Catalog health** / **Fixes needed** (not “schema”). Errors bloc
 
 | Priority | Focus |
 |----------|--------|
-| **1** | Fix idle timer (overlay never/always firing) — then HQ idle + grace seconds |
-| **2** | Delivery range v1 (distance **or** drive time) on `store_ops` — POS + mobile + customer_web |
-| **3** | Receipt/ticket layout polish; HQ printer-by-category later |
-| **4** | Stripe Terminal when scheduled |
-| **5** | Merge when Catalog health + POS UX signed off |
-| **6** | iOS; SendGrid credits |
+| **1** | Ordering customization normalize — shared payload, then web salad/dinner, wing-config fallback |
+| **2** | Merge polish to `main` (delivery callable is not on `main`) |
+| **3** | Delivery range on mobile + POS (web + HQ store_ops already on polish) |
+| **4** | Catalog health phase C |
+| **5** | Functions Node 22 before ~2026-10-30 |
+| **6** | Re-smoke idle; SendGrid credits if invites are required |
+
+Printer-by-category, iOS, loyalty, custom domains, Wave 2 studio, WeekTally: not this list.
 
 ---
 
@@ -92,10 +104,9 @@ Owners see **Catalog health** / **Fixes needed** (not “schema”). Errors bloc
 
 | Device | Status | Notes |
 |--------|--------|--------|
-| **Star TSP143 / TSP100 LAN** | **Live** — `192.168.1.21` | StarGraphic. Kitchen + receipt **PASS**. |
+| **Star TSP143 / TSP100 LAN** | **Live** — `192.168.1.21` | StarGraphic. Kitchen + receipt **PASS**. One printer for MVP. |
 | **Cash drawer** | **Live** via DK | Cash pay **PASS**. |
-| **Stripe card reader** | **On site** | Payment only. |
-| **2nd kitchen printer** | Doughboys floor | MVP dev = this one printer. |
+| **Stripe card reader** | **On site** | Payment only. Terminal flow not required for this bar unless counter card must be reader-taken. |
 
 Plugin vendored: `pos_app/vendor/flutter_star_prnt_plus`. Host: `--dart-define=POS_PRINTER_HOST=192.168.1.21`.
 
