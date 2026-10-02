@@ -1,6 +1,6 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: October 1, 2026 (scope note only)
+**Last Updated**: October 1, 2026
 **Hardware**: MINISFORUM AI X1 Pro-470  
 **Branch**: soft-release **`main`** · product work **`feat/pre-hardware-hq-polish`**
 **Firebase**: `doughboyspizzeria-2b3d2`  
@@ -17,6 +17,8 @@
 
 `firebase.json` on `main` (commit `fe62dafe`, 2026-09-30) rewrites `/tally` and `/tally/**` to Cloud Run service `weektally`. That is a personal household finance tool hosted on the same Firebase project. It is not HQ, Admin, POS, customer web, or customer mobile scope. Do not track it in burn-in, Owner.com cutover, or release %.
 
+Also deferred past MVP: **iOS**, **printer-by-category**, **loyalty**, **custom domains**, **home composition Wave 2** (HQ homepage widget studio; Wave 1 shell is complete).
+
 ---
 
 ## Current phase
@@ -24,14 +26,17 @@
 | Area | State |
 |------|--------|
 | Order path (web/mobile/POS software) | **On main** |
+| Ordering customization parity | **Open** — `docs/slices/ordering-customization-normalize-v1.md` (work on polish) |
 | Storefront shell Wave 1 + Modern | **COMPLETE** |
 | Inventory v1 + Staff/labor v1 | **COMPLETE on main** |
 | POS clock / delivery COD / portal users / promos v1 | **COMPLETE** |
 | Manager burn-in checklist | **GREEN 2026-08-10** |
 | Soft parallel / hard Owner.com cutover | Soft parallel OK; hard cutover after sign-off + hardware |
 | Portal invite email (SendGrid) | Wired; blocked on credits |
-| Station hardware · iOS | Waiting / postponed |
+| Station hardware · iOS | Hardware on polish; **iOS post-MVP** |
 | WeekTally `/tally` | **Out of MVP** — personal finance, not franchiseHQ |
+
+Product next is on `feat/pre-hardware-hq-polish`: normalize ordering customization, then merge. This file's August containment notes below are historical.
 
 ---
 
@@ -55,9 +60,7 @@ Authority: `docs/slices/bounded-context-repos-v1.md`, `docs/slices/customization
 | **D** Surface convergence + local user.dart | Shared helpers | **Not started** |
 | **E** Caching / N+1 / agent templates | Post-containment | **Not started** |
 
-**Scorecard (honest):** A1–A4 exceeded start plan; customization dual-write **removed** (B3); B4 partial (init dual maps / PizzaSauceSelection / sauceSplit / SauceSelectorGroup maps gone); modal still large; portions/radio/wings local; MenuItem policy ~30%; branding hygiene ~10%; god service contained at key seams ~40%; burn-in safety **met**.
-
-**Not required for hardware cutover:** A5, dual-tree deletion, shared_ui, Phase E, WeekTally.
+**Not required for hardware cutover:** A5, dual-tree deletion, shared_ui, Phase E, WeekTally, iOS, printer-by-category, Wave 2 studio.
 
 ---
 
@@ -65,11 +68,11 @@ Authority: `docs/slices/bounded-context-repos-v1.md`, `docs/slices/customization
 
 | Priority | Focus |
 |----------|--------|
-| **1** | Soft parallel; hard cutover after sign-off + hardware |
-| **2** | Device smoke on `feat/customization-modal-composition-root` → merge when green; optional further B4 (portions/radio/wings) after |
-| **3** | Optional: OrderRepository call-site migration (make A3 as real as A4) |
-| **4** | Optional: Phase C BrandingFacade |
-| **5** | Hardware pilot; iOS when Mac; SendGrid credits |
+| **1** | Ordering customization normalize on polish, then merge to `main` |
+| **2** | Delivery range on mobile + POS (callable is polish-only today) |
+| **3** | Catalog health phase C; Functions Node 22 before ~2026-10-30 |
+| **4** | Optional extract leftovers (B4, Order call sites, BrandingFacade) |
+| **5** | SendGrid credits if portal invites are required |
 
 ---
 
