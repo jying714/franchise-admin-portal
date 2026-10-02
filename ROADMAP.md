@@ -1,12 +1,16 @@
 # Doughboys Pizzeria Franchise Platform — Roadmap
 
-**Last Updated**: August 6, 2026 (~20:40 CDT)  
+**Last Updated**: October 1, 2026 (scope note)  
 **Current focus**: **Manager burn-in / soft release**  
 **Active branch**: **`main`**
 
 ## Vision
 
 Multi-tenant white-label Flutter platform: web + mobile + counter station, franchise-scoped.
+
+## Not in this roadmap
+
+**WeekTally** (`/tally` → Cloud Run `weektally` in `firebase.json`) is a personal finance tool on the same Firebase project. It is not franchiseHQ MVP, not a cutover gate, and not a growth epic.
 
 ---
 
@@ -35,6 +39,7 @@ Multi-tenant white-label Flutter platform: web + mobile + counter station, franc
 | POS hardware / iOS | **Waiting on devices** |
 | Custom domains | **Open** |
 | CF Node 22 | Before ~2026-10-30 |
+| WeekTally | **Out of scope** |
 
 ---
 
@@ -56,4 +61,4 @@ Multi-tenant white-label Flutter platform: web + mobile + counter station, franc
 
 ## How to use
 
-Agents: STATUS + HANDOFF + closed `docs/plans/*` + app READMEs.
+Agents: STATUS + HANDOFF + closed `docs/plans/*` + app READMEs. Ignore `/tally`.
