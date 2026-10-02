@@ -1,6 +1,6 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: August 21, 2026 (POS station UX + EOD + idle overlay)  
+**Last Updated**: October 1, 2026 (scope note; product snapshot still August 21)  
 **Hardware**: MINISFORUM AI X1 Pro-470  
 **Branch**: **`feat/pre-hardware-hq-polish`** (active) · soft-release **`main`** includes salad profile merge  
 **Firebase**: `doughboyspizzeria-2b3d2`  
@@ -8,6 +8,14 @@
 **Admin/HQ**: franchisehq.io
 
 > This file is **always loaded in full** by every agent.
+
+---
+
+## Out of franchiseHQ production MVP
+
+**WeekTally / weekly tally is not a franchiseHQ product feature and is not an MVP acceptance item.**
+
+`main` `firebase.json` rewrites `/tally` to Cloud Run `weektally` (commit `fe62dafe`). That is a personal household finance tool on the same Firebase project. It is not HQ, Admin, POS, customer web, or customer mobile scope. Do not track it in burn-in, Owner.com cutover, or release %.
 
 ---
 
@@ -24,6 +32,7 @@
 | Station hardware · iOS | **TSP100 + drawer + Stripe reader on site**; iOS delayed |
 | Soft parallel / Owner.com cutover | Soft parallel OK |
 | Portal invite email (SendGrid) | Wired; blocked on credits |
+| WeekTally `/tally` | **Out of MVP** — personal finance, not franchiseHQ |
 
 ---
 
