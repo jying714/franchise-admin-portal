@@ -10,6 +10,27 @@
       ],
       "rewrites": [
         {
+          "source": "/tally/api/**",
+          "run": {
+            "serviceId": "weektally",
+            "region": "us-central1"
+          }
+        },
+        {
+          "source": "/tally",
+          "run": {
+            "serviceId": "weektally",
+            "region": "us-central1"
+          }
+        },
+        {
+          "source": "/tally/**",
+          "run": {
+            "serviceId": "weektally",
+            "region": "us-central1"
+          }
+        },
+        {
           "source": "**",
           "destination": "/index.html"
         }
