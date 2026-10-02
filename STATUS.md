@@ -1,13 +1,21 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: August 12, 2026
+**Last Updated**: October 1, 2026 (scope note only)
 **Hardware**: MINISFORUM AI X1 Pro-470  
-**Branch**: **`feat/customization-modal-composition-root`** (B3 done; B4 partial; merge pending smoke) · soft-release remains **`main`**
+**Branch**: soft-release **`main`** · product work **`feat/pre-hardware-hq-polish`**
 **Firebase**: `doughboyspizzeria-2b3d2`  
 **Storefront**: https://franchise-storefront.web.app  
 **Admin/HQ**: franchisehq.io
 
 > This file is **always loaded in full** by every agent.
+
+---
+
+## Out of franchiseHQ production MVP
+
+**WeekTally / weekly tally is not a franchiseHQ product feature and is not an MVP acceptance item.**
+
+`firebase.json` on `main` (commit `fe62dafe`, 2026-09-30) rewrites `/tally` and `/tally/**` to Cloud Run service `weektally`. That is a personal household finance tool hosted on the same Firebase project. It is not HQ, Admin, POS, customer web, or customer mobile scope. Do not track it in burn-in, Owner.com cutover, or release %.
 
 ---
 
@@ -23,6 +31,7 @@
 | Soft parallel / hard Owner.com cutover | Soft parallel OK; hard cutover after sign-off + hardware |
 | Portal invite email (SendGrid) | Wired; blocked on credits |
 | Station hardware · iOS | Waiting / postponed |
+| WeekTally `/tally` | **Out of MVP** — personal finance, not franchiseHQ |
 
 ---
 
@@ -48,7 +57,7 @@ Authority: `docs/slices/bounded-context-repos-v1.md`, `docs/slices/customization
 
 **Scorecard (honest):** A1–A4 exceeded start plan; customization dual-write **removed** (B3); B4 partial (init dual maps / PizzaSauceSelection / sauceSplit / SauceSelectorGroup maps gone); modal still large; portions/radio/wings local; MenuItem policy ~30%; branding hygiene ~10%; god service contained at key seams ~40%; burn-in safety **met**.
 
-**Not required for hardware cutover:** A5, dual-tree deletion, shared_ui, Phase E.
+**Not required for hardware cutover:** A5, dual-tree deletion, shared_ui, Phase E, WeekTally.
 
 ---
 
