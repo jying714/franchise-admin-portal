@@ -15,7 +15,13 @@
 
 **WeekTally / weekly tally is not a franchiseHQ product feature and is not an MVP acceptance item.**
 
-`main` `firebase.json` rewrites `/tally` to Cloud Run `weektally` (commit `fe62dafe`). That is a personal household finance tool on the same Firebase project. It is not HQ, Admin, POS, customer web, or customer mobile scope. Do not track it in burn-in, Owner.com cutover, or release %.
+It is still hosted on the admin domain. `firebase.json` admin target must keep these rewrites **before** the `**` → `/index.html` catch-all, on `main` and on this branch:
+
+- `/tally/api/**` → Cloud Run `weektally` (`us-central1`)
+- `/tally` → Cloud Run `weektally`
+- `/tally/**` → Cloud Run `weektally`
+
+Copied onto polish in `b6692319`. Do not deploy Hosting from a branch that drops them. Do not track WeekTally in burn-in, Owner.com cutover, or release %.
 
 Also deferred past MVP (do not pull into the October completion bar): **iOS**, **printer-by-category**, **loyalty**, **custom domains**, **home composition Wave 2** (`docs/plans/home-page-composition-engine-v1.md` — HQ homepage widget studio; Wave 1 shell is already complete).
 
@@ -35,7 +41,7 @@ Also deferred past MVP (do not pull into the October completion bar): **iOS**, *
 | Station hardware · iOS | TSP100 + drawer + reader on site; **iOS post-MVP** |
 | Soft parallel / Owner.com cutover | Soft parallel OK |
 | Portal invite email (SendGrid) | Wired; blocked on credits |
-| WeekTally `/tally` | **Out of MVP** |
+| WeekTally `/tally` | **Out of MVP** — hosting rewrites required on admin target |
 
 ---
 
@@ -96,7 +102,7 @@ Owners see **Catalog health** / **Fixes needed** (not “schema”). Errors bloc
 | **5** | Functions Node 22 before ~2026-10-30 |
 | **6** | Re-smoke idle; SendGrid credits if invites are required |
 
-Printer-by-category, iOS, loyalty, custom domains, Wave 2 studio, WeekTally: not this list.
+Printer-by-category, iOS, loyalty, custom domains, Wave 2 studio, WeekTally product work: not this list. Keep the `/tally` Hosting rewrites anyway.
 
 ---
 
